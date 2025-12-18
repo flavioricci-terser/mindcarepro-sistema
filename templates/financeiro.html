@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Financeiro - MindCarePro</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <!-- Menu Superior -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="{{ url_for('dashboard') }}">
+                <i class="fas fa-brain"></i> <strong>MindCarePro</strong>
+            </a>
+            
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="{{ url_for('dashboard') }}">
+                    <i class="fas fa-tachometer-alt"></i> Dashboard
+                </a>
+                <a class="nav-link" href="{{ url_for('clientes') }}">
+                    <i class="fas fa-users"></i> Clientes
+                </a>
+                <a class="nav-link" href="{{ url_for('agenda') }}">
+                    <i class="fas fa-calendar"></i> Agenda
+                </a>
+                <a class="nav-link" href="{{ url_for('logout') }}">
+                    <i class="fas fa-sign-out-alt"></i> Sair
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid mt-4">
+        <!-- Título -->
+        <div class="row">
+            <div class="col-12">
+                <h1><i class="fas fa-dollar-sign text-primary"></i> Controle Financeiro</h1>
+                <p class="text-muted">Gerencie pagamentos e receitas</p>
+            </div>
+        </div>
+
+        <!-- Cards Financeiros -->
+        <div class="row mb-4">
+            <div class="col-md-4">
+                <div class="card bg-success text-white">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h3>R$ {{ "%.0f"|format(receita_mes) }}</h3>
+                                <p class="mb-0">Receita do Mês</p>
+                            </div>
+                            <div class="align-self-center">
+                                <i class="fas fa-chart-line fa-2x"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="card bg-warning text-white">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h3>{{ pendentes|length }}</h3>
+                                <p class="mb-0">Pagamentos Pendentes</p>
+                            </div>
+                            <div class="align-self-center">
+                                <i class="fas fa-clock fa-2x"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="card bg-danger text-white">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between">
+                            <div>
+                                <h3>{{ atrasados|length }}</h3>
+                                <p class="mb-0">Pagamentos Atrasados</p>
+                            </div>
+                            <div class="align-self-center">
+                                <i class="fas fa-exclamation-triangle fa-2x"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Pagamentos Pendentes -->
+        <div class="row">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-list"></i> Pagamentos Pendentes</h5>
+                    </div>
+                    <div class="card-body">
+                        {% if pendentes %}
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Cliente</th>
+                                            <th>Valor</th>
+                                            <th>Vencimento</th>
+                                            <th>Status</th>
+                                            <th>Ações</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for pagamento in pendentes %}
+                                        <tr class="{% if pagamento.data_vencimento < moment().date() %}table-danger{% endif %}">
+                                            <td>{{ pagamento.cliente.nome }}</td>
+                                            <td>R$ {{ "%.2f"|format(pagamento.valor) }}</td>
+                                            <td>{{ pagamento.data_vencimento.strftime('%d/%m/%Y') }}</td>
+                                            <td>
+                                                {% if pagamento.data_vencimento < moment().date() %}
+                                                    <span class="badge bg-danger">Atrasado</span>
+                                                {% else %}
+                                                    <span class="badge bg-warning">Pendente</span>
+                                                {% endif %}
+                                            </td>
+                                            <td>
+                                                <div class="btn-group btn-group-sm">
+                                                    <button class="btn btn-success" onclick="marcarPago({{ pagamento.id }})" title="Marcar como Pago">
+                                                        <i class="fas fa-check"></i>
+                                                    </button>
+                                                    <button class="btn btn-primary" title="Enviar Cobrança">
+                                                        <i class="fas fa-paper-plane"></i>
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                        {% else %}
+                            <div class="text-center text-muted py-4">
+                                <i class="fas fa-check-circle fa-3x mb-3 opacity-50"></i>
+                                <p>Todos os pagamentos estão em dia!</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+    function marcarPago(pagamentoId) {
+        if (confirm('Marcar este pagamento como pago?')) {
+            fetch(`/api/marcar_pagamento/${pagamentoId}`, {method: 'POST'})
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('Pagamento confirmado!');
+                    location.reload();
+                }
+            });
+        }
+    }
+    </script>
+</body>
+</html>
