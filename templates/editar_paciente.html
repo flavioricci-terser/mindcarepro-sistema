@@ -378,4 +378,196 @@
                 <i class="fas fa-tachometer-alt"></i>
                 Dashboard
             </a>
-            <a href="{{ url_for('pacientes') }}"
+            <a href="{{ url_for('pacientes') }}" class="menu-item active">
+                <i class="fas fa-users"></i>
+                Pacientes
+            </a>
+            <a href="#" class="menu-item">
+                <i class="fas fa-calendar-alt"></i>
+                Sessões
+            </a>
+            <a href="#" class="menu-item">
+                <i class="fas fa-chart-line"></i>
+                Evoluções
+            </a>
+            <a href="#" class="menu-item">
+                <i class="fas fa-file-alt"></i>
+                Relatórios
+            </a>
+            <a href="#" class="menu-item">
+                <i class="fas fa-cog"></i>
+                Configurações
+            </a>
+        </nav>
+    </div>
+
+    <div class="main-content">
+        <div class="top-bar">
+            <div class="page-title">
+                <i class="fas fa-user-edit"></i>
+                Editar Paciente
+            </div>
+            <div class="user-info">
+                <span>{{ current_user.nome }}</span>
+                <a href="{{ url_for('logout') }}" class="logout-btn">
+                    <i class="fas fa-sign-out-alt"></i> Sair
+                </a>
+            </div>
+        </div>
+
+        <div class="breadcrumb">
+            <a href="{{ url_for('dashboard') }}">Dashboard</a>
+            <i class="fas fa-chevron-right"></i>
+            <a href="{{ url_for('pacientes') }}">Pacientes</a>
+            <i class="fas fa-chevron-right"></i>
+            <a href="{{ url_for('ver_paciente', id=paciente.id) }}">{{ paciente.nome }}</a>
+            <i class="fas fa-chevron-right"></i>
+            <span>Editar</span>
+        </div>
+
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="alert alert-error">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <div class="form-container">
+            <div class="form-header">
+                <h3>
+                    <i class="fas fa-user-edit"></i>
+                    Editar Dados do Paciente: {{ paciente.nome }}
+                </h3>
+            </div>
+            <div class="form-content">
+                <div class="status-section">
+                    <h4>
+                        <i class="fas fa-info-circle"></i>
+                        Informações do Cadastro
+                    </h4>
+                    <div class="status-info">
+                        <div class="status-item">
+                            <span class="status-label">Cadastrado em:</span>
+                            <span class="status-value">{{ paciente.data_cadastro.strftime('%d/%m/%Y às %H:%M') }}</span>
+                        </div>
+                        <div class="status-item">
+                            <span class="status-label">Status atual:</span>
+                            <span class="status-value">
+                                {% if paciente.ativo %}
+                                    <span style="color: #28a745; font-weight: 600;">✓ Ativo</span>
+                                {% else %}
+                                    <span style="color: #dc3545; font-weight: 600;">✗ Inativo</span>
+                                {% endif %}
+                            </span>
+                        </div>
+                        {% if paciente.data_nascimento %}
+                        <div class="status-item">
+                            <span class="status-label">Idade atual:</span>
+                            <span class="status-value">{{ ((today - paciente.data_nascimento).days // 365) }} anos</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <form method="POST" action="{{ url_for('editar_paciente', id=paciente.id) }}">
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label for="nome">Nome Completo <span class="required">*</span></label>
+                            <input type="text" id="nome" name="nome" value="{{ paciente.nome }}" required>
+                            <div class="form-help">Nome completo do paciente</div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="email">Email</label>
+                            <input type="email" id="email" name="email" value="{{ paciente.email or '' }}">
+                            <div class="form-help">Email para contato (opcional)</div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="telefone">Telefone</label>
+                            <input type="tel" id="telefone" name="telefone" value="{{ paciente.telefone or '' }}" placeholder="(11) 99999-9999">
+                            <div class="form-help">Telefone para contato (opcional)</div>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="data_nascimento">Data de Nascimento</label>
+                            <input type="date" id="data_nascimento" name="data_nascimento" 
+                                   value="{% if paciente.data_nascimento %}{{ paciente.data_nascimento.strftime('%Y-%m-%d') }}{% endif %}">
+                            <div class="form-help">Data de nascimento (opcional)</div>
+                        </div>
+
+                        <div class="form-group full-width">
+                            <label for="endereco">Endereço</label>
+                            <textarea id="endereco" name="endereco" placeholder="Endereço completo do paciente">{{ paciente.endereco or '' }}</textarea>
+                            <div class="form-help">Endereço completo (opcional)</div>
+                        </div>
+
+                        <div class="form-group full-width">
+                            <label for="observacoes">Observações</label>
+                            <textarea id="observacoes" name="observacoes" placeholder="Observações, histórico, motivo da consulta, etc.">{{ paciente.observacoes or '' }}</textarea>
+                            <div class="form-help">Informações importantes sobre o paciente (opcional)</div>
+                        </div>
+                    </div>
+
+                    <div class="form-actions">
+                        <a href="{{ url_for('ver_paciente', id=paciente.id) }}" class="btn btn-secondary">
+                            <i class="fas fa-times"></i>
+                            Cancelar
+                        </a>
+                        {% if not paciente.ativo %}
+                        <button type="button" onclick="ativarPaciente({{ paciente.id }})" class="btn btn-success">
+                            <i class="fas fa-user-check"></i>
+                            Reativar Paciente
+                        </button>
+                        {% endif %}
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i>
+                            Salvar Alterações
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Máscara para telefone
+        document.getElementById('telefone').addEventListener('input', function(e) {
+            let value = e.target.value.replace(/\D/g, '');
+            if (value.length >= 11) {
+                value = value.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
+            } else if (value.length >= 7) {
+                value = value.replace(/(\d{2})(\d{4})(\d{0,4})/, '($1) $2-$3');
+            } else if (value.length >= 3) {
+                value = value.replace(/(\d{2})(\d{0,5})/, '($1) $2');
+            }
+            e.target.value = value;
+        });
+
+        // Função para reativar paciente
+        function ativarPaciente(id) {
+            if (confirm('Tem certeza que deseja reativar este paciente?')) {
+                fetch(`/pacientes/${id}/ativar`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('Paciente reativado com sucesso!');
+                        location.reload();
+                    } else {
+                        alert('Erro ao reativar paciente');
+                    }
+                });
+            }
+        }
+
+        // Foco automático no primeiro campo
+        document.getElementById('nome').focus();
+    </script>
+</body>
+</html>
