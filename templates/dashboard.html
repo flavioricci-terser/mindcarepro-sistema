@@ -266,7 +266,7 @@
                 <i class="fas fa-tachometer-alt"></i>
                 Dashboard
             </a>
-            <a href="#" class="menu-item">
+            <a href="{{ url_for('pacientes') }}" class="menu-item">
                 <i class="fas fa-users"></i>
                 Pacientes
             </a>
@@ -339,7 +339,7 @@
         <div class="quick-actions">
             <h3><i class="fas fa-bolt"></i> Ações Rápidas</h3>
             <div class="action-buttons">
-                <a href="#" class="action-btn">
+                <a href="{{ url_for('novo_paciente') }}" class="action-btn">
                     <i class="fas fa-user-plus"></i>
                     Novo Paciente
                 </a>
@@ -351,9 +351,9 @@
                     <i class="fas fa-edit"></i>
                     Nova Evolução
                 </a>
-                <a href="#" class="action-btn">
-                    <i class="fas fa-chart-bar"></i>
-                    Ver Relatórios
+                <a href="{{ url_for('pacientes') }}" class="action-btn">
+                    <i class="fas fa-users"></i>
+                    Ver Pacientes
                 </a>
             </div>
         </div>
