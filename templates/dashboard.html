@@ -3,239 +3,148 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - MindCarePro</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <title>MindCarePro - Dashboard</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .welcome {
+            font-size: 24px;
+            font-weight: bold;
+        }
+        
+        .logout-btn {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 5px;
+            transition: background 0.3s;
+        }
+        
+        .logout-btn:hover {
+            background: rgba(255,255,255,0.3);
+        }
+        
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .card h3 {
+            color: #333;
+            margin-bottom: 15px;
+        }
+        
+        .stat-number {
+            font-size: 36px;
+            font-weight: bold;
+            color: #667eea;
+        }
+        
+        .menu-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+        
+        .menu-item {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            text-decoration: none;
+            color: #333;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            transition: transform 0.2s;
+        }
+        
+        .menu-item:hover {
+            transform: translateY(-5px);
+        }
+        
+        .menu-icon {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+    </style>
 </head>
 <body>
-    <!-- Menu Superior -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
-        <div class="container-fluid">
-            <a class="navbar-brand" href="{{ url_for('dashboard') }}">
-                <i class="fas fa-brain"></i> <strong>MindCarePro</strong>
-            </a>
-            
-            <div class="navbar-nav ms-auto">
-                <a class="nav-link" href="{{ url_for('clientes') }}">
-                    <i class="fas fa-users"></i> Clientes
-                </a>
-                <a class="nav-link" href="{{ url_for('agenda') }}">
-                    <i class="fas fa-calendar"></i> Agenda
-                </a>
-                <a class="nav-link" href="{{ url_for('financeiro') }}">
-                    <i class="fas fa-dollar-sign"></i> Financeiro
-                </a>
-                <a class="nav-link" href="{{ url_for('logout') }}">
-                    <i class="fas fa-sign-out-alt"></i> Sair
-                </a>
-            </div>
+    <div class="header">
+        <div class="welcome">
+            Bem-vindo ao MindCarePro, {{ current_user.nome }}!
         </div>
-    </nav>
-
-    <div class="container-fluid mt-4">
-        <!-- Título -->
-        <div class="row">
-            <div class="col-12">
-                <h1><i class="fas fa-tachometer-alt text-primary"></i> Dashboard</h1>
-                <p class="text-muted">Bem-vindo ao MindCarePro</p>
-            </div>
+        <a href="{{ url_for('logout') }}" class="logout-btn">Sair</a>
+    </div>
+    
+    <div class="dashboard-grid">
+        <div class="card">
+            <h3>📊 Estatísticas</h3>
+            <div class="stat-number">{{ total_pacientes or 0 }}</div>
+            <p>Total de Pacientes</p>
         </div>
-
-        <!-- Cards de Estatísticas -->
-        <div class="row mb-4">
-            <div class="col-md-3">
-                <div class="card bg-primary text-white">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between">
-                            <div>
-                                <h3>{{ total_sessoes }}</h3>
-                                <p class="mb-0">Sessões Hoje</p>
-                            </div>
-                            <div class="align-self-center">
-                                <i class="fas fa-calendar-day fa-2x"></i>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-md-3">
-                <div class="card bg-success text-white">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between">
-                            <div>
-                                <h3>{{ confirmadas }}</h3>
-                                <p class="mb-0">Confirmadas</p>
-                            </div>
-                            <div class="align-self-center">
-                                <i class="fas fa-check-circle fa-2x"></i>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-md-3">
-                <div class="card bg-info text-white">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between">
-                            <div>
-                                <h3>R$ {{ "%.0f"|format(receita_dia) }}</h3>
-                                <p class="mb-0">Receita Hoje</p>
-                            </div>
-                            <div class="align-self-center">
-                                <i class="fas fa-dollar-sign fa-2x"></i>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-md-3">
-                <div class="card bg-warning text-white">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between">
-                            <div>
-                                <h3>{{ clientes|length }}</h3>
-                                <p class="mb-0">Clientes Ativos</p>
-                            </div>
-                            <div class="align-self-center">
-                                <i class="fas fa-users fa-2x"></i>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+        
+        <div class="card">
+            <h3>📅 Hoje</h3>
+            <div class="stat-number">{{ sessoes_hoje or 0 }}</div>
+            <p>Sessões Agendadas</p>
         </div>
-
-        <!-- Sessões de Hoje -->
-        <div class="row">
-            <div class="col-md-8">
-                <div class="card">
-                    <div class="card-header">
-                        <h5><i class="fas fa-calendar-alt"></i> Sessões de Hoje</h5>
-                    </div>
-                    <div class="card-body">
-                        {% if sessoes_hoje %}
-                            {% for sessao in sessoes_hoje %}
-                            <div class="d-flex justify-content-between align-items-center mb-3 p-3 border rounded">
-                                <div>
-                                    <strong>
-                                        <i class="fas fa-clock text-muted"></i> 
-                                        {{ sessao.data_hora.strftime('%H:%M') }} - {{ sessao.cliente.nome }}
-                                    </strong><br>
-                                    <small class="text-muted">
-                                        {% if sessao.status == 'confirmada' %}
-                                            <span class="badge bg-success">Confirmada</span>
-                                        {% else %}
-                                            <span class="badge bg-warning">Pendente</span>
-                                        {% endif %}
-                                        | R$ {{ "%.0f"|format(sessao.valor) }}
-                                    </small>
-                                </div>
-                                <div class="btn-group-vertical btn-group-sm">
-                                    {% if not sessao.confirmacao_cliente %}
-                                    <button class="btn btn-outline-success" onclick="confirmarSessao({{ sessao.id }})" 
-                                            title="Confirmar Sessão">
-                                        <i class="fas fa-check"></i>
-                                    </button>
-                                    {% endif %}
-                                    
-                                    {% if not sessao.meet_link %}
-                                    <button class="btn btn-outline-primary" onclick="gerarMeet({{ sessao.id }})"
-                                            title="Gerar Link Meet">
-                                        <i class="fas fa-video"></i>
-                                    </button>
-                                    {% else %}
-                                    <button class="btn btn-primary" onclick="abrirMeet('{{ sessao.meet_link }}')"
-                                            title="Abrir Meet">
-                                        <i class="fas fa-video"></i>
-                                    </button>
-                                    {% endif %}
-                                </div>
-                            </div>
-                            {% endfor %}
-                        {% else %}
-                            <div class="text-center text-muted py-4">
-                                <i class="fas fa-calendar-times fa-3x mb-3 opacity-50"></i>
-                                <p>Nenhuma sessão agendada para hoje.</p>
-                                <button class="btn btn-primary">
-                                    <i class="fas fa-plus"></i> Agendar Primeira Sessão
-                                </button>
-                            </div>
-                        {% endif %}
-                    </div>
-                </div>
-            </div>
-
-            <!-- Aniversariantes -->
-            <div class="col-md-4">
-                <div class="card">
-                    <div class="card-header">
-                        <h5><i class="fas fa-birthday-cake text-warning"></i> Aniversariantes</h5>
-                    </div>
-                    <div class="card-body">
-                        {% if aniversariantes %}
-                            {% for aniv in aniversariantes %}
-                            <div class="d-flex justify-content-between align-items-center mb-3 p-2 border rounded 
-                                {% if aniv.eh_hoje %}bg-warning bg-opacity-10{% endif %}">
-                                <div>
-                                    <strong>{{ aniv.cliente.nome }}</strong>
-                                    {% if aniv.eh_hoje %}
-                                        <span class="badge bg-warning text-dark">HOJE!</span>
-                                    {% endif %}
-                                    <br>
-                                    <small class="text-muted">
-                                        {{ aniv.data.strftime('%d/%m') }} - {{ aniv.idade }} anos
-                                    </small>
-                                </div>
-                                <div>
-                                    <button class="btn btn-sm btn-outline-warning">
-                                        <i class="fas fa-gift"></i>
-                                    </button>
-                                </div>
-                            </div>
-                            {% endfor %}
-                        {% else %}
-                            <p class="text-muted text-center">Nenhum aniversário esta semana.</p>
-                        {% endif %}
-                    </div>
-                </div>
-            </div>
+        
+        <div class="card">
+            <h3>🎯 Sistema</h3>
+            <div class="stat-number">✅</div>
+            <p>MindCarePro Online</p>
         </div>
     </div>
-
-    <!-- Scripts -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
-    <script>
-    function confirmarSessao(sessaoId) {
-        if (confirm('Confirmar esta sessão?')) {
-            fetch(`/api/confirmar_sessao/${sessaoId}`, {method: 'POST'})
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    alert('Sessão confirmada!');
-                    location.reload();
-                }
-            });
-        }
-    }
-
-    function gerarMeet(sessaoId) {
-        fetch(`/api/gerar_meet/${sessaoId}`, {method: 'POST'})
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                alert('Link do Meet gerado: ' + data.meet_link);
-                location.reload();
-            }
-        });
-    }
-
-    function abrirMeet(link) {
-        window.open(link, '_blank');
-    }
-    </script>
+    
+    <div class="menu-grid">
+        <a href="#" class="menu-item">
+            <div class="menu-icon">👥</div>
+            <h4>Pacientes</h4>
+            <p>Gerenciar pacientes</p>
+        </a>
+        
+        <a href="#" class="menu-item">
+            <div class="menu-icon">📅</div>
+            <h4>Sessões</h4>
+            <p>Agendar e gerenciar</p>
+        </a>
+        
+        <a href="#" class="menu-item">
+            <div class="menu-icon">📝</div>
+            <h4>Evoluções</h4>
+            <p>Registrar progressos</p>
+        </a>
+        
+        <a href="#" class="menu-item">
+            <div class="menu-icon">📊</div>
+            <h4>Relatórios</h4>
+            <p>Análises e métricas</p>
+        </a>
+    </div>
 </body>
 </html>
