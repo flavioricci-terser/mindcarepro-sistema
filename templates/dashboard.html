@@ -4,147 +4,390 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MindCarePro - Dashboard</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            margin: 0;
-            padding: 20px;
-            background-color: #f5f5f5;
+            background-color: #f8f9fa;
+            color: #333;
         }
-        
-        .header {
+
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 250px;
+            height: 100vh;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
+            z-index: 1000;
+            overflow-y: auto;
+        }
+
+        .sidebar-header {
             padding: 20px;
+            text-align: center;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .sidebar-header h2 {
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+
+        .sidebar-header p {
+            font-size: 14px;
+            opacity: 0.8;
+        }
+
+        .sidebar-menu {
+            padding: 20px 0;
+        }
+
+        .menu-item {
+            display: block;
+            padding: 15px 25px;
+            color: white;
+            text-decoration: none;
+            transition: background 0.3s;
+            border-left: 3px solid transparent;
+        }
+
+        .menu-item:hover,
+        .menu-item.active {
+            background: rgba(255,255,255,0.1);
+            border-left-color: white;
+        }
+
+        .menu-item i {
+            width: 20px;
+            margin-right: 10px;
+        }
+
+        .main-content {
+            margin-left: 250px;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .top-bar {
+            background: white;
+            padding: 15px 25px;
             border-radius: 10px;
-            margin-bottom: 30px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 25px;
             display: flex;
             justify-content: space-between;
             align-items: center;
         }
-        
-        .welcome {
+
+        .welcome-text {
             font-size: 24px;
-            font-weight: bold;
+            font-weight: 600;
+            color: #333;
         }
-        
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
         .logout-btn {
-            background: rgba(255,255,255,0.2);
+            background: #dc3545;
             color: white;
-            padding: 10px 20px;
+            padding: 8px 16px;
             text-decoration: none;
             border-radius: 5px;
+            font-size: 14px;
             transition: background 0.3s;
         }
-        
+
         .logout-btn:hover {
-            background: rgba(255,255,255,0.3);
+            background: #c82333;
         }
-        
-        .dashboard-grid {
+
+        .stats-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
             gap: 20px;
             margin-bottom: 30px;
         }
-        
-        .card {
+
+        .stat-card {
             background: white;
-            padding: 20px;
+            padding: 25px;
             border-radius: 10px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            text-align: center;
+            transition: transform 0.3s;
         }
-        
-        .card h3 {
-            color: #333;
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .stat-icon {
+            font-size: 48px;
             margin-bottom: 15px;
+            color: #667eea;
         }
-        
+
         .stat-number {
             font-size: 36px;
             font-weight: bold;
-            color: #667eea;
+            color: #333;
+            margin-bottom: 5px;
         }
-        
-        .menu-grid {
+
+        .stat-label {
+            color: #666;
+            font-size: 16px;
+        }
+
+        .quick-actions {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+
+        .quick-actions h3 {
+            margin-bottom: 20px;
+            color: #333;
+        }
+
+        .action-buttons {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 15px;
         }
-        
-        .menu-item {
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            text-align: center;
+
+        .action-btn {
+            display: flex;
+            align-items: center;
+            padding: 15px 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
             text-decoration: none;
-            color: #333;
+            border-radius: 8px;
+            transition: transform 0.3s;
+        }
+
+        .action-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .action-btn i {
+            margin-right: 10px;
+            font-size: 18px;
+        }
+
+        .recent-activity {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            transition: transform 0.2s;
         }
-        
-        .menu-item:hover {
-            transform: translateY(-5px);
+
+        .recent-activity h3 {
+            margin-bottom: 20px;
+            color: #333;
         }
-        
-        .menu-icon {
-            font-size: 48px;
-            margin-bottom: 10px;
+
+        .activity-item {
+            padding: 15px 0;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            align-items: center;
+        }
+
+        .activity-item:last-child {
+            border-bottom: none;
+        }
+
+        .activity-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #667eea;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 15px;
+        }
+
+        .activity-content {
+            flex: 1;
+        }
+
+        .activity-title {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .activity-time {
+            color: #666;
+            font-size: 14px;
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+                transition: transform 0.3s;
+            }
+
+            .main-content {
+                margin-left: 0;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
         }
     </style>
 </head>
 <body>
-    <div class="header">
-        <div class="welcome">
-            Bem-vindo ao MindCarePro, {{ current_user.nome }}!
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <h2>MindCarePro</h2>
+            <p>Sistema de Gestão</p>
         </div>
-        <a href="{{ url_for('logout') }}" class="logout-btn">Sair</a>
+        <nav class="sidebar-menu">
+            <a href="{{ url_for('dashboard') }}" class="menu-item active">
+                <i class="fas fa-tachometer-alt"></i>
+                Dashboard
+            </a>
+            <a href="#" class="menu-item">
+                <i class="fas fa-users"></i>
+                Pacientes
+            </a>
+            <a href="#" class="menu-item">
+                <i class="fas fa-calendar-alt"></i>
+                Sessões
+            </a>
+            <a href="#" class="menu-item">
+                <i class="fas fa-chart-line"></i>
+                Evoluções
+            </a>
+            <a href="#" class="menu-item">
+                <i class="fas fa-file-alt"></i>
+                Relatórios
+            </a>
+            <a href="#" class="menu-item">
+                <i class="fas fa-cog"></i>
+                Configurações
+            </a>
+        </nav>
     </div>
-    
-    <div class="dashboard-grid">
-        <div class="card">
-            <h3>📊 Estatísticas</h3>
-            <div class="stat-number">{{ total_pacientes or 0 }}</div>
-            <p>Total de Pacientes</p>
+
+    <div class="main-content">
+        <div class="top-bar">
+            <div class="welcome-text">
+                Bem-vindo, {{ current_user.nome }}!
+            </div>
+            <div class="user-info">
+                <span>{{ current_user.email }}</span>
+                <a href="{{ url_for('logout') }}" class="logout-btn">
+                    <i class="fas fa-sign-out-alt"></i> Sair
+                </a>
+            </div>
         </div>
-        
-        <div class="card">
-            <h3>📅 Hoje</h3>
-            <div class="stat-number">{{ sessoes_hoje or 0 }}</div>
-            <p>Sessões Agendadas</p>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-users"></i>
+                </div>
+                <div class="stat-number">{{ total_pacientes or 0 }}</div>
+                <div class="stat-label">Total de Pacientes</div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-calendar-check"></i>
+                </div>
+                <div class="stat-number">{{ sessoes_hoje or 0 }}</div>
+                <div class="stat-label">Sessões Hoje</div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-clock"></i>
+                </div>
+                <div class="stat-number">{{ proximas_sessoes|length or 0 }}</div>
+                <div class="stat-label">Próximas Sessões</div>
+            </div>
+
+            <div class="stat-card">
+                <div class="stat-icon">
+                    <i class="fas fa-chart-line"></i>
+                </div>
+                <div class="stat-number">100%</div>
+                <div class="stat-label">Sistema Online</div>
+            </div>
         </div>
-        
-        <div class="card">
-            <h3>🎯 Sistema</h3>
-            <div class="stat-number">✅</div>
-            <p>MindCarePro Online</p>
+
+        <div class="quick-actions">
+            <h3><i class="fas fa-bolt"></i> Ações Rápidas</h3>
+            <div class="action-buttons">
+                <a href="#" class="action-btn">
+                    <i class="fas fa-user-plus"></i>
+                    Novo Paciente
+                </a>
+                <a href="#" class="action-btn">
+                    <i class="fas fa-calendar-plus"></i>
+                    Agendar Sessão
+                </a>
+                <a href="#" class="action-btn">
+                    <i class="fas fa-edit"></i>
+                    Nova Evolução
+                </a>
+                <a href="#" class="action-btn">
+                    <i class="fas fa-chart-bar"></i>
+                    Ver Relatórios
+                </a>
+            </div>
         </div>
-    </div>
-    
-    <div class="menu-grid">
-        <a href="#" class="menu-item">
-            <div class="menu-icon">👥</div>
-            <h4>Pacientes</h4>
-            <p>Gerenciar pacientes</p>
-        </a>
-        
-        <a href="#" class="menu-item">
-            <div class="menu-icon">📅</div>
-            <h4>Sessões</h4>
-            <p>Agendar e gerenciar</p>
-        </a>
-        
-        <a href="#" class="menu-item">
-            <div class="menu-icon">📝</div>
-            <h4>Evoluções</h4>
-            <p>Registrar progressos</p>
-        </a>
-        
-        <a href="#" class="menu-item">
-            <div class="menu-icon">📊</div>
-            <h4>Relatórios</h4>
-            <p>Análises e métricas</p>
-        </a>
+
+        <div class="recent-activity">
+            <h3><i class="fas fa-history"></i> Atividade Recente</h3>
+            <div class="activity-item">
+                <div class="activity-icon">
+                    <i class="fas fa-user-check"></i>
+                </div>
+                <div class="activity-content">
+                    <div class="activity-title">Sistema MindCarePro iniciado</div>
+                    <div class="activity-time">Agora mesmo</div>
+                </div>
+            </div>
+            <div class="activity-item">
+                <div class="activity-icon">
+                    <i class="fas fa-database"></i>
+                </div>
+                <div class="activity-content">
+                    <div class="activity-title">Banco de dados conectado</div>
+                    <div class="activity-time">Há poucos minutos</div>
+                </div>
+            </div>
+            <div class="activity-item">
+                <div class="activity-icon">
+                    <i class="fas fa-shield-alt"></i>
+                </div>
+                <div class="activity-content">
+                    <div class="activity-title">Login realizado com sucesso</div>
+                    <div class="activity-time">Agora mesmo</div>
+                </div>
+            </div>
+        </div>
     </div>
 </body>
 </html>
