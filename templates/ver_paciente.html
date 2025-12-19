@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MindCarePro - {{ paciente.nome }}</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8f9fa;
+            color: #333;
+        }
+
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 250px;
+            height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            z-index: 1000;
+            overflow-y: auto;
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            text-align: center;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .sidebar-header h2 {
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+
+        .sidebar-header p {
+            font-size: 14px;
+            opacity: 0.8;
+        }
+
+        .sidebar-menu {
+            padding: 20px 0;
+        }
+
+        .menu-item {
+            display: block;
+            padding: 15px 25px;
+            color: white;
+            text-decoration: none;
+            transition: background 0.3s;
+            border-left: 3px solid transparent;
+        }
+
+        .menu-item:hover,
+        .menu-item.active {
+            background: rgba(255,255,255,0.1);
+            border-left-color: white;
+        }
+
+        .menu-item i {
+            width: 20px;
+            margin-right: 10px;
+        }
+
+        .main-content {
+            margin-left: 250px;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .top-bar {
+            background: white;
+            padding: 15px 25px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .page-title {
+            font-size: 28px;
+            font-weight: 600;
+            color: #333;
+            display: flex;
+            align-items: center;
+        }
+
+        .page-title i {
+            margin-right: 10px;
+            color: #667eea;
+        }
+
+        .breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
+
+        .breadcrumb a {
+            color: #667eea;
+            text-decoration: none;
+        }
+
+        .breadcrumb a:hover {
+            text-decoration: underline;
+        }
+
+        .patient-header {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            padding: 30px;
+            margin-bottom: 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .patient-info {
+            flex: 1;
+        }
+
+        .patient-name {
+            font-size: 32px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+        }
+
+        .status-badge {
+            padding: 6px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-left: 15px;
+        }
+
+        .status-active {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-inactive {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .patient-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .detail-item {
+            display: flex;
+            align-items: center;
+            color: #666;
+        }
+
+        .detail-item i {
+            width: 20px;
+            margin-right: 10px;
+            color: #667eea;
+        }
+
+        .patient-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            transition: all 0.3s;
+        }
+
+        .btn i {
+            margin-right: 8px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-warning {
+            background: #ffc107;
+            color: #212529;
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-info {
+            background: #17a2b8;
+            color: white;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+
+        .content-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+            margin-bottom: 25px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        .card-header {
+            background: #f8f9fa;
+            padding: 20px 25px;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .card-header h3 {
+            color: #333;
+            display: flex;
+            align-items: center;
+        }
+
+        .card-header i {
+            margin-right: 10px;
+            color: #667eea;
+        }
+
+        .card-content {
+            padding: 25px;
+        }
+
+        .info-grid {
+            display: grid;
+            gap: 15px;
+        }
+
+        .info-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #f1f3f4;
+        }
+
+        .info-item:last-child {
+            border-bottom: none;
+        }
+
+        .info-label {
+            font-weight: 600;
+            color: #333;
+        }
+
+        .info-value {
+            color: #666;
+            text-align: right;
+        }
+
+        .observations {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+            margin-top: 15px;
+        }
+
+        .observations h4 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .observations p {
+            color: #666;
+            line-height: 1.6;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #666;
+        }
+
+        .empty-state i {
+            font-size: 48px;
+            color: #dee2e6;
+            margin-bottom: 15px;
+        }
+
+        .list-item {
+            padding: 15px 0;
+            border-bottom: 1px solid #f1f3f4;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .list-item:last-child {
+            border-bottom: none;
+        }
+
+        .list-item-content {
+            flex: 1;
+        }
+
+        .list-item-title {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 5px;
+        }
+
+        .list-item-meta {
+            font-size: 14px;
+            color: #666;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .logout-btn {
+            background: #dc3545;
+            color: white;
+            padding: 8px 16px;
+            text-decoration: none;
+            border-radius: 5px;
+            font-size: 14px;
+            transition: background 0.3s;
+        }
+
+        .logout-btn:hover {
+            background: #c82333;
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+
+            .main-content {
+                margin-left: 0;
+            }
+
+            .patient-header {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .patient-actions {
+                justify-content: stretch;
+            }
+
+            .btn {
+                flex: 1;
+                justify-content: center;
+            }
+
+            .content-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .patient-details {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <h2>MindCarePro</h2>
+            <p>Sistema de Gestão</p>
+        </div>
+        <nav class="sidebar-menu">
+            <a href="{{ url_for('dashboard') }}" class="menu-item">
+                <i class="fas fa-tachometer-alt"></i>
+                Dashboard
+            </a>
+            <a href="{{ url_for('pacientes') }}" class="menu-item active">
+                <i class="fas fa-users"></i>
+                Pacientes
+            </a>
+            <a href="#" class="menu-item">
+                <i class="fas fa-calendar-alt"></i>
+                Sessões
+            </a>
+            <a href="#" class="menu-item">
+                <i class="fas fa-chart-line"></i>
+                Evoluções
+            </a>
+            <a href="#" class="menu-item">
+                <i class="fas fa-file-alt"></i>
+                Relatórios
+            </a>
+            <a href="#" class="menu-item">
+                <i class="fas fa-cog"></i>
+                Configurações
+            </a>
+        </nav>
+    </div>
+
+    <div class="main-content">
+        <div class="top-bar">
+            <div class="page-title">
+                <i class="fas fa-user"></i>
+                Detalhes do Paciente
+            </div>
+            <div class="user-info">
+                <span>{{ current_user.nome }}</span>
+                <a href="{{ url_for('logout') }}" class="logout-btn">
+                    <i class="fas fa-sign-out-alt"></i> Sair
+                </a>
+            </div>
+        </div>
+
+        <div class="breadcrumb">
+            <a href="{{ url_for('dashboard') }}">Dashboard</a>
+            <i class="fas fa-chevron-right"></i>
+            <a href="{{ url_for('pacientes') }}">Pacientes</a>
+            <i class="fas fa-chevron-right"></i>
+            <span>{{ paciente.nome }}</span>
+        </div>
+
+        <div class="patient-header">
+            <div class="patient-info">
+                <div class="patient-name">
+                    {{ paciente.nome }}
+                    {% if paciente.ativo %}
+                        <span class="status-badge status-active">Ativo</span>
+                    {% else %}
+                        <span class="status-badge status-inactive">Inativo</span>
+                    {% endif %}
+                </div>
+                
+                <div class="patient-details">
+                    {% if paciente.email %}
+                    <div class="detail-item">
+                        <i class="fas fa-envelope"></i>
+                        <span>{{ paciente.email }}</span>
+                    </div>
+                    {% endif %}
+                    
+                    {% if paciente.telefone %}
+                    <div class="detail-item">
+                        <i class="fas fa-phone"></i>
+                        <span>{{ paciente.telefone }}</span>
+                    </div>
+                    {% endif %}
+                    
+                    {% if paciente.data_nascimento %}
+                    <div class="detail-item">
+                        <i class="fas fa-birthday-cake"></i>
+                        <span>{{ paciente.data_nascimento.strftime('%d/%m/%Y') }} ({{ ((today - paciente.data_nascimento).days // 365) }} anos)</span>
+                    </div>
+                    {% endif %}
+                    
+                    <div class="detail-item">
+                        <i class="fas fa-calendar-plus"></i>
+                        <span>Cadastrado em {{ paciente.data_cadastro.strftime('%d/%m/%Y') }}</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="patient-actions">
+                <a href="{{ url_for('editar_paciente', id=paciente.id) }}" class="btn btn-warning">
+                    <i class="fas fa-edit"></i>
+                    Editar
+                </a>
+                <a href="#" class="btn btn-success">
+                    <i class="fas fa-calendar-plus"></i>
+                    Nova Sessão
+                </a>
+                <a href="#" class="btn btn-info">
+                    <i class="fas fa-notes-medical"></i>
+                    Nova Evolução
+                </a>
+            </div>
+        </div>
+
+        <div class="content-grid">
+            <div class="card">
+                <div class="card-header">
+                    <h3>
+                        <i class="fas fa-info-circle"></i>
+                        Informações Pessoais
+                    </h3>
+                </div>
+                <div class="card-content">
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <span class="info-label">Nome Completo:</span>
+                            <span class="info-value">{{ paciente.nome }}</span>
+                        </div>
+                        
+                        <div class="info-item">
+                            <span class="info-label">Email:</span>
+                            <span class="info-value">{{ paciente.email or 'Não informado' }}</span>
+                        </div>
+                        
+                        <div class="info-item">
+                            <span class="info-label">Telefone:</span>
+                            <span class="info-value">{{ paciente.telefone or 'Não informado' }}</span>
+                        </div>
+                        
+                        <div class="info-item">
+                            <span class="info-label">Data de Nascimento:</span>
+                            <span class="info-value">
+                                {% if paciente.data_nascimento %}
+                                    {{ paciente.data_nascimento.strftime('%d/%m/%Y') }}
+                                {% else %}
+                                    Não informado
+                                {% endif %}
+                            </span>
+                        </div>
+                        
+                        <div class="info-item">
+                            <span class="info-label">Idade:</span>
+                            <span class="info-value">
+                                {% if paciente.data_nascimento %}
+                                    {{ ((today - paciente.data_nascimento).days // 365) }} anos
+                                {% else %}
+                                    Não informado
+                                {% endif %}
+                            </span>
+                        </div>
+                        
+                        <div class="info-item">
+                            <span class="info-label">Status:</span>
+                            <span class="info-value">
+                                {% if paciente.ativo %}
+                                    <span style="color: #28a745; font-weight: 600;">Ativo</span>
+                                {% else %}
+                                    <span style="color: #dc3545; font-weight: 600;">Inativo</span>
+                                {% endif %}
+                            </span>
+                        </div>
+                    </div>
+                    
+                    {% if paciente.endereco %}
+                    <div class="observations">
+                        <h4><i class="fas fa-map-marker-alt"></i> Endereço</h4>
+                        <p>{{ paciente.endereco }}</p>
+                    </div>
+                    {% endif %}
+                    
+                    {% if paciente.observacoes %}
+                    <div class="observations">
+                        <h4><i class="fas fa-sticky-note"></i> Observações</h4>
+                        <p>{{ paciente.observacoes }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h3>
+                        <i class="fas fa-calendar-alt"></i>
+                        Sessões Recentes
+                    </h3>
+                </div>
+                <div class="card-content">
+                    {% if sessoes %}
+                        {% for sessao in sessoes %}
+                        <div class="list-item">
+                            <div class="list-item-content">
+                                <div class="list-item-title">
+                                    Sessão - {{ sessao.data_sessao.strftime('%d/%m/%Y às %H:%M') }}
+                                </div>
+                                <div class="list-item-meta">
+                                    Status: {{ sessao.status.title() }} | Duração: {{ sessao.duracao }}min
+                                    {% if sessao.valor %}
+                                        | Valor: R$ {{ "%.2f"|format(sessao.valor) }}
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                        <div class="empty-state">
+                            <i class="fas fa-calendar-times"></i>
+                            <h4>Nenhuma sessão registrada</h4>
+                            <p>Este paciente ainda não possui sessões cadastradas</p>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <h3>
+                    <i class="fas fa-chart-line"></i>
+                    Evoluções e Anotações
+                </h3>
+            </div>
+            <div class="card-content">
+                {% if evolucoes %}
+                    {% for evolucao in evolucoes %}
+                    <div class="list-item">
+                        <div class="list-item-content">
+                            <div class="list-item-title">{{ evolucao.titulo }}</div>
+                            <div class="list-item-meta">
+                                {{ evolucao.data_evolucao.strftime('%d/%m/%Y às %H:%M') }} | Tipo: {{ evolucao.tipo.title() }}
+                            </div>
+                            {% if evolucao.descricao %}
+                            <p style="margin-top: 10px; color: #666;">{{ evolucao.descricao[:200] }}{% if evolucao.descricao|length > 200 %}...{% endif %}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="empty-state">
+                        <i class="fas fa-notes-medical"></i>
+                        <h4>Nenhuma evolução registrada</h4>
+                        <p>Este paciente ainda não possui evoluções ou anotações cadastradas</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</body>
+</html>
