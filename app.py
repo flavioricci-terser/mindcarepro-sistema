@@ -15,6 +15,7 @@ if database_url and database_url.startswith('postgresql://'):
 app.config['SQLALCHEMY_DATABASE_URI'] = database_url
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'mindcarepro-secret-key')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['TEMPLATES_AUTO_RELOAD'] = True
 
 # Inicialização das extensões
 db = SQLAlchemy(app)
@@ -131,7 +132,45 @@ def logout():
 @app.route('/dashboard')
 @login_required
 def dashboard():
-    return "<h1>Dashboard do MindCarePro</h1><p>Bem-vindo, " + current_user.nome + "!</p><a href='/logout'>Sair</a>"
+    # Estatísticas básicas (simuladas por enquanto)
+    total_pacientes = 0
+    sessoes_hoje = 0
+    proximas_sessoes = []
+    
+    try:
+        # Tentar buscar dados reais do banco
+        total_pacientes = Paciente.query.filter_by(psicologo_id=current_user.id, ativo=True).count()
+        sessoes_hoje = Sessao.query.filter_by(
+            psicologo_id=current_user.id
+        ).filter(
+            db.func.date(Sessao.data_sessao) == date.today()
+        ).count()
+        
+        proximas_sessoes = Sessao.query.filter_by(
+            psicologo_id=current_user.id,
+            status='agendada'
+        ).filter(
+            Sessao.data_sessao >= datetime.now()
+        ).order_by(Sessao.data_sessao).limit(5).all()
+        
+    except Exception as e:
+        print(f"Erro ao buscar estatísticas: {e}")
+        # Usar valores padrão se houver erro
+        pass
+    
+    return render_template('dashboard.html', 
+                         total_pacientes=total_pacientes,
+                         sessoes_hoje=sessoes_hoje,
+                         proximas_sessoes=proximas_sessoes)
+
+# Rota de teste para verificar se templates funcionam
+@app.route('/teste-template')
+@login_required
+def teste_template():
+    return render_template('dashboard.html', 
+                         total_pacientes=5,
+                         sessoes_hoje=3,
+                         proximas_sessoes=[])
 
 # Função para criar tabelas e usuário admin
 def criar_dados_iniciais():
