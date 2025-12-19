@@ -169,12 +169,23 @@ def dashboard():
 @login_required
 def pacientes():
     try:
-        # Buscar todos os pacientes do psicólogo logado
-        pacientes_lista = Paciente.query.filter_by(psicologo_id=current_user.id).order_by(Paciente.nome).all()
+        search = request.args.get('search', '')
+        
+        # Buscar pacientes com filtro de busca
+        if search:
+            pacientes_lista = Paciente.query.filter_by(psicologo_id=current_user.id).filter(
+                db.or_(
+                    Paciente.nome.ilike(f'%{search}%'),
+                    Paciente.email.ilike(f'%{search}%'),
+                    Paciente.telefone.ilike(f'%{search}%')
+                )
+            ).order_by(Paciente.nome).all()
+        else:
+            pacientes_lista = Paciente.query.filter_by(psicologo_id=current_user.id).order_by(Paciente.nome).all()
         
         # Estatísticas
-        total_pacientes = len(pacientes_lista)
-        pacientes_ativos = len([p for p in pacientes_lista if p.ativo])
+        total_pacientes = Paciente.query.filter_by(psicologo_id=current_user.id).count()
+        pacientes_ativos = Paciente.query.filter_by(psicologo_id=current_user.id, ativo=True).count()
         
         # Novos pacientes este mês
         primeiro_dia_mes = date.today().replace(day=1)
@@ -277,7 +288,8 @@ def ver_paciente(id):
         return render_template('ver_paciente.html', 
                              paciente=paciente,
                              sessoes=sessoes,
-                             evolucoes=evolucoes)
+                             evolucoes=evolucoes,
+                             today=date.today())
     except Exception as e:
         print(f"Erro ao ver paciente: {e}")
         flash('Paciente não encontrado', 'error')
@@ -301,7 +313,7 @@ def editar_paciente(id):
             # Validações básicas
             if not nome:
                 flash('Nome é obrigatório', 'error')
-                return render_template('editar_paciente.html', paciente=paciente)
+                return render_template('editar_paciente.html', paciente=paciente, today=date.today())
             
             # Converter data de nascimento
             data_nascimento = None
@@ -310,14 +322,14 @@ def editar_paciente(id):
                     data_nascimento = datetime.strptime(data_nascimento_str, '%Y-%m-%d').date()
                 except:
                     flash('Data de nascimento inválida', 'error')
-                    return render_template('editar_paciente.html', paciente=paciente)
+                    return render_template('editar_paciente.html', paciente=paciente, today=date.today())
             
             # Verificar se email já existe (se fornecido e diferente do atual)
             if email and email != paciente.email:
                 paciente_existente = Paciente.query.filter_by(email=email, psicologo_id=current_user.id).first()
                 if paciente_existente:
                     flash('Já existe um paciente com este email', 'error')
-                    return render_template('editar_paciente.html', paciente=paciente)
+                    return render_template('editar_paciente.html', paciente=paciente, today=date.today())
             
             # Atualizar dados do paciente
             paciente.nome = nome
@@ -332,7 +344,7 @@ def editar_paciente(id):
             flash(f'Dados de {nome} atualizados com sucesso!', 'success')
             return redirect(url_for('ver_paciente', id=id))
         
-        return render_template('editar_paciente.html', paciente=paciente)
+        return render_template('editar_paciente.html', paciente=paciente, today=date.today())
         
     except Exception as e:
         print(f"Erro ao editar paciente: {e}")
