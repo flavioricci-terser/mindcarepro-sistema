@@ -481,87 +481,150 @@ def sessoes():
 def nova_sessao():
     if request.method == 'POST':
         try:
+            print("=== DEBUG NOVA SESSÃO ===")
+            
             # Capturar dados do formulário
             paciente_id = request.form.get('paciente_id')
             data_sessao_str = request.form.get('data_sessao')
             hora_sessao = request.form.get('hora_sessao')
             duracao = request.form.get('duracao', 50)
-            valor_str = request.form.get('valor', '')
+            valor_str = request.form.get('valor', '').strip()
             observacoes = request.form.get('observacoes', '').strip()
+            
+            print(f"Paciente ID: {paciente_id}")
+            print(f"Data: {data_sessao_str}")
+            print(f"Hora: {hora_sessao}")
+            print(f"Duração: {duracao}")
+            print(f"Valor string: '{valor_str}'")
+            print(f"Observações: {observacoes}")
             
             # Validações básicas
             if not paciente_id:
+                print("ERRO: Paciente não selecionado")
                 flash('Paciente é obrigatório', 'error')
-                return render_template('nova_sessao.html', 
-                                     pacientes=Paciente.query.filter_by(psicologo_id=current_user.id, ativo=True).order_by(Paciente.nome).all())
+                pacientes_lista = Paciente.query.filter_by(psicologo_id=current_user.id, ativo=True).order_by(Paciente.nome).all()
+                return render_template('nova_sessao.html', pacientes=pacientes_lista)
             
             if not data_sessao_str or not hora_sessao:
+                print("ERRO: Data ou hora não fornecida")
                 flash('Data e hora são obrigatórios', 'error')
-                return render_template('nova_sessao.html', 
-                                     pacientes=Paciente.query.filter_by(psicologo_id=current_user.id, ativo=True).order_by(Paciente.nome).all())
+                pacientes_lista = Paciente.query.filter_by(psicologo_id=current_user.id, ativo=True).order_by(Paciente.nome).all()
+                return render_template('nova_sessao.html', pacientes=pacientes_lista)
             
             # Converter data e hora
             try:
                 data_sessao = datetime.strptime(f"{data_sessao_str} {hora_sessao}", '%Y-%m-%d %H:%M')
-            except:
+                print(f"Data/hora convertida: {data_sessao}")
+            except Exception as e:
+                print(f"ERRO ao converter data/hora: {e}")
                 flash('Data ou hora inválida', 'error')
-                return render_template('nova_sessao.html', 
-                                     pacientes=Paciente.query.filter_by(psicologo_id=current_user.id, ativo=True).order_by(Paciente.nome).all())
+                pacientes_lista = Paciente.query.filter_by(psicologo_id=current_user.id, ativo=True).order_by(Paciente.nome).all()
+                return render_template('nova_sessao.html', pacientes=pacientes_lista)
             
             # Verificar se a data não é no passado
             if data_sessao < datetime.now():
+                print("ERRO: Data no passado")
                 flash('Não é possível agendar sessão no passado', 'error')
-                return render_template('nova_sessao.html', 
-                                     pacientes=Paciente.query.filter_by(psicologo_id=current_user.id, ativo=True).order_by(Paciente.nome).all())
+                pacientes_lista = Paciente.query.filter_by(psicologo_id=current_user.id, ativo=True).order_by(Paciente.nome).all()
+                return render_template('nova_sessao.html', pacientes=pacientes_lista)
             
             # Verificar conflito de horário
-            conflito = Sessao.query.filter_by(
-                psicologo_id=current_user.id,
-                status='agendada'
-            ).filter(
-                Sessao.data_sessao == data_sessao
-            ).first()
-            
-            if conflito:
-                flash('Já existe uma sessão agendada para este horário', 'error')
-                return render_template('nova_sessao.html', 
-                                     pacientes=Paciente.query.filter_by(psicologo_id=current_user.id, ativo=True).order_by(Paciente.nome).all())
+            try:
+                conflito = Sessao.query.filter_by(
+                    psicologo_id=current_user.id,
+                    status='agendada'
+                ).filter(
+                    Sessao.data_sessao == data_sessao
+                ).first()
+                
+                if conflito:
+                    print("ERRO: Conflito de horário")
+                    flash('Já existe uma sessão agendada para este horário', 'error')
+                    pacientes_lista = Paciente.query.filter_by(psicologo_id=current_user.id, ativo=True).order_by(Paciente.nome).all()
+                    return render_template('nova_sessao.html', pacientes=pacientes_lista)
+            except Exception as e:
+                print(f"ERRO ao verificar conflito: {e}")
             
             # Converter valor
             valor = None
-            if valor_str:
+            if valor_str and valor_str.strip():
                 try:
-                    valor = Decimal(valor_str.replace(',', '.'))
-                except:
+                    # Limpar e converter valor
+                    valor_limpo = valor_str.replace(',', '.').strip()
+                    valor = Decimal(valor_limpo)
+                    print(f"Valor convertido: {valor}")
+                except Exception as e:
+                    print(f"ERRO ao converter valor '{valor_str}': {e}")
                     flash('Valor inválido', 'error')
-                    return render_template('nova_sessao.html', 
-                                         pacientes=Paciente.query.filter_by(psicologo_id=current_user.id, ativo=True).order_by(Paciente.nome).all())
+                    pacientes_lista = Paciente.query.filter_by(psicologo_id=current_user.id, ativo=True).order_by(Paciente.nome).all()
+                    return render_template('nova_sessao.html', pacientes=pacientes_lista)
+            
+            # Verificar se paciente existe e pertence ao usuário
+            try:
+                paciente = Paciente.query.filter_by(id=paciente_id, psicologo_id=current_user.id).first()
+                if not paciente:
+                    print("ERRO: Paciente não encontrado ou não pertence ao usuário")
+                    flash('Paciente não encontrado', 'error')
+                    pacientes_lista = Paciente.query.filter_by(psicologo_id=current_user.id, ativo=True).order_by(Paciente.nome).all()
+                    return render_template('nova_sessao.html', pacientes=pacientes_lista)
+                print(f"Paciente encontrado: {paciente.nome}")
+            except Exception as e:
+                print(f"ERRO ao buscar paciente: {e}")
+                flash('Erro ao verificar paciente', 'error')
+                pacientes_lista = Paciente.query.filter_by(psicologo_id=current_user.id, ativo=True).order_by(Paciente.nome).all()
+                return render_template('nova_sessao.html', pacientes=pacientes_lista)
             
             # Criar nova sessão
-            nova_sessao = Sessao(
-                paciente_id=paciente_id,
-                psicologo_id=current_user.id,
-                data_sessao=data_sessao,
-                duracao=int(duracao),
-                valor=valor,
-                observacoes=observacoes if observacoes else None
-            )
-            
-            db.session.add(nova_sessao)
-            db.session.commit()
-            
-            # Buscar nome do paciente para a mensagem
-            paciente = Paciente.query.get(paciente_id)
-            flash(f'Sessão agendada com {paciente.nome} para {data_sessao.strftime("%d/%m/%Y às %H:%M")}!', 'success')
-            return redirect(url_for('sessoes'))
+            try:
+                nova_sessao_obj = Sessao(
+                    paciente_id=int(paciente_id),
+                    psicologo_id=current_user.id,
+                    data_sessao=data_sessao,
+                    duracao=int(duracao),
+                    valor=valor,
+                    observacoes=observacoes if observacoes else None
+                )
+                
+                print(f"Sessão criada: {nova_sessao_obj}")
+                print(f"Paciente ID: {nova_sessao_obj.paciente_id}")
+                print(f"Psicólogo ID: {nova_sessao_obj.psicologo_id}")
+                print(f"Data: {nova_sessao_obj.data_sessao}")
+                print(f"Valor: {nova_sessao_obj.valor}")
+                
+                db.session.add(nova_sessao_obj)
+                db.session.commit()
+                
+                print("Sessão salva no banco com sucesso!")
+                
+                flash(f'Sessão agendada com {paciente.nome} para {data_sessao.strftime("%d/%m/%Y às %H:%M")}!', 'success')
+                return redirect(url_for('sessoes'))
+                
+            except Exception as e:
+                print(f"ERRO ao salvar sessão no banco: {e}")
+                print(f"Tipo do erro: {type(e)}")
+                import traceback
+                traceback.print_exc()
+                flash('Erro ao salvar sessão no banco de dados', 'error')
+                db.session.rollback()
+                pacientes_lista = Paciente.query.filter_by(psicologo_id=current_user.id, ativo=True).order_by(Paciente.nome).all()
+                return render_template('nova_sessao.html', pacientes=pacientes_lista)
             
         except Exception as e:
-            print(f"Erro ao agendar sessão: {e}")
+            print(f"ERRO GERAL na nova_sessao: {e}")
+            print(f"Tipo do erro: {type(e)}")
+            import traceback
+            traceback.print_exc()
             flash('Erro ao agendar sessão', 'error')
             db.session.rollback()
     
     # Buscar pacientes ativos para o formulário
-    pacientes_lista = Paciente.query.filter_by(psicologo_id=current_user.id, ativo=True).order_by(Paciente.nome).all()
+    try:
+        pacientes_lista = Paciente.query.filter_by(psicologo_id=current_user.id, ativo=True).order_by(Paciente.nome).all()
+        print(f"Pacientes encontrados: {len(pacientes_lista)}")
+    except Exception as e:
+        print(f"ERRO ao buscar pacientes: {e}")
+        pacientes_lista = []
+    
     return render_template('nova_sessao.html', pacientes=pacientes_lista)
 
 @app.route('/sessoes/<int:id>')
@@ -586,7 +649,7 @@ def editar_sessao(id):
             data_sessao_str = request.form.get('data_sessao')
             hora_sessao = request.form.get('hora_sessao')
             duracao = request.form.get('duracao', 50)
-            valor_str = request.form.get('valor', '')
+            valor_str = request.form.get('valor', '').strip()
             observacoes = request.form.get('observacoes', '').strip()
             
             # Validações básicas
@@ -616,7 +679,7 @@ def editar_sessao(id):
             
             # Converter valor
             valor = None
-            if valor_str:
+            if valor_str and valor_str.strip():
                 try:
                     valor = Decimal(valor_str.replace(',', '.'))
                 except:
