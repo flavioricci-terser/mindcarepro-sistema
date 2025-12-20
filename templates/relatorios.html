@@ -1,0 +1,544 @@
+{% extends "dashboard.html" %}
+
+{% block title %}Relatórios - MindCarePro{% endblock %}
+
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+.chart-container {
+    position: relative;
+    height: 300px;
+    margin-bottom: 2rem;
+}
+
+.stats-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 15px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+.stats-card h3 {
+    font-size: 2.5rem;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+}
+
+.stats-card p {
+    margin: 0;
+    opacity: 0.9;
+}
+
+.chart-card {
+    background: white;
+    border-radius: 15px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    border: 1px solid #e9ecef;
+}
+
+.chart-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    color: #495057;
+}
+
+.period-selector {
+    background: white;
+    border-radius: 10px;
+    padding: 1rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+
+.btn-period {
+    margin-right: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.top-pacientes-list {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.paciente-item {
+    display: flex;
+    justify-content: between;
+    align-items: center;
+    padding: 0.75rem;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.paciente-item:last-child {
+    border-bottom: none;
+}
+
+.paciente-nome {
+    font-weight: 600;
+    color: #495057;
+}
+
+.paciente-stats {
+    font-size: 0.875rem;
+    color: #6c757d;
+}
+
+.loading-spinner {
+    display: none;
+    text-align: center;
+    padding: 2rem;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- Cabeçalho -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h1 class="h3 mb-0">📊 Relatórios e Análises</h1>
+                    <p class="text-muted">Análise completa do seu consultório</p>
+                </div>
+                <div>
+                    <a href="{{ url_for('relatorio_financeiro') }}" class="btn btn-primary">
+                        <i class="fas fa-file-invoice-dollar"></i> Relatório Financeiro
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Seletor de Período -->
+    <div class="row">
+        <div class="col-12">
+            <div class="period-selector">
+                <h5 class="mb-3">📅 Período de Análise</h5>
+                <div class="btn-group" role="group">
+                    <button type="button" class="btn btn-outline-primary btn-period" data-periodo="1" 
+                            {{ 'active' if periodo == '1' else '' }}>
+                        Este Mês
+                    </button>
+                    <button type="button" class="btn btn-outline-primary btn-period" data-periodo="3"
+                            {{ 'active' if periodo == '3' else '' }}>
+                        3 Meses
+                    </button>
+                    <button type="button" class="btn btn-outline-primary btn-period" data-periodo="6"
+                            {{ 'active' if periodo == '6' else '' }}>
+                        6 Meses
+                    </button>
+                    <button type="button" class="btn btn-outline-primary btn-period" data-periodo="12"
+                            {{ 'active' if periodo == '12' else '' }}>
+                        12 Meses
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cards de Estatísticas -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="stats-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                <h3>{{ "{:,.0f}".format(stats.receita_total) }}</h3>
+                <p>💰 Receita Total</p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                <h3>{{ stats.sessoes_realizadas }}</h3>
+                <p>✅ Sessões Realizadas</p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                <h3>{{ stats.pacientes_ativos }}</h3>
+                <p>👥 Pacientes Ativos</p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stats-card" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);">
+                <h3>{{ "{:.1f}%".format(stats.taxa_comparecimento) }}</h3>
+                <p>📈 Taxa de Comparecimento</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Gráficos -->
+    <div class="row">
+        <!-- Receita Mensal -->
+        <div class="col-lg-8">
+            <div class="chart-card">
+                <h5 class="chart-title">💰 Receita Mensal</h5>
+                <div class="loading-spinner" id="loading-receita">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="sr-only">Carregando...</span>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="receitaChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sessões por Status -->
+        <div class="col-lg-4">
+            <div class="chart-card">
+                <h5 class="chart-title">📊 Sessões por Status</h5>
+                <div class="loading-spinner" id="loading-status">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="sr-only">Carregando...</span>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="statusChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Evolução de Sessões -->
+        <div class="col-lg-8">
+            <div class="chart-card">
+                <h5 class="chart-title">📈 Evolução de Sessões (Últimas Semanas)</h5>
+                <div class="loading-spinner" id="loading-evolucao">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="sr-only">Carregando...</span>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="evolucaoChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Top Pacientes -->
+        <div class="col-lg-4">
+            <div class="chart-card">
+                <h5 class="chart-title">🏆 Top 5 Pacientes</h5>
+                <div class="loading-spinner" id="loading-pacientes">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="sr-only">Carregando...</span>
+                    </div>
+                </div>
+                <div class="top-pacientes-list" id="topPacientesList">
+                    <!-- Será preenchido via JavaScript -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pacientes Ativos vs Inativos -->
+    <div class="row">
+        <div class="col-lg-6">
+            <div class="chart-card">
+                <h5 class="chart-title">👥 Pacientes Ativos vs Inativos</h5>
+                <div class="loading-spinner" id="loading-pacientes-status">
+                    <div class="spinner-border text-primary" role="status">
+                        <span class="sr-only">Carregando...</span>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="pacientesChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Métricas Adicionais -->
+        <div class="col-lg-6">
+            <div class="chart-card">
+                <h5 class="chart-title">📋 Métricas Detalhadas</h5>
+                <div class="row">
+                    <div class="col-6">
+                        <div class="text-center p-3">
+                            <h4 class="text-primary">R\$ {{ "{:,.2f}".format(stats.valor_medio_sessao) }}</h4>
+                            <small class="text-muted">Valor Médio por Sessão</small>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="text-center p-3">
+                            <h4 class="text-success">R\$ {{ "{:,.2f}".format(stats.receita_pendente) }}</h4>
+                            <small class="text-muted">Receita Pendente</small>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="text-center p-3">
+                            <h4 class="text-info">{{ stats.sessoes_agendadas }}</h4>
+                            <small class="text-muted">Sessões Agendadas</small>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="text-center p-3">
+                            <h4 class="text-warning">{{ stats.sessoes_canceladas }}</h4>
+                            <small class="text-muted">Sessões Canceladas</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+let receitaChart, statusChart, evolucaoChart, pacientesChart;
+let currentPeriodo = '{{ periodo }}';
+
+// Configuração global dos gráficos
+Chart.defaults.font.family = "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif";
+Chart.defaults.color = '#495057';
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Carregar todos os gráficos
+    carregarGraficos();
+    
+    // Event listeners para os botões de período
+    document.querySelectorAll('.btn-period').forEach(btn => {
+        btn.addEventListener('click', function() {
+            // Remover classe active de todos os botões
+            document.querySelectorAll('.btn-period').forEach(b => b.classList.remove('active'));
+            
+            // Adicionar classe active ao botão clicado
+            this.classList.add('active');
+            
+            // Atualizar período atual
+            currentPeriodo = this.dataset.periodo;
+            
+            // Recarregar gráficos
+            carregarGraficos();
+        });
+    });
+});
+
+function carregarGraficos() {
+    carregarReceitaMensal();
+    carregarSessoesStatus();
+    carregarEvolucaoSessoes();
+    carregarPacientesAtivos();
+    carregarTopPacientes();
+}
+
+function carregarReceitaMensal() {
+    mostrarLoading('loading-receita');
+    
+    fetch(`/api/relatorios/receita-mensal?periodo=${currentPeriodo}`)
+        .then(response => response.json())
+        .then(data => {
+            esconderLoading('loading-receita');
+            
+            if (receitaChart) {
+                receitaChart.destroy();
+            }
+            
+            const ctx = document.getElementById('receitaChart').getContext('2d');
+            receitaChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.labels,
+                    datasets: [{
+                        label: 'Receita (R\$)',
+                        data: data.data,
+                        backgroundColor: 'rgba(54, 162, 235, 0.8)',
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        borderWidth: 1,
+                        borderRadius: 5
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return 'R\$ ' + value.toLocaleString('pt-BR');
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        })
+        .catch(error => {
+            console.error('Erro ao carregar receita mensal:', error);
+            esconderLoading('loading-receita');
+        });
+}
+
+function carregarSessoesStatus() {
+    mostrarLoading('loading-status');
+    
+    fetch(`/api/relatorios/sessoes-status?periodo=${currentPeriodo}`)
+        .then(response => response.json())
+        .then(data => {
+            esconderLoading('loading-status');
+            
+            if (statusChart) {
+                statusChart.destroy();
+            }
+            
+            const ctx = document.getElementById('statusChart').getContext('2d');
+            statusChart = new Chart(ctx, {
+                type: 'pie',
+                data: {
+                    labels: data.labels,
+                    datasets: [{
+                        data: data.data,
+                        backgroundColor: data.backgroundColor,
+                        borderWidth: 2,
+                        borderColor: '#fff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        })
+        .catch(error => {
+            console.error('Erro ao carregar sessões por status:', error);
+            esconderLoading('loading-status');
+        });
+}
+
+function carregarEvolucaoSessoes() {
+    mostrarLoading('loading-evolucao');
+    
+    fetch(`/api/relatorios/evolucao-sessoes?periodo=${currentPeriodo}`)
+        .then(response => response.json())
+        .then(data => {
+            esconderLoading('loading-evolucao');
+            
+            if (evolucaoChart) {
+                evolucaoChart.destroy();
+            }
+            
+            const ctx = document.getElementById('evolucaoChart').getContext('2d');
+            evolucaoChart = new Chart(ctx, {
+                type: 'line',
+                data: data,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        })
+        .catch(error => {
+            console.error('Erro ao carregar evolução de sessões:', error);
+            esconderLoading('loading-evolucao');
+        });
+}
+
+function carregarPacientesAtivos() {
+    mostrarLoading('loading-pacientes-status');
+    
+    fetch('/api/relatorios/pacientes-ativos')
+        .then(response => response.json())
+        .then(data => {
+            esconderLoading('loading-pacientes-status');
+            
+            if (pacientesChart) {
+                pacientesChart.destroy();
+            }
+            
+            const ctx = document.getElementById('pacientesChart').getContext('2d');
+            pacientesChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: data.labels,
+                    datasets: [{
+                        data: data.data,
+                        backgroundColor: data.backgroundColor,
+                        borderWidth: 3,
+                        borderColor: '#fff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        })
+        .catch(error => {
+            console.error('Erro ao carregar pacientes ativos:', error);
+            esconderLoading('loading-pacientes-status');
+        });
+}
+
+function carregarTopPacientes() {
+    mostrarLoading('loading-pacientes');
+    
+    fetch(`/api/relatorios/top-pacientes?periodo=${currentPeriodo}`)
+        .then(response => response.json())
+        .then(data => {
+            esconderLoading('loading-pacientes');
+            
+            const container = document.getElementById('topPacientesList');
+            container.innerHTML = '';
+            
+            if (data.pacientes && data.pacientes.length > 0) {
+                data.pacientes.forEach((paciente, index) => {
+                    const item = document.createElement('div');
+                    item.className = 'paciente-item';
+                    item.innerHTML = `
+                        <div>
+                            <div class="paciente-nome">${index + 1}. ${paciente.nome}</div>
+                            <div class="paciente-stats">
+                                ${paciente.sessoes} sessões • R\$ ${paciente.receita.toLocaleString('pt-BR', {minimumFractionDigits: 2})}
+                            </div>
+                        </div>
+                    `;
+                    container.appendChild(item);
+                });
+            } else {
+                container.innerHTML = '<p class="text-muted text-center">Nenhum dado encontrado</p>';
+            }
+        })
+        .catch(error => {
+            console.error('Erro ao carregar top pacientes:', error);
+            esconderLoading('loading-pacientes');
+        });
+}
+
+function mostrarLoading(id) {
+    document.getElementById(id).style.display = 'block';
+}
+
+function esconderLoading(id) {
+    document.getElementById(id).style.display = 'none';
+}
+</script>
+{% endblock %}
