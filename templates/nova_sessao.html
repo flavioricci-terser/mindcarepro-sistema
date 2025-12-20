@@ -450,7 +450,7 @@
                                 <i class="fas fa-calendar"></i>
                                 Data da Sessão <span class="required">*</span>
                             </label>
-                            <input type="date" id="data_sessao" name="data_sessao" required min="{{ today }}">
+                            <input type="date" id="data_sessao" name="data_sessao" required>
                             <div class="help-text">A data deve ser futura</div>
                         </div>
 
@@ -483,8 +483,8 @@
                                 <i class="fas fa-dollar-sign"></i>
                                 Valor da Sessão
                             </label>
-                            <input type="number" id="valor" name="valor" step="0.01" min="0" placeholder="0,00">
-                            <div class="help-text">Opcional - pode ser definido depois</div>
+                            <input type="text" id="valor" name="valor" placeholder="Ex: 150,00 ou 150.50">
+                            <div class="help-text">Opcional - use vírgula ou ponto para decimais</div>
                         </div>
 
                         <!-- Observações -->
@@ -536,7 +536,7 @@
             }
         });
 
-        // Validação de conflito de horário (básica)
+        // Validação básica do formulário
         document.querySelector('form').addEventListener('submit', function(e) {
             const paciente = document.getElementById('paciente_id').value;
             const data = document.getElementById('data_sessao').value;
@@ -565,14 +565,58 @@
             }
         });
 
-        // Formatação do valor monetário
+        // Formatação melhorada do valor monetário
         document.getElementById('valor').addEventListener('input', function(e) {
             let value = e.target.value;
-            // Remove caracteres não numéricos exceto ponto e vírgula
+            
+            // Remove caracteres que não são números, vírgula ou ponto
             value = value.replace(/[^0-9.,]/g, '');
-            // Substitui vírgula por ponto
-            value = value.replace(',', '.');
+            
+            // Se tem vírgula E ponto, remove o ponto
+            if (value.includes(',') && value.includes('.')) {
+                value = value.replace(/\./g, '');
+            }
+            
+            // Limita a 2 casas decimais após vírgula ou ponto
+            if (value.includes(',')) {
+                const parts = value.split(',');
+                if (parts[1] && parts[1].length > 2) {
+                    parts[1] = parts[1].substring(0, 2);
+                    value = parts.join(',');
+                }
+            } else if (value.includes('.')) {
+                const parts = value.split('.');
+                if (parts[1] && parts[1].length > 2) {
+                    parts[1] = parts[1].substring(0, 2);
+                    value = parts.join('.');
+                }
+            }
+            
             e.target.value = value;
+        });
+
+        // Formatação ao sair do campo (blur)
+        document.getElementById('valor').addEventListener('blur', function(e) {
+            let value = e.target.value.trim();
+            
+            if (value === '') return;
+            
+            // Converte vírgula para ponto para validação
+            let numValue = value.replace(',', '.');
+            
+            // Verifica se é um número válido
+            if (!isNaN(numValue) && numValue !== '') {
+                // Formata para 2 casas decimais se necessário
+                const num = parseFloat(numValue);
+                if (num > 0) {
+                    // Mantém o formato original (vírgula ou ponto) que o usuário digitou
+                    if (value.includes(',')) {
+                        e.target.value = num.toFixed(2).replace('.', ',');
+                    } else {
+                        e.target.value = num.toFixed(2);
+                    }
+                }
+            }
         });
     </script>
 </body>
