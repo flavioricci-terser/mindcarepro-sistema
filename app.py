@@ -108,6 +108,51 @@ def processar_login():
         flash('Email ou senha inválidos', 'error')
         return False
 
+# Função auxiliar para estatísticas
+def obter_estatisticas_gerais(data_inicio, data_fim):
+    """Função auxiliar para obter estatísticas gerais"""
+    try:
+        stats = {}
+        
+        # Total de pacientes
+        stats['total_pacientes'] = Paciente.query.filter_by(psicologo_id=current_user.id).count()
+        stats['pacientes_ativos'] = Paciente.query.filter_by(psicologo_id=current_user.id, ativo=True).count()
+        
+        # Sessões no período
+        sessoes_periodo = Sessao.query.filter(
+            Sessao.psicologo_id == current_user.id,
+            func.date(Sessao.data_sessao) >= data_inicio,
+            func.date(Sessao.data_sessao) <= data_fim
+        ).all()
+        
+        stats['total_sessoes'] = len(sessoes_periodo)
+        stats['sessoes_realizadas'] = len([s for s in sessoes_periodo if s.status == 'realizada'])
+        stats['sessoes_agendadas'] = len([s for s in sessoes_periodo if s.status == 'agendada'])
+        stats['sessoes_canceladas'] = len([s for s in sessoes_periodo if s.status in ['cancelada', 'faltou']])
+        
+        # Receita
+        stats['receita_total'] = sum(float(s.valor or 0) for s in sessoes_periodo if s.status == 'realizada')
+        stats['receita_pendente'] = sum(float(s.valor or 0) for s in sessoes_periodo if s.status == 'agendada')
+        
+        # Média de valor por sessão
+        sessoes_com_valor = [s for s in sessoes_periodo if s.status == 'realizada' and s.valor]
+        if sessoes_com_valor:
+            stats['valor_medio_sessao'] = stats['receita_total'] / len(sessoes_com_valor)
+        else:
+            stats['valor_medio_sessao'] = 0
+        
+        # Taxa de comparecimento
+        if stats['total_sessoes'] > 0:
+            stats['taxa_comparecimento'] = (stats['sessoes_realizadas'] / stats['total_sessoes']) * 100
+        else:
+            stats['taxa_comparecimento'] = 0
+        
+        return stats
+    
+    except Exception as e:
+        print(f"Erro ao obter estatísticas: {e}")
+        return {}
+
 # Rotas da aplicação
 @app.route('/', methods=['GET', 'POST'])
 def index():
@@ -890,63 +935,4 @@ def api_pacientes_ativos():
 
 @app.route('/api/relatorios/evolucao-sessoes')
 @login_required
-def api_evolucao_sessoes():
-    """API para dados do gráfico de evolução de sessões"""
-    try:
-        periodo = int(request.args.get('periodo', 12))
-        hoje = date.today()
-        
-        # Últimas N semanas
-        semanas = []
-        sessoes_realizadas = []
-        sessoes_agendadas = []
-        
-        for i in range(periodo):
-            inicio_semana = hoje - timedelta(days=hoje.weekday() + i*7)
-            fim_semana = inicio_semana + timedelta(days=6)
-            
-            realizadas = Sessao.query.filter(
-                Sessao.psicologo_id == current_user.id,
-                Sessao.status == 'realizada',
-                func.date(Sessao.data_sessao) >= inicio_semana,
-                func.date(Sessao.data_sessao) <= fim_semana
-            ).count()
-            
-            agendadas = Sessao.query.filter(
-                Sessao.psicologo_id == current_user.id,
-                Sessao.status == 'agendada',
-                func.date(Sessao.data_sessao) >= inicio_semana,
-                func.date(Sessao.data_sessao) <= fim_semana
-            ).count()
-            
-            semanas.insert(0, f"{inicio_semana.strftime('%d/%m')}")
-            sessoes_realizadas.insert(0, realizadas)
-            sessoes_agendadas.insert(0, agendadas)
-        
-        return jsonify({
-            'labels': semanas,
-            'datasets': [
-                {
-                    'label': 'Realizadas',
-                    'data': sessoes_realizadas,
-                    'borderColor': '#28a745',
-                    'backgroundColor': 'rgba(40, 167, 69, 0.1)',
-                    'fill': True
-                },
-                {
-                    'label': 'Agendadas',
-                    'data': sessoes_agendadas,
-                    'borderColor': '#007bff',
-                    'backgroundColor': 'rgba(0, 123, 255, 0.1)',
-                    'fill': True
-                }
-            ]
-        })
-    
-    except Exception as e:
-        print(f"Erro na API evolução sessões: {e}")
-        return jsonify({'error': 'Erro ao buscar dados'}), 500
-
-@app.route('/api/relatorios/top-pacientes')
-@login_required
-def api_
+def api_evolucao_sess
