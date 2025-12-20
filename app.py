@@ -5,6 +5,7 @@ from flask_login import LoginManager, UserMixin, login_user, logout_user, login_
 from datetime import datetime, date, timedelta
 from werkzeug.security import generate_password_hash, check_password_hash
 from decimal import Decimal
+from sqlalchemy import func, extract
 
 app = Flask(__name__)
 
@@ -749,38 +750,203 @@ def reagendar_sessao(id):
 
 # ========== FIM DAS ROTAS DE SESSÕES ==========
 
-# Rota de teste para verificar se templates funcionam
-@app.route('/teste-template')
+# ========== ROTAS DE RELATÓRIOS ==========
+
+@app.route('/relatorios')
 @login_required
-def teste_template():
-    return render_template('dashboard.html', 
-                         total_pacientes=5,
-                         sessoes_hoje=3,
-                         proximas_sessoes=[])
+def relatorios():
+    """Página principal de relatórios com gráficos e estatísticas"""
+    try:
+        # Período padrão: últimos 12 meses
+        periodo = request.args.get('periodo', '12')
+        
+        # Calcular data de início baseada no período
+        hoje = date.today()
+        if periodo == '1':
+            data_inicio = hoje.replace(day=1)
+        elif periodo == '3':
+            data_inicio = hoje - timedelta(days=90)
+        elif periodo == '6':
+            data_inicio = hoje - timedelta(days=180)
+        else:  # 12 meses
+            data_inicio = hoje - timedelta(days=365)
+        
+        # Estatísticas gerais
+        stats = obter_estatisticas_gerais(data_inicio, hoje)
+        
+        return render_template('relatorios.html', 
+                             stats=stats,
+                             periodo=periodo,
+                             data_inicio=data_inicio.strftime('%Y-%m-%d'),
+                             data_fim=hoje.strftime('%Y-%m-%d'))
+    
+    except Exception as e:
+        print(f"Erro na página de relatórios: {e}")
+        flash('Erro ao carregar relatórios', 'error')
+        return redirect(url_for('dashboard'))
 
-# Função para criar tabelas e usuário admin
-def criar_dados_iniciais():
-    with app.app_context():
-        try:
-            db.create_all()
+@app.route('/api/relatorios/receita-mensal')
+@login_required
+def api_receita_mensal():
+    """API para dados do gráfico de receita mensal"""
+    try:
+        periodo = int(request.args.get('periodo', 12))
+        
+        # Calcular últimos N meses
+        hoje = date.today()
+        meses = []
+        receitas = []
+        
+        for i in range(periodo):
+            mes_atual = hoje.replace(day=1) - timedelta(days=i*30)
+            primeiro_dia = mes_atual.replace(day=1)
             
-            # Verificar se já existe um usuário admin
-            admin = Usuario.query.filter_by(email='admin@mindcarepro.com').first()
-            if not admin:
-                admin = Usuario(
-                    nome='Administrador',
-                    email='admin@mindcarepro.com',
-                    tipo='admin'
-                )
-                admin.set_password('123456')
-                db.session.add(admin)
-                db.session.commit()
-                print("Usuário admin criado: admin@mindcarepro.com / 123456")
-        except Exception as e:
-            print(f"Erro ao criar dados iniciais: {e}")
+            # Último dia do mês
+            if mes_atual.month == 12:
+                ultimo_dia = mes_atual.replace(year=mes_atual.year+1, month=1, day=1) - timedelta(days=1)
+            else:
+                ultimo_dia = mes_atual.replace(month=mes_atual.month+1, day=1) - timedelta(days=1)
+            
+            # Buscar receita do mês
+            receita = db.session.query(func.sum(Sessao.valor)).filter(
+                Sessao.psicologo_id == current_user.id,
+                Sessao.status == 'realizada',
+                func.date(Sessao.data_sessao) >= primeiro_dia,
+                func.date(Sessao.data_sessao) <= ultimo_dia
+            ).scalar() or 0
+            
+            meses.insert(0, mes_atual.strftime('%m/%Y'))
+            receitas.insert(0, float(receita))
+        
+        return jsonify({
+            'labels': meses,
+            'data': receitas
+        })
+    
+    except Exception as e:
+        print(f"Erro na API receita mensal: {e}")
+        return jsonify({'error': 'Erro ao buscar dados'}), 500
 
-if __name__ == '__main__':
-    criar_dados_iniciais()
-    app.run(debug=True)
-else:
-    criar_dados_iniciais()
+@app.route('/api/relatorios/sessoes-status')
+@login_required
+def api_sessoes_status():
+    """API para dados do gráfico de sessões por status"""
+    try:
+        periodo = int(request.args.get('periodo', 12))
+        hoje = date.today()
+        data_inicio = hoje - timedelta(days=periodo*30)
+        
+        # Contar sessões por status
+        status_counts = db.session.query(
+            Sessao.status,
+            func.count(Sessao.id)
+        ).filter(
+            Sessao.psicologo_id == current_user.id,
+            func.date(Sessao.data_sessao) >= data_inicio
+        ).group_by(Sessao.status).all()
+        
+        labels = []
+        data = []
+        colors = {
+            'realizada': '#28a745',
+            'agendada': '#007bff',
+            'cancelada': '#dc3545',
+            'faltou': '#ffc107'
+        }
+        background_colors = []
+        
+        for status, count in status_counts:
+            labels.append(status.title())
+            data.append(count)
+            background_colors.append(colors.get(status, '#6c757d'))
+        
+        return jsonify({
+            'labels': labels,
+            'data': data,
+            'backgroundColor': background_colors
+        })
+    
+    except Exception as e:
+        print(f"Erro na API sessões por status: {e}")
+        return jsonify({'error': 'Erro ao buscar dados'}), 500
+
+@app.route('/api/relatorios/pacientes-ativos')
+@login_required
+def api_pacientes_ativos():
+    """API para dados do gráfico de pacientes ativos vs inativos"""
+    try:
+        ativos = Paciente.query.filter_by(psicologo_id=current_user.id, ativo=True).count()
+        inativos = Paciente.query.filter_by(psicologo_id=current_user.id, ativo=False).count()
+        
+        return jsonify({
+            'labels': ['Ativos', 'Inativos'],
+            'data': [ativos, inativos],
+            'backgroundColor': ['#28a745', '#dc3545']
+        })
+    
+    except Exception as e:
+        print(f"Erro na API pacientes ativos: {e}")
+        return jsonify({'error': 'Erro ao buscar dados'}), 500
+
+@app.route('/api/relatorios/evolucao-sessoes')
+@login_required
+def api_evolucao_sessoes():
+    """API para dados do gráfico de evolução de sessões"""
+    try:
+        periodo = int(request.args.get('periodo', 12))
+        hoje = date.today()
+        
+        # Últimas N semanas
+        semanas = []
+        sessoes_realizadas = []
+        sessoes_agendadas = []
+        
+        for i in range(periodo):
+            inicio_semana = hoje - timedelta(days=hoje.weekday() + i*7)
+            fim_semana = inicio_semana + timedelta(days=6)
+            
+            realizadas = Sessao.query.filter(
+                Sessao.psicologo_id == current_user.id,
+                Sessao.status == 'realizada',
+                func.date(Sessao.data_sessao) >= inicio_semana,
+                func.date(Sessao.data_sessao) <= fim_semana
+            ).count()
+            
+            agendadas = Sessao.query.filter(
+                Sessao.psicologo_id == current_user.id,
+                Sessao.status == 'agendada',
+                func.date(Sessao.data_sessao) >= inicio_semana,
+                func.date(Sessao.data_sessao) <= fim_semana
+            ).count()
+            
+            semanas.insert(0, f"{inicio_semana.strftime('%d/%m')}")
+            sessoes_realizadas.insert(0, realizadas)
+            sessoes_agendadas.insert(0, agendadas)
+        
+        return jsonify({
+            'labels': semanas,
+            'datasets': [
+                {
+                    'label': 'Realizadas',
+                    'data': sessoes_realizadas,
+                    'borderColor': '#28a745',
+                    'backgroundColor': 'rgba(40, 167, 69, 0.1)',
+                    'fill': True
+                },
+                {
+                    'label': 'Agendadas',
+                    'data': sessoes_agendadas,
+                    'borderColor': '#007bff',
+                    'backgroundColor': 'rgba(0, 123, 255, 0.1)',
+                    'fill': True
+                }
+            ]
+        })
+    
+    except Exception as e:
+        print(f"Erro na API evolução sessões: {e}")
+        return jsonify({'error': 'Erro ao buscar dados'}), 500
+
+@app.route('/api/relatorios/top-pacientes')
+@login_required
+def api_
