@@ -10,6 +10,7 @@
     border-radius: 15px;
     padding: 2rem;
     margin-bottom: 2rem;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
 }
 
 .metric-card {
@@ -20,6 +21,11 @@
     box-shadow: 0 2px 10px rgba(0,0,0,0.1);
     border: 1px solid #e9ecef;
     margin-bottom: 1rem;
+    transition: transform 0.2s;
+}
+
+.metric-card:hover {
+    transform: translateY(-2px);
 }
 
 .metric-value {
@@ -31,6 +37,7 @@
 .metric-label {
     color: #6c757d;
     font-size: 0.875rem;
+    font-weight: 500;
 }
 
 .filter-card {
@@ -39,6 +46,7 @@
     padding: 1.5rem;
     margin-bottom: 2rem;
     box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    border: 1px solid #e9ecef;
 }
 
 .table-card {
@@ -46,23 +54,214 @@
     border-radius: 10px;
     padding: 1.5rem;
     box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    border: 1px solid #e9ecef;
+    margin-bottom: 2rem;
 }
 
 .status-badge {
-    padding: 0.25rem 0.5rem;
+    padding: 0.35rem 0.65rem;
     border-radius: 0.375rem;
     font-size: 0.75rem;
     font-weight: 600;
+    text-transform: uppercase;
 }
 
-.status-realizada { background-color: #d4edda; color: #155724; }
-.status-agendada { background-color: #d1ecf1; color: #0c5460; }
-.status-cancelada { background-color: #f8d7da; color: #721c24; }
-.status-faltou { background-color: #fff3cd; color: #856404; }
+.status-realizada { 
+    background-color: #d4edda; 
+    color: #155724; 
+    border: 1px solid #c3e6cb;
+}
 
+.status-agendada { 
+    background-color: #d1ecf1; 
+    color: #0c5460; 
+    border: 1px solid #bee5eb;
+}
+
+.status-cancelada { 
+    background-color: #f8d7da; 
+    color: #721c24; 
+    border: 1px solid #f5c6cb;
+}
+
+.status-faltou { 
+    background-color: #fff3cd; 
+    color: #856404; 
+    border: 1px solid #ffeaa7;
+}
+
+.summary-box {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    border-left: 4px solid #667eea;
+}
+
+.export-buttons {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.btn-export {
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    transition: all 0.2s;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: #6c757d;
+}
+
+.empty-state i {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+.table-financial {
+    font-size: 0.9rem;
+}
+
+.table-financial th {
+    background-color: #343a40;
+    color: white;
+    border: none;
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.8rem;
+    letter-spacing: 0.5px;
+}
+
+.table-financial td {
+    vertical-align: middle;
+    border-color: #e9ecef;
+}
+
+.table-financial tbody tr:hover {
+    background-color: rgba(102, 126, 234, 0.05);
+}
+
+.patient-info {
+    line-height: 1.3;
+}
+
+.session-date {
+    font-weight: 600;
+    color: #495057;
+}
+
+.session-time {
+    font-size: 0.8rem;
+    color: #6c757d;
+}
+
+.value-highlight {
+    font-weight: 700;
+    font-size: 1.1rem;
+}
+
+.quick-stats {
+    display: flex;
+    justify-content: space-around;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1rem;
+}
+
+.quick-stat {
+    text-align: center;
+}
+
+.quick-stat-value {
+    font-size: 1.25rem;
+    font-weight: bold;
+    color: #495057;
+}
+
+.quick-stat-label {
+    font-size: 0.75rem;
+    color: #6c757d;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Melhorias para impressão */
 @media print {
-    .no-print { display: none !important; }
-    .financial-header { background: #667eea !important; }
+    .no-print { 
+        display: none !important; 
+    }
+    
+    .financial-header { 
+        background: #667eea !important;
+        -webkit-print-color-adjust: exact;
+        color-adjust: exact;
+    }
+    
+    .table-card,
+    .metric-card {
+        box-shadow: none !important;
+        border: 1px solid #dee2e6 !important;
+    }
+    
+    .table-financial {
+        font-size: 0.8rem;
+    }
+    
+    .metric-value {
+        font-size: 1.5rem;
+    }
+    
+    body {
+        font-size: 12px;
+    }
+    
+    .container-fluid {
+        padding: 0;
+    }
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+    .financial-header {
+        padding: 1.5rem;
+        text-align: center;
+    }
+    
+    .export-buttons {
+        justify-content: center;
+        margin-top: 1rem;
+    }
+    
+    .metric-value {
+        font-size: 1.5rem;
+    }
+    
+    .table-responsive {
+        font-size: 0.85rem;
+    }
+    
+    .quick-stats {
+        flex-direction: column;
+        gap: 1rem;
+    }
+}
+
+/* Animações */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.metric-card,
+.table-card,
+.filter-card {
+    animation: fadeIn 0.3s ease-out;
 }
 </style>
 {% endblock %}
@@ -74,36 +273,49 @@
         <div class="row align-items-center">
             <div class="col-md-8">
                 <h1 class="h3 mb-2">💰 Relatório Financeiro Detalhado</h1>
-                <p class="mb-0">Período: {{ data_inicio }} a {{ data_fim }}</p>
+                <p class="mb-0">
+                    <i class="fas fa-calendar-alt"></i> 
+                    Período: {{ data_inicio }} a {{ data_fim }}
+                </p>
+                <small class="opacity-75">
+                    Gerado em {{ moment().format('DD/MM/YYYY às HH:mm') if moment else 'tempo real' }}
+                </small>
             </div>
             <div class="col-md-4 text-md-end">
-                <button onclick="window.print()" class="btn btn-light no-print">
-                    <i class="fas fa-print"></i> Imprimir
-                </button>
-                <a href="{{ url_for('relatorios') }}" class="btn btn-light no-print">
-                    <i class="fas fa-chart-bar"></i> Voltar aos Gráficos
-                </a>
+                <div class="export-buttons no-print">
+                    <button onclick="window.print()" class="btn btn-light btn-export">
+                        <i class="fas fa-print"></i> Imprimir
+                    </button>
+                    <button onclick="exportarCSV()" class="btn btn-light btn-export">
+                        <i class="fas fa-file-csv"></i> CSV
+                    </button>
+                    <a href="{{ url_for('relatorios') }}" class="btn btn-light btn-export">
+                        <i class="fas fa-chart-bar"></i> Gráficos
+                    </a>
+                </div>
             </div>
         </div>
     </div>
 
     <!-- Filtros -->
     <div class="filter-card no-print">
-        <h5 class="mb-3">🔍 Filtros</h5>
+        <h5 class="mb-3">
+            <i class="fas fa-filter"></i> Filtros de Período
+        </h5>
         <form method="GET" class="row g-3">
             <div class="col-md-4">
                 <label for="data_inicio" class="form-label">Data Início</label>
                 <input type="date" class="form-control" id="data_inicio" name="data_inicio" 
-                       value="{{ data_inicio }}">
+                       value="{{ data_inicio }}" required>
             </div>
             <div class="col-md-4">
                 <label for="data_fim" class="form-label">Data Fim</label>
                 <input type="date" class="form-control" id="data_fim" name="data_fim" 
-                       value="{{ data_fim }}">
+                       value="{{ data_fim }}" required>
             </div>
             <div class="col-md-4">
                 <label class="form-label">&nbsp;</label>
-                <div>
+                <div class="d-flex gap-2">
                     <button type="submit" class="btn btn-primary">
                         <i class="fas fa-search"></i> Filtrar
                     </button>
@@ -113,6 +325,36 @@
                 </div>
             </div>
         </form>
+    </div>
+
+    <!-- Resumo Rápido -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="quick-stats">
+                <div class="quick-stat">
+                    <div class="quick-stat-value">{{ sessoes|length }}</div>
+                    <div class="quick-stat-label">Total Sessões</div>
+                </div>
+                <div class="quick-stat">
+                    <div class="quick-stat-value">{{ total_sessoes }}</div>
+                    <div class="quick-stat-label">Realizadas</div>
+                </div>
+                <div class="quick-stat">
+                    <div class="quick-stat-value">{{ sessoes_canceladas }}</div>
+                    <div class="quick-stat-label">Canceladas</div>
+                </div>
+                <div class="quick-stat">
+                    <div class="quick-stat-value">
+                        {% if total_sessoes > 0 %}
+                            {{ "{:.1f}%".format((total_sessoes / sessoes|length) * 100) }}
+                        {% else %}
+                            0%
+                        {% endif %}
+                    </div>
+                    <div class="quick-stat-label">Taxa Sucesso</div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Métricas Principais -->
@@ -156,23 +398,40 @@
     <div class="row mb-4">
         <div class="col-12">
             <div class="table-card">
-                <h5 class="mb-3">📊 Receita por Mês</h5>
+                <h5 class="mb-3">
+                    <i class="fas fa-chart-line"></i> Receita por Mês
+                </h5>
                 <div class="table-responsive">
-                    <table class="table table-striped">
+                    <table class="table table-striped table-financial">
                         <thead>
                             <tr>
-                                <th>Mês/Ano</th>
-                                <th class="text-end">Receita</th>
+                                <th><i class="fas fa-calendar"></i> Mês/Ano</th>
+                                <th class="text-end"><i class="fas fa-dollar-sign"></i> Receita</th>
+                                <th class="text-end">% do Total</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for mes_ano, receita in receita_mensal.items() %}
                             <tr>
                                 <td>{{ mes_ano }}</td>
-                                <td class="text-end">R$ {{ "{:,.2f}".format(receita) }}</td>
+                                <td class="text-end value-highlight">R$ {{ "{:,.2f}".format(receita) }}</td>
+                                <td class="text-end">
+                                    {% if total_receita > 0 %}
+                                        {{ "{:.1f}%".format((receita / total_receita) * 100) }}
+                                    {% else %}
+                                        0%
+                                    {% endif %}
+                                </td>
                             </tr>
                             {% endfor %}
                         </tbody>
+                        <tfoot class="table-light">
+                            <tr>
+                                <th>Total Geral</th>
+                                <th class="text-end">R$ {{ "{:,.2f}".format(total_receita) }}</th>
+                                <th class="text-end">100%</th>
+                            </tr>
+                        </tfoot>
                     </table>
                 </div>
             </div>
@@ -185,50 +444,66 @@
         <div class="col-12">
             <div class="table-card">
                 <div class="d-flex justify-content-between align-items-center mb-3">
-                    <h5 class="mb-0">📋 Detalhamento de Sessões</h5>
-                    <span class="badge bg-primary">{{ sessoes|length }} sessões</span>
+                    <h5 class="mb-0">
+                        <i class="fas fa-list"></i> Detalhamento de Sessões
+                    </h5>
+                    <span class="badge bg-primary fs-6">{{ sessoes|length }} sessões</span>
                 </div>
                 
                 {% if sessoes %}
                 <div class="table-responsive">
-                    <table class="table table-striped table-hover">
-                        <thead class="table-dark">
+                    <table class="table table-striped table-hover table-financial" id="sessoesTable">
+                        <thead>
                             <tr>
-                                <th>Data/Hora</th>
-                                <th>Paciente</th>
-                                <th>Status</th>
-                                <th class="text-end">Valor</th>
-                                <th>Observações</th>
+                                <th><i class="fas fa-calendar"></i> Data/Hora</th>
+                                <th><i class="fas fa-user"></i> Paciente</th>
+                                <th><i class="fas fa-info-circle"></i> Status</th>
+                                <th class="text-end"><i class="fas fa-dollar-sign"></i> Valor</th>
+                                <th><i class="fas fa-sticky-note"></i> Observações</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for sessao in sessoes %}
                             <tr>
                                 <td>
-                                    <strong>{{ sessao.data_sessao.strftime('%d/%m/%Y') }}</strong><br>
-                                    <small class="text-muted">{{ sessao.data_sessao.strftime('%H:%M') }}</small>
+                                    <div class="session-date">{{ sessao.data_sessao.strftime('%d/%m/%Y') }}</div>
+                                    <div class="session-time">{{ sessao.data_sessao.strftime('%H:%M') }}</div>
                                 </td>
                                 <td>
-                                    <strong>{{ sessao.paciente.nome }}</strong>
-                                    {% if sessao.paciente.telefone %}
-                                    <br><small class="text-muted">{{ sessao.paciente.telefone }}</small>
-                                    {% endif %}
+                                    <div class="patient-info">
+                                        <strong>{{ sessao.paciente.nome }}</strong>
+                                        {% if sessao.paciente.telefone %}
+                                        <br><small class="text-muted">
+                                            <i class="fas fa-phone fa-xs"></i> {{ sessao.paciente.telefone }}
+                                        </small>
+                                        {% endif %}
+                                    </div>
                                 </td>
                                 <td>
                                     <span class="status-badge status-{{ sessao.status }}">
-                                        {{ sessao.status.title() }}
+                                        {% if sessao.status == 'realizada' %}
+                                            <i class="fas fa-check"></i> {{ sessao.status.title() }}
+                                        {% elif sessao.status == 'agendada' %}
+                                            <i class="fas fa-clock"></i> {{ sessao.status.title() }}
+                                        {% elif sessao.status == 'cancelada' %}
+                                            <i class="fas fa-times"></i> {{ sessao.status.title() }}
+                                        {% else %}
+                                            <i class="fas fa-exclamation"></i> {{ sessao.status.title() }}
+                                        {% endif %}
                                     </span>
                                 </td>
                                 <td class="text-end">
                                     {% if sessao.valor %}
-                                        <strong>R$ {{ "{:,.2f}".format(sessao.valor) }}</strong>
+                                        <span class="value-highlight">R$ {{ "{:,.2f}".format(sessao.valor) }}</span>
                                     {% else %}
                                         <span class="text-muted">-</span>
                                     {% endif %}
                                 </td>
                                 <td>
                                     {% if sessao.observacoes %}
-                                        <small>{{ sessao.observacoes[:50] }}{% if sessao.observacoes|length > 50 %}...{% endif %}</small>
+                                        <small title="{{ sessao.observacoes }}">
+                                            {{ sessao.observacoes[:50] }}{% if sessao.observacoes|length > 50 %}...{% endif %}
+                                        </small>
                                     {% else %}
                                         <span class="text-muted">-</span>
                                     {% endif %}
@@ -238,9 +513,13 @@
                         </tbody>
                         <tfoot class="table-light">
                             <tr>
-                                <th colspan="3">Total Geral</th>
+                                <th colspan="3">
+                                    <i class="fas fa-calculator"></i> Total Geral
+                                </th>
                                 <th class="text-end">
-                                    R$ {{ "{:,.2f}".format(total_receita + receita_pendente) }}
+                                    <span class="value-highlight text-success">
+                                        R$ {{ "{:,.2f}".format(total_receita + receita_pendente) }}
+                                    </span>
                                 </th>
                                 <th></th>
                             </tr>
@@ -248,10 +527,13 @@
                     </table>
                 </div>
                 {% else %}
-                <div class="text-center py-5">
-                    <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
-                    <h5 class="text-muted">Nenhuma sessão encontrada</h5>
-                    <p class="text-muted">Não há sessões no período selecionado.</p>
+                <div class="empty-state">
+                    <i class="fas fa-inbox"></i>
+                    <h5>Nenhuma sessão encontrada</h5>
+                    <p>Não há sessões no período selecionado.</p>
+                    <a href="{{ url_for('nova_sessao') }}" class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Agendar Nova Sessão
+                    </a>
                 </div>
                 {% endif %}
             </div>
@@ -261,11 +543,20 @@
     <!-- Resumo para Impressão -->
     <div class="row mt-4 d-print-block d-none">
         <div class="col-12">
-            <div style="border-top: 2px solid #dee2e6; padding-top: 1rem;">
-                <p><strong>Relatório gerado em:</strong> {{ moment().format('DD/MM/YYYY HH:mm') }}</p>
-                <p><strong>Total de sessões:</strong> {{ sessoes|length }}</p>
-                <p><strong>Receita total realizada:</strong> R$ {{ "{:,.2f}".format(total_receita) }}</p>
-                <p><strong>Receita pendente:</strong> R$ {{ "{:,.2f}".format(receita_pendente) }}</p>
+            <div class="summary-box">
+                <h6><strong>Resumo do Relatório</strong></h6>
+                <div class="row">
+                    <div class="col-6">
+                        <p><strong>Período:</strong> {{ data_inicio }} a {{ data_fim }}</p>
+                        <p><strong>Total de sessões:</strong> {{ sessoes|length }}</p>
+                        <p><strong>Sessões realizadas:</strong> {{ total_sessoes }}</p>
+                    </div>
+                    <div class="col-6">
+                        <p><strong>Receita realizada:</strong> R$ {{ "{:,.2f}".format(total_receita) }}</p>
+                        <p><strong>Receita pendente:</strong> R$ {{ "{:,.2f}".format(receita_pendente) }}</p>
+                        <p><strong>Gerado em:</strong> {{ moment().format('DD/MM/YYYY HH:mm') if moment else 'tempo real' }}</p>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -290,12 +581,83 @@ document.addEventListener('DOMContentLoaded', function() {
         const hoje = new Date();
         dataFim.value = hoje.toISOString().split('T')[0];
     }
+
+    // Validação de datas
+    dataInicio.addEventListener('change', validarDatas);
+    dataFim.addEventListener('change', validarDatas);
 });
 
-// Função para exportar dados (futura implementação)
-function exportarDados(formato) {
-    // Implementar exportação para Excel/PDF
-    console.log('Exportando para:', formato);
+function validarDatas() {
+    const dataInicio = document.getElementById('data_inicio');
+    const dataFim = document.getElementById('data_fim');
+    
+    if (dataInicio.value && dataFim.value) {
+        if (new Date(dataInicio.value) > new Date(dataFim.value)) {
+            alert('A data de início não pode ser maior que a data de fim.');
+            dataInicio.focus();
+        }
+    }
 }
+
+// Função para exportar para CSV
+function exportarCSV() {
+    const table = document.getElementById('sessoesTable');
+    if (!table) {
+        alert('Nenhuma tabela encontrada para exportar.');
+        return;
+    }
+
+    let csv = [];
+    const rows = table.querySelectorAll('tr');
+    
+    for (let i = 0; i < rows.length; i++) {
+        const row = [];
+        const cols = rows[i].querySelectorAll('td, th');
+        
+        for (let j = 0; j < cols.length; j++) {
+            // Limpar o texto e escapar aspas
+            let cellText = cols[j].innerText.replace(/"/g, '""');
+            row.push('"' + cellText + '"');
+        }
+        csv.push(row.join(','));
+    }
+
+    // Criar e baixar o arquivo
+    const csvContent = csv.join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    
+    if (link.download !== undefined) {
+        const url = URL.createObjectURL(blob);
+        link.setAttribute('href', url);
+        link.setAttribute('download', `relatorio_financeiro_${new Date().toISOString().split('T')[0]}.csv`);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    } else {
+        alert('Seu navegador não suporta download de arquivos.');
+    }
+}
+
+// Função para imprimir com configurações otimizadas
+function imprimirRelatorio() {
+    window.print();
+}
+
+// Atalhos de teclado
+document.addEventListener('keydown', function(e) {
+    // Ctrl+P para imprimir
+    if (e.ctrlKey && e.key === 'p') {
+        e.preventDefault();
+        imprimirRelatorio();
+    }
+    
+    // Ctrl+E para exportar CSV
+    if (e.ctrlKey && e.key === 'e') {
+        e.preventDefault();
+        exportarCSV();
+    }
+});
 </script>
 {% endblock %}
