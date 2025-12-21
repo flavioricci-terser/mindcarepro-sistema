@@ -3,32 +3,35 @@
 {% block title %}Relatórios - MindCarePro{% endblock %}
 
 {% block extra_head %}
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<!-- Chart.js já está incluído no dashboard.html, não precisa duplicar -->
 <style>
+/* Estilos específicos para a página de relatórios */
 .chart-container {
     position: relative;
     height: 300px;
     margin-bottom: 2rem;
 }
 
-.stats-card {
+.stats-card-reports {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     color: white;
     border-radius: 15px;
     padding: 1.5rem;
     margin-bottom: 1rem;
     box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    text-align: center;
 }
 
-.stats-card h3 {
+.stats-card-reports h3 {
     font-size: 2.5rem;
     font-weight: bold;
     margin-bottom: 0.5rem;
 }
 
-.stats-card p {
+.stats-card-reports p {
     margin: 0;
     opacity: 0.9;
+    font-size: 1rem;
 }
 
 .chart-card {
@@ -58,6 +61,20 @@
 .btn-period {
     margin-right: 0.5rem;
     margin-bottom: 0.5rem;
+    padding: 0.5rem 1rem;
+    border: 1px solid #667eea;
+    background: white;
+    color: #667eea;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.btn-period:hover,
+.btn-period.active {
+    background: #667eea !important;
+    color: white !important;
+    border-color: #667eea !important;
 }
 
 .top-pacientes-list {
@@ -67,10 +84,15 @@
 
 .paciente-item {
     display: flex;
-    justify-content: between;
+    justify-content: space-between;
     align-items: center;
     padding: 0.75rem;
     border-bottom: 1px solid #e9ecef;
+    transition: background-color 0.2s;
+}
+
+.paciente-item:hover {
+    background-color: #f8f9fa;
 }
 
 .paciente-item:last-child {
@@ -91,6 +113,47 @@
     display: none;
     text-align: center;
     padding: 2rem;
+}
+
+.metric-box {
+    text-align: center;
+    padding: 1rem;
+    border-radius: 8px;
+    background: #f8f9fa;
+    margin-bottom: 1rem;
+}
+
+.metric-value {
+    font-size: 1.5rem;
+    font-weight: bold;
+    margin-bottom: 0.25rem;
+}
+
+.metric-label {
+    font-size: 0.875rem;
+    color: #6c757d;
+}
+
+/* Cores específicas para métricas */
+.metric-primary .metric-value { color: #007bff; }
+.metric-success .metric-value { color: #28a745; }
+.metric-info .metric-value { color: #17a2b8; }
+.metric-warning .metric-value { color: #ffc107; }
+
+/* Responsividade */
+@media (max-width: 768px) {
+    .stats-card-reports h3 {
+        font-size: 2rem;
+    }
+    
+    .chart-container {
+        height: 250px;
+    }
+    
+    .btn-period {
+        width: 100%;
+        margin-bottom: 0.5rem;
+    }
 }
 </style>
 {% endblock %}
@@ -121,19 +184,19 @@
                 <h5 class="mb-3">📅 Período de Análise</h5>
                 <div class="btn-group" role="group">
                     <button type="button" class="btn btn-outline-primary btn-period" data-periodo="1" 
-                            {{ 'active' if periodo == '1' else '' }}>
+                            {% if periodo == '1' %}active{% endif %}>
                         Este Mês
                     </button>
                     <button type="button" class="btn btn-outline-primary btn-period" data-periodo="3"
-                            {{ 'active' if periodo == '3' else '' }}>
+                            {% if periodo == '3' %}active{% endif %}>
                         3 Meses
                     </button>
                     <button type="button" class="btn btn-outline-primary btn-period" data-periodo="6"
-                            {{ 'active' if periodo == '6' else '' }}>
+                            {% if periodo == '6' %}active{% endif %}>
                         6 Meses
                     </button>
                     <button type="button" class="btn btn-outline-primary btn-period" data-periodo="12"
-                            {{ 'active' if periodo == '12' else '' }}>
+                            {% if periodo == '12' %}active{% endif %}>
                         12 Meses
                     </button>
                 </div>
@@ -144,26 +207,26 @@
     <!-- Cards de Estatísticas -->
     <div class="row mb-4">
         <div class="col-md-3">
-            <div class="stats-card" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
-                <h3>{{ "{:,.0f}".format(stats.receita_total) }}</h3>
+            <div class="stats-card-reports" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                <h3>R\$ {{ "{:,.0f}".format(stats.receita_total or 0) }}</h3>
                 <p>💰 Receita Total</p>
             </div>
         </div>
         <div class="col-md-3">
-            <div class="stats-card" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
-                <h3>{{ stats.sessoes_realizadas }}</h3>
+            <div class="stats-card-reports" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);">
+                <h3>{{ stats.sessoes_realizadas or 0 }}</h3>
                 <p>✅ Sessões Realizadas</p>
             </div>
         </div>
         <div class="col-md-3">
-            <div class="stats-card" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
-                <h3>{{ stats.pacientes_ativos }}</h3>
+            <div class="stats-card-reports" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);">
+                <h3>{{ stats.pacientes_ativos or 0 }}</h3>
                 <p>👥 Pacientes Ativos</p>
             </div>
         </div>
         <div class="col-md-3">
-            <div class="stats-card" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);">
-                <h3>{{ "{:.1f}%".format(stats.taxa_comparecimento) }}</h3>
+            <div class="stats-card-reports" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);">
+                <h3>{{ "{:.1f}%".format(stats.taxa_comparecimento or 0) }}</h3>
                 <p>📈 Taxa de Comparecimento</p>
             </div>
         </div>
@@ -256,27 +319,27 @@
                 <h5 class="chart-title">📋 Métricas Detalhadas</h5>
                 <div class="row">
                     <div class="col-6">
-                        <div class="text-center p-3">
-                            <h4 class="text-primary">R\$ {{ "{:,.2f}".format(stats.valor_medio_sessao) }}</h4>
-                            <small class="text-muted">Valor Médio por Sessão</small>
+                        <div class="metric-box metric-primary">
+                            <div class="metric-value">R\$ {{ "{:,.2f}".format(stats.valor_medio_sessao or 0) }}</div>
+                            <div class="metric-label">Valor Médio por Sessão</div>
                         </div>
                     </div>
                     <div class="col-6">
-                        <div class="text-center p-3">
-                            <h4 class="text-success">R\$ {{ "{:,.2f}".format(stats.receita_pendente) }}</h4>
-                            <small class="text-muted">Receita Pendente</small>
+                        <div class="metric-box metric-success">
+                            <div class="metric-value">R\$ {{ "{:,.2f}".format(stats.receita_pendente or 0) }}</div>
+                            <div class="metric-label">Receita Pendente</div>
                         </div>
                     </div>
                     <div class="col-6">
-                        <div class="text-center p-3">
-                            <h4 class="text-info">{{ stats.sessoes_agendadas }}</h4>
-                            <small class="text-muted">Sessões Agendadas</small>
+                        <div class="metric-box metric-info">
+                            <div class="metric-value">{{ stats.sessoes_agendadas or 0 }}</div>
+                            <div class="metric-label">Sessões Agendadas</div>
                         </div>
                     </div>
                     <div class="col-6">
-                        <div class="text-center p-3">
-                            <h4 class="text-warning">{{ stats.sessoes_canceladas }}</h4>
-                            <small class="text-muted">Sessões Canceladas</small>
+                        <div class="metric-box metric-warning">
+                            <div class="metric-value">{{ stats.sessoes_canceladas or 0 }}</div>
+                            <div class="metric-label">Sessões Canceladas</div>
                         </div>
                     </div>
                 </div>
@@ -289,7 +352,7 @@
 {% block extra_scripts %}
 <script>
 let receitaChart, statusChart, evolucaoChart, pacientesChart;
-let currentPeriodo = '{{ periodo }}';
+let currentPeriodo = '{{ periodo or "12" }}';
 
 // Configuração global dos gráficos
 Chart.defaults.font.family = "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif";
@@ -303,10 +366,16 @@ document.addEventListener('DOMContentLoaded', function() {
     document.querySelectorAll('.btn-period').forEach(btn => {
         btn.addEventListener('click', function() {
             // Remover classe active de todos os botões
-            document.querySelectorAll('.btn-period').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.btn-period').forEach(b => {
+                b.classList.remove('active');
+                b.classList.add('btn-outline-primary');
+                b.classList.remove('btn-primary');
+            });
             
             // Adicionar classe active ao botão clicado
             this.classList.add('active');
+            this.classList.remove('btn-outline-primary');
+            this.classList.add('btn-primary');
             
             // Atualizar período atual
             currentPeriodo = this.dataset.periodo;
@@ -345,8 +414,8 @@ function carregarReceitaMensal() {
                     datasets: [{
                         label: 'Receita (R\$)',
                         data: data.data,
-                        backgroundColor: 'rgba(54, 162, 235, 0.8)',
-                        borderColor: 'rgba(54, 162, 235, 1)',
+                        backgroundColor: 'rgba(102, 126, 234, 0.8)',
+                        borderColor: 'rgba(102, 126, 234, 1)',
                         borderWidth: 1,
                         borderRadius: 5
                     }]
@@ -375,6 +444,7 @@ function carregarReceitaMensal() {
         .catch(error => {
             console.error('Erro ao carregar receita mensal:', error);
             esconderLoading('loading-receita');
+            mostrarErro('receitaChart', 'Erro ao carregar dados de receita');
         });
 }
 
@@ -416,6 +486,7 @@ function carregarSessoesStatus() {
         .catch(error => {
             console.error('Erro ao carregar sessões por status:', error);
             esconderLoading('loading-status');
+            mostrarErro('statusChart', 'Erro ao carregar dados de status');
         });
 }
 
@@ -454,6 +525,7 @@ function carregarEvolucaoSessoes() {
         .catch(error => {
             console.error('Erro ao carregar evolução de sessões:', error);
             esconderLoading('loading-evolucao');
+            mostrarErro('evolucaoChart', 'Erro ao carregar dados de evolução');
         });
 }
 
@@ -495,6 +567,7 @@ function carregarPacientesAtivos() {
         .catch(error => {
             console.error('Erro ao carregar pacientes ativos:', error);
             esconderLoading('loading-pacientes-status');
+            mostrarErro('pacientesChart', 'Erro ao carregar dados de pacientes');
         });
 }
 
@@ -530,15 +603,34 @@ function carregarTopPacientes() {
         .catch(error => {
             console.error('Erro ao carregar top pacientes:', error);
             esconderLoading('loading-pacientes');
+            document.getElementById('topPacientesList').innerHTML = '<p class="text-danger text-center">Erro ao carregar dados</p>';
         });
 }
 
 function mostrarLoading(id) {
-    document.getElementById(id).style.display = 'block';
+    const element = document.getElementById(id);
+    if (element) {
+        element.style.display = 'block';
+    }
 }
 
 function esconderLoading(id) {
-    document.getElementById(id).style.display = 'none';
+    const element = document.getElementById(id);
+    if (element) {
+        element.style.display = 'none';
+    }
+}
+
+function mostrarErro(canvasId, mensagem) {
+    const canvas = document.getElementById(canvasId);
+    if (canvas) {
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.font = '16px Arial';
+        ctx.fillStyle = '#dc3545';
+        ctx.textAlign = 'center';
+        ctx.fillText(mensagem, canvas.width / 2, canvas.height / 2);
+    }
 }
 </script>
 {% endblock %}
