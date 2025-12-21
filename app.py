@@ -452,7 +452,6 @@ def ativar_paciente(id):
         return jsonify({'success': False, 'message': 'Erro ao ativar paciente'})
 
 # ========== FIM DAS ROTAS DE PACIENTES ==========
-
 # ========== ROTAS DE SESSÕES ==========
 
 @app.route('/sessoes')
@@ -794,7 +793,6 @@ def reagendar_sessao(id):
         return jsonify({'success': False, 'message': 'Erro ao reagendar sessão'})
 
 # ========== FIM DAS ROTAS DE SESSÕES ==========
-
 # ========== ROTAS DE RELATÓRIOS ==========
 
 @app.route('/relatorios')
@@ -829,6 +827,62 @@ def relatorios():
         print(f"Erro na página de relatórios: {e}")
         flash('Erro ao carregar relatórios', 'error')
         return redirect(url_for('dashboard'))
+
+@app.route('/relatorios/financeiro')
+@login_required
+def relatorio_financeiro():
+    """Relatório financeiro detalhado"""
+    try:
+        # Filtros
+        data_inicio = request.args.get('data_inicio', '')
+        data_fim = request.args.get('data_fim', '')
+        
+        # Datas padrão (último mês)
+        if not data_inicio or not data_fim:
+            hoje = date.today()
+            data_fim = hoje.strftime('%Y-%m-%d')
+            data_inicio = hoje.replace(day=1).strftime('%Y-%m-%d')
+        
+        # Converter strings para dates
+        data_inicio_obj = datetime.strptime(data_inicio, '%Y-%m-%d').date()
+        data_fim_obj = datetime.strptime(data_fim, '%Y-%m-%d').date()
+        
+        # Buscar sessões do período
+        sessoes = Sessao.query.filter(
+            Sessao.psicologo_id == current_user.id,
+            func.date(Sessao.data_sessao) >= data_inicio_obj,
+            func.date(Sessao.data_sessao) <= data_fim_obj
+        ).order_by(Sessao.data_sessao.desc()).all()
+        
+        # Calcular totais
+        total_receita = sum(float(s.valor or 0) for s in sessoes if s.status == 'realizada')
+        total_sessoes = len([s for s in sessoes if s.status == 'realizada'])
+        receita_pendente = sum(float(s.valor or 0) for s in sessoes if s.status == 'agendada')
+        sessoes_canceladas = len([s for s in sessoes if s.status in ['cancelada', 'faltou']])
+        
+        # Receita por mês
+        receita_mensal = {}
+        for sessao in sessoes:
+            if sessao.status == 'realizada' and sessao.valor:
+                mes_ano = sessao.data_sessao.strftime('%m/%Y')
+                if mes_ano not in receita_mensal:
+                    receita_mensal[mes_ano] = 0
+                receita_mensal[mes_ano] += float(sessao.valor)
+        
+        return render_template('relatorio_financeiro.html',
+                             sessoes=sessoes,
+                             total_receita=total_receita,
+                             total_sessoes=total_sessoes,
+                             receita_pendente=receita_pendente,
+                             sessoes_canceladas=sessoes_canceladas,
+                             receita_mensal=receita_mensal,
+                             data_inicio=data_inicio,
+                             data_fim=data_fim)
+    
+    except Exception as e:
+        print(f"Erro no relatório financeiro: {e}")
+        flash('Erro ao gerar relatório financeiro', 'error')
+        return redirect(url_for('relatorios'))
 
 @app.route('/api/relatorios/receita-mensal')
 @login_required
@@ -991,3 +1045,52 @@ def api_evolucao_sessoes():
     except Exception as e:
         print(f"Erro na API evolução sessões: {e}")
         return jsonify({'error': 'Erro ao buscar dados'}), 500
+
+@app.route('/api/relatorios/top-pacientes')
+@login_required
+def api_top_pacientes():
+    """API para dados do ranking de pacientes"""
+    try:
+        periodo = int(request.args.get('periodo', 12))
+        hoje = date.today()
+        data_inicio = hoje - timedelta(days=periodo*30)
+        
+        # Top 5 pacientes com mais sessões
+        top_pacientes = db.session.query(
+            Paciente.nome,
+            func.count(Sessao.id).label('total_sessoes'),
+            func.sum(Sessao.valor).label('total_receita')
+        ).join(Sessao).filter(
+            Sessao.psicologo_id == current_user.id,
+            func.date(Sessao.data_sessao) >= data_inicio,
+            Sessao.status == 'realizada'
+        ).group_by(Paciente.id, Paciente.nome).order_by(
+            func.count(Sessao.id).desc()
+        ).limit(5).all()
+        
+        pacientes = []
+        for nome, total_sessoes, total_receita in top_pacientes:
+            pacientes.append({
+                'nome': nome,
+                'sessoes': total_sessoes,
+                'receita': float(total_receita or 0)
+            })
+        
+        return jsonify({'pacientes': pacientes})
+    
+    except Exception as e:
+        print(f"Erro na API top pacientes: {e}")
+        return jsonify({'error': 'Erro ao buscar dados'}), 500
+
+# ========== FIM DAS ROTAS DE RELATÓRIOS ==========
+
+# Criar tabelas se não existirem
+with app.app_context():
+    try:
+        db.create_all()
+        print("Tabelas criadas/verificadas com sucesso!")
+    except Exception as e:
+        print(f"Erro ao criar tabelas: {e}")
+
+if __name__ == '__main__':
+    app.run(debug=True)
