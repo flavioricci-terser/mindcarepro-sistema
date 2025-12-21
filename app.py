@@ -1082,6 +1082,307 @@ def api_top_pacientes():
         print(f"Erro na API top pacientes: {e}")
         return jsonify({'error': 'Erro ao buscar dados'}), 500
 
+# ========== ROTAS DE EVOLUÇÕES ==========
+
+@app.route('/evolucoes')
+@login_required
+def evolucoes():
+    """Página de evoluções dos pacientes"""
+    try:
+        # Filtros
+        paciente_filter = request.args.get('paciente', '')
+        data_inicio = request.args.get('data_inicio', '')
+        data_fim = request.args.get('data_fim', '')
+        
+        # Query base
+        query = Evolucao.query.join(Paciente).filter(Paciente.psicologo_id == current_user.id)
+        
+        # Aplicar filtros
+        if paciente_filter:
+            query = query.filter(Evolucao.paciente_id == paciente_filter)
+        
+        if data_inicio:
+            try:
+                data_inicio_obj = datetime.strptime(data_inicio, '%Y-%m-%d').date()
+                query = query.filter(func.date(Evolucao.data_evolucao) >= data_inicio_obj)
+            except:
+                pass
+        
+        if data_fim:
+            try:
+                data_fim_obj = datetime.strptime(data_fim, '%Y-%m-%d').date()
+                query = query.filter(func.date(Evolucao.data_evolucao) <= data_fim_obj)
+            except:
+                pass
+        
+        # Buscar evoluções
+        evolucoes_lista = query.order_by(Evolucao.data_evolucao.desc()).all()
+        
+        # Buscar pacientes para o filtro
+        pacientes_lista = Paciente.query.filter_by(psicologo_id=current_user.id, ativo=True).order_by(Paciente.nome).all()
+        
+        # Estatísticas
+        total_evolucoes = Evolucao.query.join(Paciente).filter(Paciente.psicologo_id == current_user.id).count()
+        
+        # Evoluções este mês
+        primeiro_dia_mes = date.today().replace(day=1)
+        evolucoes_mes = Evolucao.query.join(Paciente).filter(
+            Paciente.psicologo_id == current_user.id,
+            func.date(Evolucao.data_evolucao) >= primeiro_dia_mes
+        ).count()
+        
+        return render_template('evolucoes.html',
+                             evolucoes=evolucoes_lista,
+                             pacientes=pacientes_lista,
+                             total_evolucoes=total_evolucoes,
+                             evolucoes_mes=evolucoes_mes,
+                             today=date.today())
+    
+    except Exception as e:
+        print(f"Erro na página de evoluções: {e}")
+        flash('Erro ao carregar evoluções', 'error')
+        return redirect(url_for('dashboard'))
+
+@app.route('/evolucoes/nova', methods=['GET', 'POST'])
+@login_required
+def nova_evolucao():
+    """Criar nova evolução"""
+    if request.method == 'POST':
+        try:
+            # Capturar dados do formulário
+            paciente_id = request.form.get('paciente_id')
+            titulo = request.form.get('titulo', '').strip()
+            descricao = request.form.get('descricao', '').strip()
+            tipo = request.form.get('tipo', 'evolucao')
+            
+            # Validações básicas
+            if not paciente_id or paciente_id == '' or paciente_id == 'None':
+                flash('Paciente é obrigatório', 'error')
+                pacientes_lista = Paciente.query.filter_by(psicologo_id=current_user.id, ativo=True).order_by(Paciente.nome).all()
+                return render_template('nova_evolucao.html', pacientes=pacientes_lista)
+            
+            if not titulo:
+                flash('Título é obrigatório', 'error')
+                pacientes_lista = Paciente.query.filter_by(psicologo_id=current_user.id, ativo=True).order_by(Paciente.nome).all()
+                return render_template('nova_evolucao.html', pacientes=pacientes_lista)
+            
+            if not descricao:
+                flash('Descrição é obrigatória', 'error')
+                pacientes_lista = Paciente.query.filter_by(psicologo_id=current_user.id, ativo=True).order_by(Paciente.nome).all()
+                return render_template('nova_evolucao.html', pacientes=pacientes_lista)
+            
+            # Verificar se paciente existe e pertence ao usuário
+            paciente = Paciente.query.filter_by(id=int(paciente_id), psicologo_id=current_user.id).first()
+            if not paciente:
+                flash('Paciente não encontrado', 'error')
+                pacientes_lista = Paciente.query.filter_by(psicologo_id=current_user.id, ativo=True).order_by(Paciente.nome).all()
+                return render_template('nova_evolucao.html', pacientes=pacientes_lista)
+            
+            # Criar nova evolução
+            nova_evolucao_obj = Evolucao(
+                paciente_id=int(paciente_id),
+                titulo=titulo,
+                descricao=descricao,
+                tipo=tipo
+            )
+            
+            db.session.add(nova_evolucao_obj)
+            db.session.commit()
+            
+            flash(f'Evolução de {paciente.nome} registrada com sucesso!', 'success')
+            return redirect(url_for('evolucoes'))
+            
+        except Exception as e:
+            print(f"Erro ao criar evolução: {e}")
+            flash('Erro ao registrar evolução', 'error')
+            db.session.rollback()
+    
+    # Buscar pacientes ativos para o formulário
+    try:
+        pacientes_lista = Paciente.query.filter_by(psicologo_id=current_user.id, ativo=True).order_by(Paciente.nome).all()
+    except Exception as e:
+        print(f"ERRO ao buscar pacientes: {e}")
+        pacientes_lista = []
+    
+    return render_template('nova_evolucao.html', pacientes=pacientes_lista)
+
+@app.route('/evolucoes/<int:id>')
+@login_required
+def ver_evolucao(id):
+    """Ver detalhes de uma evolução"""
+    try:
+        evolucao = Evolucao.query.join(Paciente).filter(
+            Evolucao.id == id,
+            Paciente.psicologo_id == current_user.id
+        ).first_or_404()
+        
+        return render_template('ver_evolucao.html', evolucao=evolucao, today=date.today())
+    except Exception as e:
+        print(f"Erro ao ver evolução: {e}")
+        flash('Evolução não encontrada', 'error')
+        return redirect(url_for('evolucoes'))
+
+@app.route('/evolucoes/<int:id>/editar', methods=['GET', 'POST'])
+@login_required
+def editar_evolucao(id):
+    """Editar uma evolução"""
+    try:
+        evolucao = Evolucao.query.join(Paciente).filter(
+            Evolucao.id == id,
+            Paciente.psicologo_id == current_user.id
+        ).first_or_404()
+        
+        if request.method == 'POST':
+            # Capturar dados do formulário
+            titulo = request.form.get('titulo', '').strip()
+            descricao = request.form.get('descricao', '').strip()
+            tipo = request.form.get('tipo', 'evolucao')
+            
+            # Validações básicas
+            if not titulo:
+                flash('Título é obrigatório', 'error')
+                return render_template('editar_evolucao.html', evolucao=evolucao, today=date.today())
+            
+            if not descricao:
+                flash('Descrição é obrigatória', 'error')
+                return render_template('editar_evolucao.html', evolucao=evolucao, today=date.today())
+            
+            # Atualizar evolução
+            evolucao.titulo = titulo
+            evolucao.descricao = descricao
+            evolucao.tipo = tipo
+            
+            db.session.commit()
+            
+            flash('Evolução atualizada com sucesso!', 'success')
+            return redirect(url_for('ver_evolucao', id=id))
+        
+        return render_template('editar_evolucao.html', evolucao=evolucao, today=date.today())
+        
+    except Exception as e:
+        print(f"Erro ao editar evolução: {e}")
+        flash('Evolução não encontrada', 'error')
+        return redirect(url_for('evolucoes'))
+
+@app.route('/evolucoes/<int:id>/excluir', methods=['POST'])
+@login_required
+def excluir_evolucao(id):
+    """Excluir uma evolução"""
+    try:
+        evolucao = Evolucao.query.join(Paciente).filter(
+            Evolucao.id == id,
+            Paciente.psicologo_id == current_user.id
+        ).first_or_404()
+        
+        db.session.delete(evolucao)
+        db.session.commit()
+        
+        return jsonify({'success': True, 'message': 'Evolução excluída com sucesso'})
+    except Exception as e:
+        print(f"Erro ao excluir evolução: {e}")
+        return jsonify({'success': False, 'message': 'Erro ao excluir evolução'})
+
+# ========== FIM DAS ROTAS DE EVOLUÇÕES ==========
+
+# ========== ROTAS DE CONFIGURAÇÕES ==========
+
+@app.route('/configuracoes')
+@login_required
+def configuracoes():
+    """Página de configurações do usuário"""
+    return render_template('configuracoes.html', usuario=current_user, today=date.today())
+
+@app.route('/configuracoes/perfil', methods=['GET', 'POST'])
+@login_required
+def configuracoes_perfil():
+    """Configurações do perfil do usuário"""
+    if request.method == 'POST':
+        try:
+            # Capturar dados do formulário
+            nome = request.form.get('nome', '').strip()
+            email = request.form.get('email', '').strip()
+            
+            # Validações básicas
+            if not nome:
+                flash('Nome é obrigatório', 'error')
+                return render_template('configuracoes_perfil.html', usuario=current_user, today=date.today())
+            
+            if not email:
+                flash('Email é obrigatório', 'error')
+                return render_template('configuracoes_perfil.html', usuario=current_user, today=date.today())
+            
+            # Verificar se email já existe (se diferente do atual)
+            if email != current_user.email:
+                usuario_existente = Usuario.query.filter_by(email=email).first()
+                if usuario_existente:
+                    flash('Este email já está sendo usado por outro usuário', 'error')
+                    return render_template('configuracoes_perfil.html', usuario=current_user, today=date.today())
+            
+            # Atualizar dados do usuário
+            current_user.nome = nome
+            current_user.email = email
+            
+            db.session.commit()
+            
+            flash('Perfil atualizado com sucesso!', 'success')
+            return redirect(url_for('configuracoes'))
+            
+        except Exception as e:
+            print(f"Erro ao atualizar perfil: {e}")
+            flash('Erro ao atualizar perfil', 'error')
+            db.session.rollback()
+    
+    return render_template('configuracoes_perfil.html', usuario=current_user, today=date.today())
+
+@app.route('/configuracoes/senha', methods=['GET', 'POST'])
+@login_required
+def configuracoes_senha():
+    """Alterar senha do usuário"""
+    if request.method == 'POST':
+        try:
+            # Capturar dados do formulário
+            senha_atual = request.form.get('senha_atual', '')
+            nova_senha = request.form.get('nova_senha', '')
+            confirmar_senha = request.form.get('confirmar_senha', '')
+            
+            # Validações básicas
+            if not senha_atual:
+                flash('Senha atual é obrigatória', 'error')
+                return render_template('configuracoes_senha.html', today=date.today())
+            
+            if not nova_senha:
+                flash('Nova senha é obrigatória', 'error')
+                return render_template('configuracoes_senha.html', today=date.today())
+            
+            if len(nova_senha) < 6:
+                flash('Nova senha deve ter pelo menos 6 caracteres', 'error')
+                return render_template('configuracoes_senha.html', today=date.today())
+            
+            if nova_senha != confirmar_senha:
+                flash('Confirmação de senha não confere', 'error')
+                return render_template('configuracoes_senha.html', today=date.today())
+            
+            # Verificar senha atual
+            if not current_user.check_password(senha_atual):
+                flash('Senha atual incorreta', 'error')
+                return render_template('configuracoes_senha.html', today=date.today())
+            
+            # Atualizar senha
+            current_user.set_password(nova_senha)
+            db.session.commit()
+            
+            flash('Senha alterada com sucesso!', 'success')
+            return redirect(url_for('configuracoes'))
+            
+        except Exception as e:
+            print(f"Erro ao alterar senha: {e}")
+            flash('Erro ao alterar senha', 'error')
+            db.session.rollback()
+    
+    return render_template('configuracoes_senha.html', today=date.today())
+
+# ========== FIM DAS ROTAS DE CONFIGURAÇÕES ==========
+
 # ========== FIM DAS ROTAS DE RELATÓRIOS ==========
 
 # Criar tabelas se não existirem
@@ -1094,3 +1395,4 @@ with app.app_context():
 
 if __name__ == '__main__':
     app.run(debug=True)
+
