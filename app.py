@@ -935,4 +935,59 @@ def api_pacientes_ativos():
 
 @app.route('/api/relatorios/evolucao-sessoes')
 @login_required
-def api_evolucao_sess
+def api_evolucao_sessoes():
+    """API para dados do gráfico de evolução de sessões"""
+    try:
+        periodo = int(request.args.get('periodo', 12))
+        hoje = date.today()
+        
+        # Últimas N semanas
+        semanas = []
+        sessoes_realizadas = []
+        sessoes_agendadas = []
+        
+        for i in range(periodo):
+            inicio_semana = hoje - timedelta(days=hoje.weekday() + i*7)
+            fim_semana = inicio_semana + timedelta(days=6)
+            
+            realizadas = Sessao.query.filter(
+                Sessao.psicologo_id == current_user.id,
+                Sessao.status == 'realizada',
+                func.date(Sessao.data_sessao) >= inicio_semana,
+                func.date(Sessao.data_sessao) <= fim_semana
+            ).count()
+            
+            agendadas = Sessao.query.filter(
+                Sessao.psicologo_id == current_user.id,
+                Sessao.status == 'agendada',
+                func.date(Sessao.data_sessao) >= inicio_semana,
+                func.date(Sessao.data_sessao) <= fim_semana
+            ).count()
+            
+            semanas.insert(0, f"{inicio_semana.strftime('%d/%m')}")
+            sessoes_realizadas.insert(0, realizadas)
+            sessoes_agendadas.insert(0, agendadas)
+        
+        return jsonify({
+            'labels': semanas,
+            'datasets': [
+                {
+                    'label': 'Realizadas',
+                    'data': sessoes_realizadas,
+                    'borderColor': '#28a745',
+                    'backgroundColor': 'rgba(40, 167, 69, 0.1)',
+                    'fill': True
+                },
+                {
+                    'label': 'Agendadas',
+                    'data': sessoes_agendadas,
+                    'borderColor': '#007bff',
+                    'backgroundColor': 'rgba(0, 123, 255, 0.1)',
+                    'fill': True
+                }
+            ]
+        })
+    
+    except Exception as e:
+        print(f"Erro na API evolução sessões: {e}")
+        return jsonify({'error': 'Erro ao buscar dados'}), 500
