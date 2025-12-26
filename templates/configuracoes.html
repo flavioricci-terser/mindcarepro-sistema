@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configurações - MindCarePro</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <style>
+        .config-sidebar {
+            position: sticky;
+            top: 20px;
+        }
+        .list-group-item.active {
+            background-color: #0d6efd;
+            border-color: #0d6efd;
+        }
+        .section-card {
+            display: none;
+        }
+        .section-card.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/dashboard">MindCarePro</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="/dashboard">Dashboard</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/pacientes">Pacientes</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/sessoes">Sessões</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/relatorios">Relatórios</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link active" href="/configuracoes">Configurações</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="/logout">Sair</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="row">
+            <!-- Menu Lateral -->
+            <div class="col-md-3">
+                <div class="config-sidebar">
+                    <div class="card">
+                        <div class="card-header">
+                            <h6 class="mb-0"><i class="bi bi-gear"></i> Configurações</h6>
+                        </div>
+                        <div class="list-group list-group-flush">
+                            <a href="#" class="list-group-item list-group-item-action active" data-section="dados-profissionais">
+                                <i class="bi bi-person-badge"></i> Dados Profissionais
+                            </a>
+                            <a href="#" class="list-group-item list-group-item-action" data-section="consultorio">
+                                <i class="bi bi-building"></i> Consultório
+                            </a>
+                            <a href="#" class="list-group-item list-group-item-action" data-section="atendimento">
+                                <i class="bi bi-calendar-check"></i> Atendimento
+                            </a>
+                            <a href="#" class="list-group-item list-group-item-action" data-section="notificacoes">
+                                <i class="bi bi-bell"></i> Notificações
+                            </a>
+                            <a href="#" class="list-group-item list-group-item-action" data-section="seguranca">
+                                <i class="bi bi-shield-lock"></i> Segurança
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Conteúdo -->
+            <div class="col-md-9">
+                <form method="POST" action="/configuracoes/salvar">
+                    
+                    <!-- Dados Profissionais -->
+                    <div class="section-card active" id="dados-profissionais">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0"><i class="bi bi-person-badge"></i> Dados Profissionais</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-8 mb-3">
+                                        <label class="form-label">Nome Completo</label>
+                                        <input type="text" class="form-control" name="nome_completo" 
+                                               value="{{ config.nome_completo if config else '' }}"
+                                               placeholder="Seu nome completo">
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        <label class="form-label">CRP</label>
+                                        <input type="text" class="form-control" name="crp" 
+                                               value="{{ config.crp if config else '' }}" 
+                                               placeholder="00/00000">
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Especialidade</label>
+                                    <input type="text" class="form-control" name="especialidade" 
+                                           value="{{ config.especialidade if config else '' }}" 
+                                           placeholder="Ex: Psicanálise, TCC, Gestalt...">
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Telefone Profissional</label>
+                                        <input type="tel" class="form-control" name="telefone_profissional" 
+                                               value="{{ config.telefone_profissional if config else '' }}"
+                                               placeholder="(00) 00000-0000">
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">E-mail Profissional</label>
+                                        <input type="email" class="form-control" name="email_profissional" 
+                                               value="{{ config.email_profissional if config else '' }}"
+                                               placeholder="seu@email.com">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Consultório -->
+                    <div class="section-card" id="consultorio">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0"><i class="bi bi-building"></i> Endereço do Consultório</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="mb-3">
+                                    <label class="form-label">Endereço Completo</label>
+                                    <input type="text" class="form-control" name="endereco" 
+                                           value="{{ config.endereco if config else '' }}" 
+                                           placeholder="Rua, número, complemento">
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-5 mb-3">
+                                        <label class="form-label">Cidade</label>
+                                        <input type="text" class="form-control" name="cidade" 
+                                               value="{{ config.cidade if config else '' }}"
+                                               placeholder="Sua cidade">
+                                    </div>
+                                    <div class="col-md-3 mb-3">
+                                        <label class="form-label">Estado</label>
+                                        <select class="form-select" name="estado">
+                                            <option value="">Selecione</option>
+                                            <option value="AC" {% if config and config.estado == 'AC' %}selected{% endif %}>AC</option>
+                                            <option value="AL" {% if config and config.estado == 'AL' %}selected{% endif %}>AL</option>
+                                            <option value="AP" {% if config and config.estado == 'AP' %}selected{% endif %}>AP</option>
+                                            <option value="AM" {% if config and config.estado == 'AM' %}selected{% endif %}>AM</option>
+                                            <option value="BA" {% if config and config.estado == 'BA' %}selected{% endif %}>BA</option>
+                                            <option value="CE" {% if config and config.estado == 'CE' %}selected{% endif %}>CE</option>
+                                            <option value="DF" {% if config and config.estado == 'DF' %}selected{% endif %}>DF</option>
+                                            <option value="ES" {% if config and config.estado == 'ES' %}selected{% endif %}>ES</option>
+                                            <option value="GO" {% if config and config.estado == 'GO' %}selected{% endif %}>GO</option>
+                                            <option value="MA" {% if config and config.estado == 'MA' %}selected{% endif %}>MA</option>
+                                            <option value="MT" {% if config and config.estado == 'MT' %}selected{% endif %}>MT</option>
+                                            <option value="MS" {% if config and config.estado == 'MS' %}selected{% endif %}>MS</option>
+                                            <option value="MG" {% if config and config.estado == 'MG' %}selected{% endif %}>MG</option>
+                                            <option value="PA" {% if config and config.estado == 'PA' %}selected{% endif %}>PA</option>
+                                            <option value="PB" {% if config and config.estado == 'PB' %}selected{% endif %}>PB</option>
+                                            <option value="PR" {% if config and config.estado == 'PR' %}selected{% endif %}>PR</option>
+                                            <option value="PE" {% if config and config.estado == 'PE' %}selected{% endif %}>PE</option>
+                                            <option value="PI" {% if config and config.estado == 'PI' %}selected{% endif %}>PI</option>
+                                            <option value="RJ" {% if config and config.estado == 'RJ' %}selected{% endif %}>RJ</option>
+                                            <option value="RN" {% if config and config.estado == 'RN' %}selected{% endif %}>RN</option>
+                                            <option value="RS" {% if config and config.estado == 'RS' %}selected{% endif %}>RS</option>
+                                            <option value="RO" {% if config and config.estado == 'RO' %}selected{% endif %}>RO</option>
+                                            <option value="RR" {% if config and config.estado == 'RR' %}selected{% endif %}>RR</option>
+                                            <option value="SC" {% if config and config.estado == 'SC' %}selected{% endif %}>SC</option>
+                                            <option value="SP" {% if config and config.estado == 'SP' %}selected{% endif %}>SP</option>
+                                            <option value="SE" {% if config and config.estado == 'SE' %}selected{% endif %}>SE</option>
+                                            <option value="TO" {% if config and config.estado == 'TO' %}selected{% endif %}>TO</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        <label class="form-label">CEP</label>
+                                        <input type="text" class="form-control" name="cep" 
+                                               value="{{ config.cep if config else '' }}" 
+                                               placeholder="00000-000">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Atendimento -->
+                    <div class="section-card" id="atendimento">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0"><i class="bi bi-calendar-check"></i> Configurações de Atendimento</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Duração da Sessão (minutos)</label>
+                                        <input type="number" class="form-control" name="duracao_sessao" 
+                                               value="{{ config.duracao_sessao if config else 50 }}"
+                                               min="30" max="120">
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Valor da Sessão (R$)</label>
+                                        <input type="number" step="0.01" class="form-control" name="valor_sessao" 
+                                               value="{{ config.valor_sessao if config else '' }}"
+                                               placeholder="0,00">
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Horário de Início</label>
+                                        <input type="time" class="form-control" name="horario_inicio" 
+                                               value="{{ config.horario_inicio.strftime('%H:%M') if config and config.horario_inicio else '' }}">
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">Horário de Término</label>
+                                        <input type="time" class="form-control" name="horario_fim" 
+                                               value="{{ config.horario_fim.strftime('%H:%M') if config and config.horario_fim else '' }}">
+                                    </div>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Dias de Atendimento</label>
+                                    <div class="btn-group w-100" role="group">
+                                        {% set dias = config.dias_atendimento.split(',') if config and config.dias_atendimento else [] %}
+                                        
+                                        <input type="checkbox" class="btn-check" name="dias_atendimento" value="seg" id="seg" {% if 'seg' in dias %}checked{% endif %}>
+                                        <label class="btn btn-outline-primary" for="seg">Seg</label>
+                                        
+                                        <input type="checkbox" class="btn-check" name="dias_atendimento" value="ter" id="ter" {% if 'ter' in dias %}checked{% endif %}>
+                                        <label class="btn btn-outline-primary" for="ter">Ter</label>
+                                        
+                                        <input type="checkbox" class="btn-check" name="dias_atendimento" value="qua" id="qua" {% if 'qua' in dias %}checked{% endif %}>
+                                        <label class="btn btn-outline-primary" for="qua">Qua</label>
+                                        
+                                        <input type="checkbox" class="btn-check" name="dias_atendimento" value="qui" id="qui" {% if 'qui' in dias %}checked{% endif %}>
+                                        <label class="btn btn-outline-primary" for="qui">Qui</label>
+                                        
+                                        <input type="checkbox" class="btn-check" name="dias_atendimento" value="sex" id="sex" {% if 'sex' in dias %}checked{% endif %}>
+                                        <label class="btn btn-outline-primary" for="sex">Sex</label>
+                                        
+                                        <input type="checkbox" class="btn-check" name="dias_atendimento" value="sab" id="sab" {% if 'sab' in dias %}checked{% endif %}>
+                                        <label class="btn btn-outline-primary" for="sab">Sáb</label>
+                                        
+                                        <input type="checkbox" class="btn-check" name="dias_atendimento" value="dom" id="dom" {% if 'dom' in dias %}checked{% endif %}>
+                                        <label class="btn btn-outline-primary" for="dom">Dom</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Notificações -->
+                    <div class="section-card" id="notificacoes">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0"><i class="bi bi-bell"></i> Configurações de Notificações</h5>
+                            </div>
+                            <div class="card-body">
+                                <div class="form-check form-switch mb-3">
+                                    <input class="form-check-input" type="checkbox" name="lembrete_paciente" id="lembrete_paciente" 
+                                           {% if not config or config.lembrete_paciente %}checked{% endif %}>
+                                    <label class="form-check-label" for="lembrete_paciente">
+                                        <strong>Enviar lembretes automáticos para pacientes</strong>
+                                        <br>
+                                        <small class="text-muted">Os pacientes receberão lembretes sobre suas sessões agendadas</small>
+                                    </label>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Antecedência do Lembrete (horas)</label>
+                                    <input type="number" class="form-control" name="antecedencia_lembrete" 
+                                           value="{{ config.antecedencia_lembrete if config else 24 }}"
+                                           min="1" max="168">
+                                    <small class="text-muted">Pacientes receberão lembrete X horas antes da sessão</small>
+                                </div>
+                                <div class="alert alert-info">
+                                    <i class="bi bi-info-circle"></i> <strong>Em breve:</strong> Integração com WhatsApp e E-mail para envio automático de lembretes.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Segurança -->
+                    <div class="section-card" id="seguranca">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="mb-0"><i class="bi bi-shield-lock"></i> Segurança</h5>
+                            </div>
+                            <div class="card-body">
+                                <h6 class="mb-3">Alterar Senha</h6>
+                                <div class="mb-3">
+                                    <label class="form-label">Senha Atual</label>
+                                    <input type="password" class="form-control" name="senha_atual" placeholder="Digite sua senha atual">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Nova Senha</label>
+                                    <input type="password" class="form-control" name="nova_senha" placeholder="Digite a nova senha (mínimo 6 caracteres)">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Confirmar Nova Senha</label>
+                                    <input type="password" class="form-control" name="confirmar_senha" placeholder="Digite novamente a nova senha">
+                                </div>
+                                <div class="alert alert-warning">
+                                    <i class="bi bi-exclamation-triangle"></i> <strong>Atenção:</strong> Deixe os campos em branco se não quiser alterar a senha.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Botão Salvar -->
+                    <div class="mt-4 text-end">
+                        <a href="/dashboard" class="btn btn-secondary">
+                            <i class="bi bi-x-circle"></i> Cancelar
+                        </a>
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="bi bi-check-circle"></i> Salvar Configurações
+                        </button>
+                    </div>
+
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Navegação entre seções
+        document.querySelectorAll('.list-group-item').forEach(item => {
+            item.addEventListener('click', function(e) {
+                e.preventDefault();
+                
+                // Remove active de todos
+                document.querySelectorAll('.list-group-item').forEach(i => i.classList.remove('active'));
+                document.querySelectorAll('.section-card').forEach(s => s.classList.remove('active'));
+                
+                // Adiciona active no clicado
+                this.classList.add('active');
+                const section = this.getAttribute('data-section');
+                document.getElementById(section).classList.add('active');
+            });
+        });
+    </script>
+</body>
+</html>
