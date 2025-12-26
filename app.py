@@ -6,6 +6,7 @@ from datetime import datetime, date, timedelta
 from werkzeug.security import generate_password_hash, check_password_hash
 from decimal import Decimal
 from sqlalchemy import func, extract
+import traceback
 
 app = Flask(__name__)
 
@@ -62,7 +63,6 @@ class Paciente(db.Model):
     data_cadastro = db.Column(db.DateTime, default=datetime.utcnow)
     psicologo_id = db.Column(db.Integer, db.ForeignKey('usuarios.id'), nullable=False)
     
-    # Relacionamentos
     sessoes = db.relationship('Sessao', backref='paciente', lazy=True)
     evolucoes = db.relationship('Evolucao', backref='paciente', lazy=True)
 
@@ -79,7 +79,6 @@ class Sessao(db.Model):
     observacoes = db.Column(db.Text)
     data_criacao = db.Column(db.DateTime, default=datetime.utcnow)
     
-    # Relacionamentos
     psicologo = db.relationship('Usuario', backref='sessoes_psicologo', lazy=True)
 
 class Evolucao(db.Model):
@@ -100,32 +99,23 @@ class Configuracao(db.Model):
     
     id = db.Column(db.Integer, primary_key=True)
     usuario_id = db.Column(db.Integer, db.ForeignKey('usuarios.id'), nullable=False, unique=True)
-    
-    # Dados Profissionais
     nome_completo = db.Column(db.String(200))
     crp = db.Column(db.String(20))
     especialidade = db.Column(db.String(200))
     telefone_profissional = db.Column(db.String(20))
     email_profissional = db.Column(db.String(120))
-    
-    # Endereço do Consultório
     endereco = db.Column(db.String(300))
     cidade = db.Column(db.String(100))
     estado = db.Column(db.String(2))
     cep = db.Column(db.String(10))
-    
-    # Configurações de Atendimento
     duracao_sessao = db.Column(db.Integer, default=50)
     valor_sessao = db.Column(db.Numeric(10, 2))
     horario_inicio = db.Column(db.Time)
     horario_fim = db.Column(db.Time)
     dias_atendimento = db.Column(db.String(50))
-    
-    # Configurações de Notificação
     lembrete_paciente = db.Column(db.Boolean, default=True)
     antecedencia_lembrete = db.Column(db.Integer, default=24)
     
-    # Relacionamento
     usuario = db.relationship('Usuario', backref='configuracao', uselist=False)
 
 # ========== FUNÇÕES AUXILIARES ==========
@@ -148,10 +138,8 @@ def processar_login():
         return False
 
 def obter_estatisticas_gerais(data_inicio, data_fim):
-    """Função auxiliar para obter estatísticas gerais"""
     try:
         stats = {}
-        
         stats['total_pacientes'] = Paciente.query.filter_by(psicologo_id=current_user.id).count()
         stats['pacientes_ativos'] = Paciente.query.filter_by(psicologo_id=current_user.id, ativo=True).count()
         
@@ -165,7 +153,6 @@ def obter_estatisticas_gerais(data_inicio, data_fim):
         stats['sessoes_realizadas'] = len([s for s in sessoes_periodo if s.status == 'realizada'])
         stats['sessoes_agendadas'] = len([s for s in sessoes_periodo if s.status == 'agendada'])
         stats['sessoes_canceladas'] = len([s for s in sessoes_periodo if s.status in ['cancelada', 'faltou']])
-        
         stats['receita_total'] = sum(float(s.valor or 0) for s in sessoes_periodo if s.status == 'realizada')
         stats['receita_pendente'] = sum(float(s.valor or 0) for s in sessoes_periodo if s.status == 'agendada')
         
@@ -181,9 +168,9 @@ def obter_estatisticas_gerais(data_inicio, data_fim):
             stats['taxa_comparecimento'] = 0
         
         return stats
-    
     except Exception as e:
-        print(f"Erro ao obter estatísticas: {e}")
+        print(f"❌ Erro ao obter estatísticas: {e}")
+        traceback.print_exc()
         return {}
 
 # ========== ROTAS PRINCIPAIS ==========
@@ -219,6 +206,7 @@ def logout():
 @app.route('/dashboard')
 @login_required
 def dashboard():
+    print("✅ Rota /dashboard acessada")
     total_pacientes = 0
     sessoes_hoje = 0
     proximas_sessoes = []
@@ -227,7 +215,6 @@ def dashboard():
     
     try:
         total_pacientes = Paciente.query.filter_by(psicologo_id=current_user.id, ativo=True).count()
-        
         hoje = date.today()
         sessoes_hoje = Sessao.query.filter_by(psicologo_id=current_user.id).filter(
             db.func.date(Sessao.data_sessao) == hoje
@@ -254,9 +241,9 @@ def dashboard():
             db.func.date(Sessao.data_sessao) >= primeiro_dia_mes
         ).scalar()
         receita_mes = float(receita_query) if receita_query else 0
-        
     except Exception as e:
-        print(f"Erro ao buscar estatísticas: {e}")
+        print(f"❌ Erro ao buscar estatísticas do dashboard: {e}")
+        traceback.print_exc()
     
     return render_template('dashboard.html', 
                          total_pacientes=total_pacientes,
@@ -270,6 +257,7 @@ def dashboard():
 @app.route('/pacientes')
 @login_required
 def pacientes():
+    print("✅ Rota /pacientes acessada")
     try:
         search = request.args.get('search', '')
         
@@ -286,7 +274,6 @@ def pacientes():
         
         total_pacientes = Paciente.query.filter_by(psicologo_id=current_user.id).count()
         pacientes_ativos = Paciente.query.filter_by(psicologo_id=current_user.id, ativo=True).count()
-        
         primeiro_dia_mes = date.today().replace(day=1)
         novos_mes = Paciente.query.filter_by(psicologo_id=current_user.id).filter(
             Paciente.data_cadastro >= primeiro_dia_mes
@@ -307,9 +294,9 @@ def pacientes():
                              novos_mes=novos_mes,
                              sessoes_mes=sessoes_mes,
                              today=date.today())
-    
     except Exception as e:
-        print(f"Erro na página de pacientes: {e}")
+        print(f"❌ Erro na página de pacientes: {e}")
+        traceback.print_exc()
         flash('Erro ao carregar pacientes', 'error')
         return redirect(url_for('dashboard'))
 
@@ -358,9 +345,9 @@ def novo_paciente():
             
             flash(f'Paciente {nome} cadastrado com sucesso!', 'success')
             return redirect(url_for('pacientes'))
-            
         except Exception as e:
-            print(f"Erro ao cadastrar paciente: {e}")
+            print(f"❌ Erro ao cadastrar paciente: {e}")
+            traceback.print_exc()
             flash('Erro ao cadastrar paciente', 'error')
             db.session.rollback()
     
@@ -380,7 +367,8 @@ def ver_paciente(id):
                              evolucoes=evolucoes,
                              today=date.today())
     except Exception as e:
-        print(f"Erro ao ver paciente: {e}")
+        print(f"❌ Erro ao ver paciente: {e}")
+        traceback.print_exc()
         flash('Paciente não encontrado', 'error')
         return redirect(url_for('pacientes'))
 
@@ -429,9 +417,9 @@ def editar_paciente(id):
             return redirect(url_for('ver_paciente', id=id))
         
         return render_template('editar_paciente.html', paciente=paciente, today=date.today())
-        
     except Exception as e:
-        print(f"Erro ao editar paciente: {e}")
+        print(f"❌ Erro ao editar paciente: {e}")
+        traceback.print_exc()
         flash('Paciente não encontrado', 'error')
         return redirect(url_for('pacientes'))
 
@@ -444,7 +432,7 @@ def desativar_paciente(id):
         db.session.commit()
         return jsonify({'success': True, 'message': f'Paciente {paciente.nome} desativado com sucesso'})
     except Exception as e:
-        print(f"Erro ao desativar paciente: {e}")
+        print(f"❌ Erro ao desativar paciente: {e}")
         return jsonify({'success': False, 'message': 'Erro ao desativar paciente'})
 
 @app.route('/pacientes/<int:id>/ativar', methods=['POST'])
@@ -456,7 +444,7 @@ def ativar_paciente(id):
         db.session.commit()
         return jsonify({'success': True, 'message': f'Paciente {paciente.nome} ativado com sucesso'})
     except Exception as e:
-        print(f"Erro ao ativar paciente: {e}")
+        print(f"❌ Erro ao ativar paciente: {e}")
         return jsonify({'success': False, 'message': 'Erro ao ativar paciente'})
 
 # ========== ROTAS DE SESSÕES ==========
@@ -464,6 +452,7 @@ def ativar_paciente(id):
 @app.route('/sessoes')
 @login_required
 def sessoes():
+    print("✅ Rota /sessoes acessada")
     try:
         status_filter = request.args.get('status', '')
         paciente_filter = request.args.get('paciente', '')
@@ -513,9 +502,9 @@ def sessoes():
                              sessoes_realizadas=sessoes_realizadas,
                              receita_total=receita_total,
                              today=date.today())
-    
     except Exception as e:
-        print(f"Erro na página de sessões: {e}")
+        print(f"❌ Erro na página de sessões: {e}")
+        traceback.print_exc()
         flash('Erro ao carregar sessões', 'error')
         return redirect(url_for('dashboard'))
 
@@ -538,7 +527,7 @@ def nova_sessao():
             
             try:
                 paciente_id_int = int(paciente_id)
-            except (ValueError, TypeError) as e:
+            except (ValueError, TypeError):
                 flash('Paciente inválido', 'error')
                 pacientes_lista = Paciente.query.filter_by(psicologo_id=current_user.id, ativo=True).order_by(Paciente.nome).all()
                 return render_template('nova_sessao.html', pacientes=pacientes_lista)
@@ -550,7 +539,7 @@ def nova_sessao():
             
             try:
                 data_sessao = datetime.strptime(f"{data_sessao_str} {hora_sessao}", '%Y-%m-%d %H:%M')
-            except Exception as e:
+            except Exception:
                 flash('Data ou hora inválida', 'error')
                 pacientes_lista = Paciente.query.filter_by(psicologo_id=current_user.id, ativo=True).order_by(Paciente.nome).all()
                 return render_template('nova_sessao.html', pacientes=pacientes_lista)
@@ -560,72 +549,56 @@ def nova_sessao():
                 pacientes_lista = Paciente.query.filter_by(psicologo_id=current_user.id, ativo=True).order_by(Paciente.nome).all()
                 return render_template('nova_sessao.html', pacientes=pacientes_lista)
             
-            try:
-                paciente = Paciente.query.filter_by(id=paciente_id_int, psicologo_id=current_user.id).first()
-                if not paciente:
-                    flash('Paciente não encontrado', 'error')
-                    pacientes_lista = Paciente.query.filter_by(psicologo_id=current_user.id, ativo=True).order_by(Paciente.nome).all()
-                    return render_template('nova_sessao.html', pacientes=pacientes_lista)
-            except Exception as e:
-                flash('Erro ao verificar paciente', 'error')
+            paciente = Paciente.query.filter_by(id=paciente_id_int, psicologo_id=current_user.id).first()
+            if not paciente:
+                flash('Paciente não encontrado', 'error')
                 pacientes_lista = Paciente.query.filter_by(psicologo_id=current_user.id, ativo=True).order_by(Paciente.nome).all()
                 return render_template('nova_sessao.html', pacientes=pacientes_lista)
             
-            try:
-                conflito = Sessao.query.filter(
-                    Sessao.psicologo_id == current_user.id,
-                    Sessao.status == 'agendada',
-                    Sessao.data_sessao == data_sessao
-                ).first()
-                
-                if conflito:
-                    flash('Já existe uma sessão agendada para este horário', 'error')
-                    pacientes_lista = Paciente.query.filter_by(psicologo_id=current_user.id, ativo=True).order_by(Paciente.nome).all()
-                    return render_template('nova_sessao.html', pacientes=pacientes_lista)
-            except Exception as e:
-                pass
+            conflito = Sessao.query.filter(
+                Sessao.psicologo_id == current_user.id,
+                Sessao.status == 'agendada',
+                Sessao.data_sessao == data_sessao
+            ).first()
+            
+            if conflito:
+                flash('Já existe uma sessão agendada para este horário', 'error')
+                pacientes_lista = Paciente.query.filter_by(psicologo_id=current_user.id, ativo=True).order_by(Paciente.nome).all()
+                return render_template('nova_sessao.html', pacientes=pacientes_lista)
             
             valor = None
             if valor_str and valor_str.strip():
                 try:
                     valor_limpo = valor_str.replace(',', '.').strip()
                     valor = Decimal(valor_limpo)
-                except Exception as e:
+                except Exception:
                     flash('Valor inválido', 'error')
                     pacientes_lista = Paciente.query.filter_by(psicologo_id=current_user.id, ativo=True).order_by(Paciente.nome).all()
                     return render_template('nova_sessao.html', pacientes=pacientes_lista)
             
-            try:
-                nova_sessao_obj = Sessao(
-                    paciente_id=paciente_id_int,
-                    psicologo_id=current_user.id,
-                    data_sessao=data_sessao,
-                    duracao=int(duracao),
-                    valor=valor,
-                    observacoes=observacoes if observacoes else None
-                )
-                
-                db.session.add(nova_sessao_obj)
-                db.session.commit()
-                
-                flash(f'Sessão agendada com {paciente.nome} para {data_sessao.strftime("%d/%m/%Y às %H:%M")}!', 'success')
-                return redirect(url_for('sessoes'))
-                
-            except Exception as e:
-                print(f"ERRO ao salvar sessão: {e}")
-                flash('Erro ao salvar sessão no banco de dados', 'error')
-                db.session.rollback()
-                pacientes_lista = Paciente.query.filter_by(psicologo_id=current_user.id, ativo=True).order_by(Paciente.nome).all()
-                return render_template('nova_sessao.html', pacientes=pacientes_lista)
+            nova_sessao_obj = Sessao(
+                paciente_id=paciente_id_int,
+                psicologo_id=current_user.id,
+                data_sessao=data_sessao,
+                duracao=int(duracao),
+                valor=valor,
+                observacoes=observacoes if observacoes else None
+            )
             
+            db.session.add(nova_sessao_obj)
+            db.session.commit()
+            
+            flash(f'Sessão agendada com {paciente.nome} para {data_sessao.strftime("%d/%m/%Y às %H:%M")}!', 'success')
+            return redirect(url_for('sessoes'))
         except Exception as e:
-            print(f"ERRO GERAL: {e}")
-            flash('Erro ao agendar sessão', 'error')
+            print(f"❌ Erro ao salvar sessão: {e}")
+            traceback.print_exc()
+            flash('Erro ao salvar sessão no banco de dados', 'error')
             db.session.rollback()
     
     try:
         pacientes_lista = Paciente.query.filter_by(psicologo_id=current_user.id, ativo=True).order_by(Paciente.nome).all()
-    except Exception as e:
+    except Exception:
         pacientes_lista = []
     
     return render_template('nova_sessao.html', pacientes=pacientes_lista)
@@ -637,7 +610,7 @@ def ver_sessao(id):
         sessao = Sessao.query.filter_by(id=id, psicologo_id=current_user.id).first_or_404()
         return render_template('ver_sessao.html', sessao=sessao, today=date.today())
     except Exception as e:
-        print(f"Erro ao ver sessão: {e}")
+        print(f"❌ Erro ao ver sessão: {e}")
         flash('Sessão não encontrada', 'error')
         return redirect(url_for('sessoes'))
 
@@ -694,9 +667,8 @@ def editar_sessao(id):
             return redirect(url_for('ver_sessao', id=id))
         
         return render_template('editar_sessao.html', sessao=sessao, today=date.today())
-        
     except Exception as e:
-        print(f"Erro ao editar sessão: {e}")
+        print(f"❌ Erro ao editar sessão: {e}")
         flash('Sessão não encontrada', 'error')
         return redirect(url_for('sessoes'))
 
@@ -749,12 +721,14 @@ def reagendar_sessao(id):
 @app.route('/prontuario/<int:paciente_id>')
 @login_required
 def prontuario(paciente_id):
+    print("✅ Rota /prontuario acessada")
     try:
         paciente = Paciente.query.filter_by(id=paciente_id, psicologo_id=current_user.id).first_or_404()
         evolucoes = Evolucao.query.filter_by(paciente_id=paciente_id).order_by(Evolucao.data_evolucao.desc()).all()
         return render_template('prontuario.html', paciente=paciente, evolucoes=evolucoes, today=date.today())
     except Exception as e:
-        print(f"Erro ao ver prontuário: {e}")
+        print(f"❌ Erro ao ver prontuário: {e}")
+        traceback.print_exc()
         flash('Paciente não encontrado', 'error')
         return redirect(url_for('pacientes'))
 
@@ -790,9 +764,9 @@ def nova_evolucao_prontuario(paciente_id):
         
         flash('Evolução registrada com sucesso!', 'success')
         return redirect(url_for('prontuario', paciente_id=paciente_id))
-        
     except Exception as e:
-        print(f"Erro ao criar evolução: {e}")
+        print(f"❌ Erro ao criar evolução: {e}")
+        traceback.print_exc()
         flash('Erro ao registrar evolução', 'error')
         db.session.rollback()
         return redirect(url_for('prontuario', paciente_id=paciente_id))
@@ -800,6 +774,7 @@ def nova_evolucao_prontuario(paciente_id):
 @app.route('/evolucoes')
 @login_required
 def evolucoes():
+    print("✅ Rota /evolucoes acessada")
     try:
         paciente_filter = request.args.get('paciente', '')
         data_inicio = request.args.get('data_inicio', '')
@@ -841,9 +816,9 @@ def evolucoes():
                              total_evolucoes=total_evolucoes,
                              evolucoes_mes=evolucoes_mes,
                              today=date.today())
-    
     except Exception as e:
-        print(f"Erro na página de evoluções: {e}")
+        print(f"❌ Erro na página de evoluções: {e}")
+        traceback.print_exc()
         flash('Erro ao carregar evoluções', 'error')
         return redirect(url_for('dashboard'))
 
@@ -890,15 +865,15 @@ def nova_evolucao():
             
             flash(f'Evolução de {paciente.nome} registrada com sucesso!', 'success')
             return redirect(url_for('evolucoes'))
-            
         except Exception as e:
-            print(f"Erro ao criar evolução: {e}")
+            print(f"❌ Erro ao criar evolução: {e}")
+            traceback.print_exc()
             flash('Erro ao registrar evolução', 'error')
             db.session.rollback()
     
     try:
         pacientes_lista = Paciente.query.filter_by(psicologo_id=current_user.id, ativo=True).order_by(Paciente.nome).all()
-    except Exception as e:
+    except Exception:
         pacientes_lista = []
     
     return render_template('nova_evolucao.html', pacientes=pacientes_lista)
@@ -914,7 +889,7 @@ def ver_evolucao(id):
         
         return render_template('ver_evolucao.html', evolucao=evolucao, today=date.today())
     except Exception as e:
-        print(f"Erro ao ver evolução: {e}")
+        print(f"❌ Erro ao ver evolução: {e}")
         flash('Evolução não encontrada', 'error')
         return redirect(url_for('evolucoes'))
 
@@ -950,9 +925,8 @@ def editar_evolucao(id):
             return redirect(url_for('ver_evolucao', id=id))
         
         return render_template('editar_evolucao.html', evolucao=evolucao, today=date.today())
-        
     except Exception as e:
-        print(f"Erro ao editar evolução: {e}")
+        print(f"❌ Erro ao editar evolução: {e}")
         flash('Evolução não encontrada', 'error')
         return redirect(url_for('evolucoes'))
 
@@ -977,11 +951,13 @@ def excluir_evolucao(id):
 @app.route('/configuracoes')
 @login_required
 def configuracoes():
+    print("✅ Rota /configuracoes acessada")
     try:
         config = Configuracao.query.filter_by(usuario_id=current_user.id).first()
         return render_template('configuracoes.html', config=config, usuario=current_user, today=date.today())
     except Exception as e:
-        print(f"Erro ao carregar configurações: {e}")
+        print(f"❌ Erro ao carregar configurações: {e}")
+        traceback.print_exc()
         return render_template('configuracoes.html', config=None, usuario=current_user, today=date.today())
 
 @app.route('/configuracoes/salvar', methods=['POST'])
@@ -994,20 +970,16 @@ def salvar_configuracoes():
             config = Configuracao(usuario_id=current_user.id)
             db.session.add(config)
         
-        # Dados profissionais
         config.nome_completo = request.form.get('nome_completo')
         config.crp = request.form.get('crp')
         config.especialidade = request.form.get('especialidade')
         config.telefone_profissional = request.form.get('telefone_profissional')
         config.email_profissional = request.form.get('email_profissional')
-        
-        # Endereço
         config.endereco = request.form.get('endereco')
         config.cidade = request.form.get('cidade')
         config.estado = request.form.get('estado')
         config.cep = request.form.get('cep')
         
-        # Atendimento
         duracao = request.form.get('duracao_sessao')
         if duracao:
             config.duracao_sessao = int(duracao)
@@ -1019,7 +991,6 @@ def salvar_configuracoes():
             except:
                 pass
         
-        # Horários
         horario_inicio = request.form.get('horario_inicio')
         horario_fim = request.form.get('horario_fim')
         if horario_inicio:
@@ -1033,17 +1004,14 @@ def salvar_configuracoes():
             except:
                 pass
         
-        # Dias de atendimento
         dias = request.form.getlist('dias_atendimento')
         config.dias_atendimento = ','.join(dias) if dias else None
-        
-        # Notificações
         config.lembrete_paciente = 'lembrete_paciente' in request.form
+        
         antecedencia = request.form.get('antecedencia_lembrete')
         if antecedencia:
             config.antecedencia_lembrete = int(antecedencia)
         
-        # Alterar senha (se fornecida)
         senha_atual = request.form.get('senha_atual')
         nova_senha = request.form.get('nova_senha')
         confirmar_senha = request.form.get('confirmar_senha')
@@ -1066,9 +1034,9 @@ def salvar_configuracoes():
         db.session.commit()
         flash('Configurações salvas com sucesso!', 'success')
         return redirect(url_for('configuracoes'))
-        
     except Exception as e:
-        print(f"Erro ao salvar configurações: {e}")
+        print(f"❌ Erro ao salvar configurações: {e}")
+        traceback.print_exc()
         flash('Erro ao salvar configurações', 'error')
         db.session.rollback()
         return redirect(url_for('configuracoes'))
@@ -1097,14 +1065,12 @@ def configuracoes_perfil():
             
             current_user.nome = nome
             current_user.email = email
-            
             db.session.commit()
             
             flash('Perfil atualizado com sucesso!', 'success')
             return redirect(url_for('configuracoes'))
-            
         except Exception as e:
-            print(f"Erro ao atualizar perfil: {e}")
+            print(f"❌ Erro ao atualizar perfil: {e}")
             flash('Erro ao atualizar perfil', 'error')
             db.session.rollback()
     
@@ -1144,9 +1110,8 @@ def configuracoes_senha():
             
             flash('Senha alterada com sucesso!', 'success')
             return redirect(url_for('configuracoes'))
-            
         except Exception as e:
-            print(f"Erro ao alterar senha: {e}")
+            print(f"❌ Erro ao alterar senha: {e}")
             flash('Erro ao alterar senha', 'error')
             db.session.rollback()
     
@@ -1157,10 +1122,11 @@ def configuracoes_senha():
 @app.route('/relatorios')
 @login_required
 def relatorios():
+    print("✅ Rota /relatorios acessada")
     try:
         periodo = request.args.get('periodo', '12')
-        
         hoje = date.today()
+        
         if periodo == '1':
             data_inicio = hoje.replace(day=1)
         elif periodo == '3':
@@ -1177,9 +1143,9 @@ def relatorios():
                              periodo=periodo,
                              data_inicio=data_inicio.strftime('%Y-%m-%d'),
                              data_fim=hoje.strftime('%Y-%m-%d'))
-    
     except Exception as e:
-        print(f"Erro na página de relatórios: {e}")
+        print(f"❌ Erro na página de relatórios: {e}")
+        traceback.print_exc()
         flash('Erro ao carregar relatórios', 'error')
         return redirect(url_for('dashboard'))
 
@@ -1226,9 +1192,9 @@ def relatorio_financeiro():
                              receita_mensal=receita_mensal,
                              data_inicio=data_inicio,
                              data_fim=data_fim)
-    
     except Exception as e:
-        print(f"Erro no relatório financeiro: {e}")
+        print(f"❌ Erro no relatório financeiro: {e}")
+        traceback.print_exc()
         flash('Erro ao gerar relatório financeiro', 'error')
         return redirect(url_for('relatorios'))
 
@@ -1264,6 +1230,7 @@ def api_receita_mensal():
         
         return jsonify({'labels': meses, 'data': receitas})
     except Exception as e:
+        print(f"❌ Erro na API receita mensal: {e}")
         return jsonify({'error': 'Erro ao buscar dados'}), 500
 
 @app.route('/api/relatorios/sessoes-status')
@@ -1299,6 +1266,7 @@ def api_sessoes_status():
         
         return jsonify({'labels': labels, 'data': data, 'backgroundColor': background_colors})
     except Exception as e:
+        print(f"❌ Erro na API sessões status: {e}")
         return jsonify({'error': 'Erro ao buscar dados'}), 500
 
 @app.route('/api/relatorios/pacientes-ativos')
@@ -1314,6 +1282,7 @@ def api_pacientes_ativos():
             'backgroundColor': ['#28a745', '#dc3545']
         })
     except Exception as e:
+        print(f"❌ Erro na API pacientes ativos: {e}")
         return jsonify({'error': 'Erro ao buscar dados'}), 500
 
 @app.route('/api/relatorios/evolucao-sessoes')
@@ -1322,7 +1291,6 @@ def api_evolucao_sessoes():
     try:
         periodo = int(request.args.get('periodo', 12))
         hoje = date.today()
-        
         semanas = []
         sessoes_realizadas = []
         sessoes_agendadas = []
@@ -1369,6 +1337,7 @@ def api_evolucao_sessoes():
             ]
         })
     except Exception as e:
+        print(f"❌ Erro na API evolução sessões: {e}")
         return jsonify({'error': 'Erro ao buscar dados'}), 500
 
 @app.route('/api/relatorios/top-pacientes')
@@ -1401,18 +1370,48 @@ def api_top_pacientes():
         
         return jsonify({'pacientes': pacientes})
     except Exception as e:
+        print(f"❌ Erro na API top pacientes: {e}")
         return jsonify({'error': 'Erro ao buscar dados'}), 500
+
+# ========== ROTA DE DEBUG ==========
+
+@app.route('/debug/rotas')
+@login_required
+def debug_rotas():
+    """Rota para listar todas as rotas disponíveis"""
+    rotas = []
+    for rule in app.url_map.iter_rules():
+        rotas.append({
+            'endpoint': rule.endpoint,
+            'methods': ','.join(rule.methods),
+            'path': str(rule)
+        })
+    return jsonify(rotas)
 
 # ========== INICIALIZAÇÃO ==========
 
 with app.app_context():
     try:
         db.create_all()
+        print("=" * 60)
         print("✅ Tabelas criadas/verificadas com sucesso!")
         print("✅ Nova tabela 'configuracoes' adicionada!")
         print("✅ Campos de prontuário adicionados à tabela 'evolucoes'!")
+        print("=" * 60)
+        print("\n🔗 ROTAS REGISTRADAS:")
+        print("   - /dashboard")
+        print("   - /pacientes")
+        print("   - /sessoes")
+        print("   - /evolucoes")
+        print("   - /relatorios")
+        print("   - /configuracoes")
+        print("   - /prontuario/<id>")
+        print("=" * 60)
     except Exception as e:
+        print("=" * 60)
         print(f"❌ Erro ao criar tabelas: {e}")
+        traceback.print_exc()
+        print("=" * 60)
 
 if __name__ == '__main__':
     app.run(debug=True)
