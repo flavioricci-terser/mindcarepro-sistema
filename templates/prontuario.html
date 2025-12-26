@@ -73,7 +73,7 @@
                         <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#novaEvolucaoModal">
                             <i class="bi bi-plus-circle"></i> Nova Evolução
                         </button>
-                        <a href="/ver_paciente/{{ paciente.id }}" class="btn btn-outline-secondary">
+                        <a href="/pacientes/{{ paciente.id }}" class="btn btn-outline-secondary">
                             <i class="bi bi-arrow-left"></i> Voltar
                         </a>
                     </div>
@@ -106,7 +106,7 @@
                                     <div>
                                         <h6 class="mb-1">{{ evolucao.titulo }}</h6>
                                         <small class="text-muted">
-                                            {{ evolucao.data_registro.strftime('%d/%m/%Y às %H:%M') }}
+                                            {{ evolucao.data_evolucao.strftime('%d/%m/%Y às %H:%M') }}
                                         </small>
                                     </div>
                                     {% if evolucao.humor %}
@@ -120,7 +120,7 @@
                                     </span>
                                     {% endif %}
                                 </div>
-                                <p class="mb-2">{{ evolucao.conteudo }}</p>
+                                <p class="mb-2">{{ evolucao.descricao }}</p>
                                 {% if evolucao.medicamentos %}
                                 <div class="alert alert-info mb-2">
                                     <strong><i class="bi bi-capsule"></i> Medicamentos:</strong> {{ evolucao.medicamentos }}
