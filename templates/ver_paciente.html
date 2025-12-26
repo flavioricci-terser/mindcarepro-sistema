@@ -225,8 +225,14 @@
             color: white;
         }
 
+        .btn-purple {
+            background: #6f42c1;
+            color: white;
+        }
+
         .btn:hover {
             transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
         }
 
         .content-grid {
@@ -415,19 +421,19 @@
                 <i class="fas fa-users"></i>
                 Pacientes
             </a>
-            <a href="#" class="menu-item">
+            <a href="{{ url_for('sessoes') }}" class="menu-item">
                 <i class="fas fa-calendar-alt"></i>
                 Sessões
             </a>
-            <a href="#" class="menu-item">
+            <a href="{{ url_for('evolucoes') }}" class="menu-item">
                 <i class="fas fa-chart-line"></i>
                 Evoluções
             </a>
-            <a href="#" class="menu-item">
+            <a href="{{ url_for('relatorios') }}" class="menu-item">
                 <i class="fas fa-file-alt"></i>
                 Relatórios
             </a>
-            <a href="#" class="menu-item">
+            <a href="{{ url_for('configuracoes') }}" class="menu-item">
                 <i class="fas fa-cog"></i>
                 Configurações
             </a>
@@ -501,11 +507,15 @@
                     <i class="fas fa-edit"></i>
                     Editar
                 </a>
-                <a href="#" class="btn btn-success">
+                <a href="{{ url_for('prontuario', paciente_id=paciente.id) }}" class="btn btn-purple">
+                    <i class="fas fa-file-medical"></i>
+                    Prontuário
+                </a>
+                <a href="{{ url_for('nova_sessao') }}?paciente_id={{ paciente.id }}" class="btn btn-success">
                     <i class="fas fa-calendar-plus"></i>
                     Nova Sessão
                 </a>
-                <a href="#" class="btn btn-info">
+                <a href="{{ url_for('nova_evolucao') }}?paciente_id={{ paciente.id }}" class="btn btn-info">
                     <i class="fas fa-notes-medical"></i>
                     Nova Evolução
                 </a>
