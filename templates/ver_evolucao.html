@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <!-- ========================================
+         METADADOS E CONFIGURAÇÕES DA PÁGINA
+         ======================================== -->
+    
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MindCarePro - Ver Evolução</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    
+    <style>
+        /* ========================================
+           RESET E ESTILOS GLOBAIS
+           ======================================== */
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8f9fa;
+            color: #333;
+        }
+
+        /* ========================================
+           MENU LATERAL (SIDEBAR)
+           ======================================== */
+        
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 250px;
+            height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            z-index: 1000;
+            overflow-y: auto;
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            text-align: center;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .sidebar-header h2 {
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+
+        .sidebar-header p {
+            font-size: 14px;
+            opacity: 0.8;
+        }
+
+        .sidebar-menu {
+            padding: 20px 0;
+        }
+
+        .menu-item {
+            display: block;
+            padding: 15px 25px;
+            color: white;
+            text-decoration: none;
+            transition: background 0.3s;
+            border-left: 3px solid transparent;
+        }
+
+        .menu-item:hover,
+        .menu-item.active {
+            background: rgba(255,255,255,0.1);
+            border-left-color: white;
+        }
+
+        .menu-item i {
+            width: 20px;
+            margin-right: 10px;
+        }
+
+        /* ========================================
+           CONTEÚDO PRINCIPAL
+           ======================================== */
+        
+        .main-content {
+            margin-left: 250px;
+            padding: 20px;
+            min-height: 100vh;
+        }
+
+        .top-bar {
+            background: white;
+            padding: 15px 25px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .page-title {
+            font-size: 28px;
+            font-weight: 600;
+            color: #333;
+            display: flex;
+            align-items: center;
+        }
+
+        .page-title i {
+            margin-right: 10px;
+            color: #667eea;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .logout-btn {
+            background: #dc3545;
+            color: white;
+            padding: 8px 16px;
+            text-decoration: none;
+            border-radius: 5px;
+            font-size: 14px;
+            transition: background 0.3s;
+        }
+
+        .logout-btn:hover {
+            background: #c82333;
+        }
+
+        /* ========================================
+           BREADCRUMB (NAVEGAÇÃO)
+           ======================================== */
+        
+        .breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
+
+        .breadcrumb a {
+            color: #667eea;
+            text-decoration: none;
+        }
+
+        .breadcrumb a:hover {
+            text-decoration: underline;
+        }
+
+        /* ========================================
+           CARD DE DETALHES
+           ======================================== */
+        
+        /* Container principal dos detalhes */
+        .details-container {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            overflow: hidden;
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        /* Cabeçalho do card */
+        .details-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+        }
+
+        .details-header h2 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .details-meta {
+            display: flex;
+            gap: 20px;
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .details-meta i {
+            margin-right: 5px;
+        }
+
+        /* Corpo do card com as informações */
+        .details-body {
+            padding: 30px;
+        }
+
+        /* Cada item de informação */
+        .info-item {
+            margin-bottom: 25px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .info-item:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+        }
+
+        .info-label {
+            font-weight: 600;
+            color: #667eea;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+        }
+
+        .info-label i {
+            margin-right: 8px;
+        }
+
+        .info-value {
+            color: #333;
+            line-height: 1.6;
+            white-space: pre-wrap; /* Preserva quebras de linha */
+        }
+
+        /* Badge de tipo */
+        .type-badge {
+            display: inline-block;
+            padding: 6px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .type-evolucao {
+            background: #e8f5e8;
+            color: #2e7d32;
+        }
+
+        .type-anamnese {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+
+        .type-observacao {
+            background: #fff3e0;
+            color: #f57c00;
+        }
+
+        /* ========================================
+           BOTÕES DE AÇÃO
+           ======================================== */
+        
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            padding: 20px 30px;
+            background: #f8f9fa;
+            justify-content: flex-end;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            transition: all 0.3s;
+        }
+
+        .btn i {
+            margin-right: 8px;
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+
+        .btn-warning {
+            background: #ffc107;
+            color: #212529;
+        }
+
+        .btn-warning:hover {
+            background: #e0a800;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #c82333;
+        }
+
+        /* ========================================
+           RESPONSIVIDADE (MOBILE)
+           ======================================== */
+        
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+
+            .main-content {
+                margin-left: 0;
+            }
+
+            .details-header {
+                padding: 20px;
+            }
+
+            .details-body {
+                padding: 20px;
+            }
+
+            .action-buttons {
+                flex-direction: column;
+                padding: 15px;
+            }
+
+            .btn {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- ========================================
+         MENU LATERAL (SIDEBAR)
+         ======================================== -->
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <h2>MindCarePro</h2>
+            <p>Sistema de Gestão</p>
+        </div>
+        <nav class="sidebar-menu">
+            <a href="{{ url_for('dashboard') }}" class="menu-item">
+                <i class="fas fa-tachometer-alt"></i>
+                Dashboard
+            </a>
+            <a href="{{ url_for('pacientes') }}" class="menu-item">
+                <i class="fas fa-users"></i>
+                Pacientes
+            </a>
+            <a href="{{ url_for('sessoes') }}" class="menu-item">
+                <i class="fas fa-calendar-alt"></i>
+                Sessões
+            </a>
+            <a href="{{ url_for('evolucoes') }}" class="menu-item active">
+                <i class="fas fa-chart-line"></i>
+                Evoluções
+            </a>
+            <a href="{{ url_for('relatorios') }}" class="menu-item">
+                <i class="fas fa-chart-bar"></i>
+                Relatórios
+            </a>
+            <a href="{{ url_for('configuracoes') }}" class="menu-item">
+                <i class="fas fa-cog"></i>
+                Configurações
+            </a>
+        </nav>
+    </div>
+
+    <!-- ========================================
+         CONTEÚDO PRINCIPAL
+         ======================================== -->
+    <div class="main-content">
+        <!-- Barra superior -->
+        <div class="top-bar">
+            <div class="page-title">
+                <i class="fas fa-eye"></i>
+                Detalhes da Evolução
+            </div>
+            <div class="user-info">
+                <span>{{ current_user.nome }}</span>
+                <a href="{{ url_for('logout') }}" class="logout-btn">
+                    <i class="fas fa-sign-out-alt"></i> Sair
+                </a>
+            </div>
+        </div>
+
+        <!-- Breadcrumb (navegação) -->
+        <div class="breadcrumb">
+            <a href="{{ url_for('dashboard') }}">Dashboard</a>
+            <i class="fas fa-chevron-right"></i>
+            <a href="{{ url_for('evolucoes') }}">Evoluções</a>
+            <i class="fas fa-chevron-right"></i>
+            <span>{{ evolucao.titulo }}</span>
+        </div>
+
+        <!-- ========================================
+             DETALHES DA EVOLUÇÃO
+             ======================================== -->
+        <div class="details-container">
+            <!-- Cabeçalho com título e informações principais -->
+            <div class="details-header">
+                <h2>{{ evolucao.titulo }}</h2>
+                <div class="details-meta">
+                    <span>
+                        <i class="fas fa-user"></i>
+                        {{ evolucao.paciente.nome }}
+                    </span>
+                    <span>
+                        <i class="fas fa-calendar"></i>
+                        {{ evolucao.data_evolucao.strftime('%d/%m/%Y às %H:%M') }}
+                    </span>
+                    <span>
+                        <span class="type-badge type-{{ evolucao.tipo }}">
+                            {{ evolucao.tipo.title() }}
+                        </span>
+                    </span>
+                </div>
+            </div>
+
+            <!-- Corpo com os detalhes -->
+            <div class="details-body">
+                <!-- Item: Paciente -->
+                <div class="info-item">
+                    <div class="info-label">
+                        <i class="fas fa-user"></i>
+                        Paciente
+                    </div>
+                    <div class="info-value">
+                        {{ evolucao.paciente.nome }}
+                    </div>
+                </div>
+
+                <!-- Item: Data e Hora -->
+                <div class="info-item">
+                    <div class="info-label">
+                        <i class="fas fa-calendar-alt"></i>
+                        Data e Hora
+                    </div>
+                    <div class="info-value">
+                        {{ evolucao.data_evolucao.strftime('%d/%m/%Y às %H:%M') }}
+                    </div>
+                </div>
+
+                <!-- Item: Tipo -->
+                <div class="info-item">
+                    <div class="info-label">
+                        <i class="fas fa-tag"></i>
+                        Tipo
+                    </div>
+                    <div class="info-value">
+                        <span class="type-badge type-{{ evolucao.tipo }}">
+                            {{ evolucao.tipo.title() }}
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Item: Descrição -->
+                <div class="info-item">
+                    <div class="info-label">
+                        <i class="fas fa-file-alt"></i>
+                        Descrição
+                    </div>
+                    <div class="info-value">
+                        {{ evolucao.descricao }}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Botões de ação -->
+            <div class="action-buttons">
+                <!-- Botão: Voltar -->
+                <a href="{{ url_for('evolucoes') }}" class="btn btn-secondary">
+                    <i class="fas fa-arrow-left"></i>
+                    Voltar
+                </a>
+                
+                <!-- Botão: Editar -->
+                <a href="{{ url_for('editar_evolucao', id=evolucao.id) }}" class="btn btn-warning">
+                    <i class="fas fa-edit"></i>
+                    Editar
+                </a>
+                
+                <!-- Botão: Excluir -->
+                <button onclick="excluirEvolucao()" class="btn btn-danger">
+                    <i class="fas fa-trash"></i>
+                    Excluir
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================
+         JAVASCRIPT - FUNÇÃO DE EXCLUIR
+         ======================================== -->
+    <script>
+        /**
+         * Exclui a evolução atual
+         */
+        function excluirEvolucao() {
+            // Pede confirmação ao usuário
+            if (confirm('Tem certeza que deseja excluir esta evolução? Esta ação não pode ser desfeita.')) {
+                // Faz uma requisição POST para o backend
+                fetch('/evolucoes/{{ evolucao.id }}/excluir', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        alert('Evolução excluída com sucesso!');
+                        // Redireciona para a lista de evoluções
+                        window.location.href = '{{ url_for("evolucoes") }}';
+                    } else {
+                        alert('Erro ao excluir evolução');
+                    }
+                });
+            }
+        }
+    </script>
+</body>
+</html>
