@@ -1809,3 +1809,163 @@ body {
 .btn-warning:hover {
     background: #e0a800;
 }
+/* ========================================
+   ESTILOS PARA VISUALIZAÇÃO DE SESSÃO
+   ======================================== */
+
+.sessao-container {
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    overflow: hidden;
+    max-width: 1000px;
+    margin: 0 auto;
+}
+
+.sessao-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 30px;
+    text-align: center;
+}
+
+.sessao-header h2 {
+    font-size: 28px;
+    margin-bottom: 10px;
+}
+
+.sessao-header .status-badge {
+    padding: 8px 20px;
+    border-radius: 25px;
+    font-size: 14px;
+    font-weight: 600;
+    text-transform: uppercase;
+    display: inline-block;
+    margin-top: 10px;
+}
+
+.status-agendada {
+    background: rgba(33, 150, 243, 0.2);
+    color: #1976d2;
+    border: 2px solid #1976d2;
+}
+
+.status-realizada {
+    background: rgba(76, 175, 80, 0.2);
+    color: #2e7d32;
+    border: 2px solid #2e7d32;
+}
+
+.status-cancelada {
+    background: rgba(244, 67, 54, 0.2);
+    color: #c62828;
+    border: 2px solid #c62828;
+}
+
+.status-faltou {
+    background: rgba(255, 152, 0, 0.2);
+    color: #f57c00;
+    border: 2px solid #f57c00;
+}
+
+.sessao-content {
+    padding: 30px;
+}
+
+.info-section {
+    background: #f8f9fa;
+    padding: 25px;
+    border-radius: 10px;
+    border-left: 4px solid #667eea;
+}
+
+.info-section h3 {
+    color: #333;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    font-size: 18px;
+}
+
+.info-section h3 i {
+    margin-right: 10px;
+    color: #667eea;
+}
+
+.observacoes-section {
+    background: #f8f9fa;
+    padding: 25px;
+    border-radius: 10px;
+    border-left: 4px solid #28a745;
+    margin-bottom: 30px;
+}
+
+.observacoes-section h3 {
+    color: #333;
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+    font-size: 18px;
+}
+
+.observacoes-section h3 i {
+    margin-right: 10px;
+    color: #28a745;
+}
+
+.observacoes-text {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    border: 1px solid #dee2e6;
+    line-height: 1.6;
+    white-space: pre-wrap;
+}
+
+.actions-section {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    flex-wrap: wrap;
+    padding-top: 25px;
+    border-top: 1px solid #dee2e6;
+}
+
+.paciente-link {
+    color: #667eea;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.paciente-link:hover {
+    text-decoration: underline;
+}
+
+.datetime-display {
+    font-size: 18px;
+    font-weight: 600;
+    color: #333;
+}
+
+.valor-display {
+    font-size: 18px;
+    font-weight: 600;
+    color: #28a745;
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+    .actions-section {
+        flex-direction: column;
+    }
+
+    .btn {
+        width: 100%;
+    }
+
+    .info-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 5px;
+    }
+}
