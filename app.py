@@ -1445,11 +1445,47 @@ def debug_rotas():
 
 with app.app_context():
     try:
+        # Cria as tabelas se não existirem
         db.create_all()
         print("=" * 60)
         print("✅ Tabelas criadas/verificadas com sucesso!")
-        print("✅ Nova tabela 'configuracoes' adicionada!")
-        print("✅ Campos de prontuário adicionados à tabela 'evolucoes'!")
+        
+        # ===== MIGRAÇÃO: ADICIONA COLUNAS NA TABELA EVOLUCOES =====
+        from sqlalchemy import text, inspect
+        
+        print("\n🔄 Verificando colunas da tabela 'evolucoes'...")
+        
+        # Verifica quais colunas existem na tabela
+        inspector = inspect(db.engine)
+        colunas_existentes = [col['name'] for col in inspector.get_columns('evolucoes')]
+        print(f"✅ Colunas existentes: {', '.join(colunas_existentes)}")
+        
+        # Lista de colunas que precisam existir
+        colunas_necessarias = {
+            'humor': 'VARCHAR(20)',
+            'medicamentos': 'TEXT',
+            'observacoes_privadas': 'TEXT'
+        }
+        
+        # Adiciona colunas que estão faltando
+        colunas_adicionadas = []
+        for coluna, tipo in colunas_necessarias.items():
+            if coluna not in colunas_existentes:
+                try:
+                    sql = f'ALTER TABLE evolucoes ADD COLUMN {coluna} {tipo};'
+                    db.session.execute(text(sql))
+                    db.session.commit()
+                    colunas_adicionadas.append(coluna)
+                    print(f"✅ Coluna '{coluna}' adicionada com sucesso!")
+                except Exception as e:
+                    print(f"⚠️ Erro ao adicionar coluna '{coluna}': {e}")
+                    db.session.rollback()
+        
+        if colunas_adicionadas:
+            print(f"\n✅ Migração concluída! Colunas adicionadas: {', '.join(colunas_adicionadas)}")
+        else:
+            print("✅ Todas as colunas já existem. Nenhuma migração necessária.")
+        
         print("=" * 60)
         print("\n🔗 ROTAS REGISTRADAS:")
         print("   - /dashboard")
@@ -1460,6 +1496,7 @@ with app.app_context():
         print("   - /configuracoes")
         print("   - /prontuario/<id>")
         print("=" * 60)
+        
     except Exception as e:
         print("=" * 60)
         print(f"❌ Erro ao criar tabelas: {e}")
