@@ -894,5 +894,45 @@
 
     <!-- Bloco para JavaScript adicional de templates filhos -->
     {% block extra_scripts %}{% endblock %}
+
+<!-- ===== CORREÇÃO DO MENU LATERAL ===== -->
+<script>
+console.log('🔧 Iniciando correção do menu...');
+
+// Espera a página carregar completamente
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('✅ Página carregada, aplicando correções...');
+    
+    // Pega todos os links do menu
+    const menuLinks = document.querySelectorAll('.menu-item');
+    console.log(`📋 Encontrados ${menuLinks.length} itens de menu`);
+    
+    // Para cada link do menu
+    menuLinks.forEach(function(link, index) {
+        console.log(`🔗 Link ${index + 1}: ${link.textContent.trim()} → ${link.href}`);
+        
+        // Remove qualquer evento anterior
+        const novoLink = link.cloneNode(true);
+        link.parentNode.replaceChild(novoLink, link);
+        
+        // Adiciona novo evento de clique
+        novoLink.addEventListener('click', function(evento) {
+            evento.preventDefault(); // Impede comportamento padrão
+            evento.stopPropagation(); // Impede propagação
+            
+            const url = this.getAttribute('href');
+            console.log(`✅ Clicou em: ${this.textContent.trim()}`);
+            console.log(`🔗 Indo para: ${url}`);
+            
+            // Redireciona para a URL
+            window.location.href = url;
+        });
+    });
+    
+    console.log('✅ Correção do menu aplicada com sucesso!');
+});
+</script>    
+
 </body>
 </html>
+
