@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <!-- ========================================
+         METADADOS E CONFIGURAÇÕES DA PÁGINA
+         ======================================== -->
+    
+    <!-- Define a codificação de caracteres como UTF-8 (suporta acentos e caracteres especiais) -->
+    <meta charset="UTF-8">
+    
+    <!-- Torna o site responsivo em dispositivos móveis -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- Título que aparece na aba do navegador -->
+    <title>MindCarePro - Evoluções</title>
+    
+    <!-- Link para a biblioteca de ícones Font Awesome (fornece ícones como gráfico, usuário, etc.) -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    
+    <style>
+        /* ========================================
+           RESET E ESTILOS GLOBAIS
+           ======================================== */
+        
+        /* Remove margens e espaçamentos padrão de todos os elementos */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box; /* Faz com que padding e border sejam incluídos no tamanho total */
+        }
+
+        /* Estilo do corpo da página */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* Fonte padrão */
+            background-color: #f8f9fa; /* Cor de fundo cinza claro */
+            color: #333; /* Cor do texto padrão */
+        }
+
+        /* ========================================
+           MENU LATERAL (SIDEBAR)
+           ======================================== */
+        
+        /* Container do menu lateral */
+        .sidebar {
+            position: fixed; /* Fica fixo na tela mesmo ao rolar a página */
+            left: 0; /* Alinhado à esquerda */
+            top: 0; /* Alinhado ao topo */
+            width: 250px; /* Largura fixa de 250 pixels */
+            height: 100vh; /* Altura de 100% da tela (vh = viewport height) */
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); /* Gradiente roxo/azul */
+            color: white; /* Texto branco */
+            z-index: 1000; /* Fica acima de outros elementos */
+            overflow-y: auto; /* Permite rolagem se o conteúdo for maior que a tela */
+        }
+
+        /* Cabeçalho do menu lateral (logo e nome do sistema) */
+        .sidebar-header {
+            padding: 20px; /* Espaçamento interno */
+            text-align: center; /* Centraliza o texto */
+            border-bottom: 1px solid rgba(255,255,255,0.1); /* Linha divisória sutil */
+        }
+
+        /* Título "MindCarePro" no cabeçalho */
+        .sidebar-header h2 {
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+
+        /* Subtítulo "Sistema de Gestão" */
+        .sidebar-header p {
+            font-size: 14px;
+            opacity: 0.8; /* Deixa o texto levemente transparente */
+        }
+
+        /* Container dos itens do menu */
+        .sidebar-menu {
+            padding: 20px 0;
+        }
+
+        /* Cada item do menu (Dashboard, Pacientes, etc.) */
+        .menu-item {
+            display: block; /* Ocupa toda a largura disponível */
+            padding: 15px 25px; /* Espaçamento interno */
+            color: white; /* Texto branco */
+            text-decoration: none; /* Remove sublinhado dos links */
+            transition: background 0.3s; /* Animação suave ao passar o mouse */
+            border-left: 3px solid transparent; /* Borda esquerda invisível (aparece ao ativar) */
+        }
+
+        /* Efeito ao passar o mouse sobre o item do menu OU quando está ativo */
+        .menu-item:hover,
+        .menu-item.active {
+            background: rgba(255,255,255,0.1); /* Fundo branco semi-transparente */
+            border-left-color: white; /* Borda esquerda branca */
+        }
+
+        /* Ícones dentro dos itens do menu */
+        .menu-item i {
+            width: 20px; /* Largura fixa para alinhar todos os ícones */
+            margin-right: 10px; /* Espaço entre ícone e texto */
+        }
+
+        /* ========================================
+           CONTEÚDO PRINCIPAL
+           ======================================== */
+        
+        /* Container do conteúdo principal (tudo que não é o menu lateral) */
+        .main-content {
+            margin-left: 250px; /* Deixa espaço para o menu lateral */
+            padding: 20px; /* Espaçamento interno */
+            min-height: 100vh; /* Altura mínima de 100% da tela */
+        }
+
+        /* Barra superior com título da página e botão de sair */
+        .top-bar {
+            background: white;
+            padding: 15px 25px;
+            border-radius: 10px; /* Cantos arredondados */
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1); /* Sombra sutil */
+            margin-bottom: 25px;
+            display: flex; /* Layout flexível */
+            justify-content: space-between; /* Espaça os elementos nas extremidades */
+            align-items: center; /* Alinha verticalmente ao centro */
+        }
+
+        /* Título da página ("Evoluções") */
+        .page-title {
+            font-size: 28px;
+            font-weight: 600;
+            color: #333;
+            display: flex;
+            align-items: center;
+        }
+
+        /* Ícone ao lado do título */
+        .page-title i {
+            margin-right: 10px;
+            color: #667eea; /* Cor roxa */
+        }
+
+        /* Container das informações do usuário (nome + botão sair) */
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px; /* Espaço entre nome e botão */
+        }
+
+        /* Botão de sair */
+        .logout-btn {
+            background: #dc3545; /* Vermelho */
+            color: white;
+            padding: 8px 16px;
+            text-decoration: none;
+            border-radius: 5px;
+            font-size: 14px;
+            transition: background 0.3s; /* Animação ao passar o mouse */
+        }
+
+        /* Efeito ao passar o mouse no botão de sair */
+        .logout-btn:hover {
+            background: #c82333; /* Vermelho mais escuro */
+        }
+
+        /* ========================================
+           CARDS DE ESTATÍSTICAS
+           ======================================== */
+        
+        /* Grid dos cards de estatísticas */
+        .stats-grid {
+            display: grid; /* Layout em grade */
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); /* Colunas responsivas */
+            gap: 20px; /* Espaço entre os cards */
+            margin-bottom: 25px;
+        }
+
+        /* Cada card de estatística */
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        /* Número grande no card (ex: "42") */
+        .stat-card h3 {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        /* Descrição abaixo do número (ex: "Total de Evoluções") */
+        .stat-card p {
+            color: #666;
+            font-size: 14px;
+        }
+
+        /* Cores diferentes para cada tipo de card */
+        .stat-card.primary h3 { color: #667eea; } /* Roxo */
+        .stat-card.success h3 { color: #28a745; } /* Verde */
+        .stat-card.warning h3 { color: #ffc107; } /* Amarelo */
+        .stat-card.info h3 { color: #17a2b8; } /* Azul claro */
+
+        /* ========================================
+           CABEÇALHO DO CONTEÚDO
+           ======================================== */
+        
+        /* Container do cabeçalho (título + botão "Nova Evolução") */
+        .content-header {
+            display: flex;
+            justify-content: space-between; /* Espaça título e botão nas extremidades */
+            align-items: center;
+            margin-bottom: 25px;
+        }
+
+        /* ========================================
+           SEÇÃO DE FILTROS
+           ======================================== */
+        
+        /* Container da seção de filtros */
+        .filters-section {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 25px;
+        }
+
+        /* Grid dos campos de filtro */
+        .filters-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); /* Colunas responsivas */
+            gap: 15px;
+            align-items: end; /* Alinha os campos na parte inferior */
+        }
+
+        /* Cada grupo de filtro (label + campo) */
+        .filter-group {
+            display: flex;
+            flex-direction: column; /* Label em cima, campo embaixo */
+        }
+
+        /* Label dos campos de filtro */
+        .filter-group label {
+            font-weight: 600;
+            margin-bottom: 5px;
+            color: #333;
+        }
+
+        /* Campos de seleção e entrada de texto dos filtros */
+        .filter-group select,
+        .filter-group input {
+            padding: 10px;
+            border: 2px solid #e1e5e9;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        /* ========================================
+           BOTÕES
+           ======================================== */
+        
+        /* Estilo base para todos os botões */
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer; /* Cursor vira "mãozinha" ao passar por cima */
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            transition: all 0.3s; /* Animação suave */
+        }
+
+        /* Ícone dentro do botão */
+        .btn i {
+            margin-right: 8px;
+        }
+
+        /* Botão primário (roxo) */
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        /* Efeito ao passar o mouse no botão primário */
+        .btn-primary:hover {
+            transform: translateY(-2px); /* Move o botão 2px para cima */
+        }
+
+        /* Botão secundário (cinza) */
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        /* Botão de aviso (amarelo) */
+        .btn-warning {
+            background: #ffc107;
+            color: #212529;
+        }
+
+        /* Botão de perigo (vermelho) */
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        /* Botão pequeno */
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 12px;
+        }
+
+        /* ========================================
+           CONTAINER DA LISTA DE EVOLUÇÕES
+           ======================================== */
+        
+        /* Container principal da lista de evoluções */
+        .evolucoes-container {
+            background: white;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            overflow: hidden; /* Esconde conteúdo que sair dos limites */
+        }
+
+        /* Cabeçalho da lista de evoluções */
+        .evolucoes-header {
+            background: #f8f9fa;
+            padding: 20px 25px;
+            border-bottom: 1px solid #dee2e6;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* Título do cabeçalho */
+        .evolucoes-header h3 {
+            color: #333;
+            display: flex;
+            align-items: center;
+        }
+
+        /* Ícone no título */
+        .evolucoes-header i {
+            margin-right: 10px;
+            color: #667eea;
+        }
+
+        /* ========================================
+           TABELA DE EVOLUÇÕES
+           ======================================== */
+        
+        /* Tabela de evoluções */
+        .evolucoes-table {
+            width: 100%;
+            border-collapse: collapse; /* Remove espaços entre células */
+        }
+
+        /* Células da tabela (cabeçalho e corpo) */
+        .evolucoes-table th,
+        .evolucoes-table td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        /* Cabeçalho da tabela */
+        .evolucoes-table th {
+            background: #f8f9fa;
+            font-weight: 600;
+            color: #333;
+        }
+
+        /* Efeito ao passar o mouse sobre uma linha */
+        .evolucoes-table tr:hover {
+            background: #f8f9fa;
+        }
+
+        /* ========================================
+           BADGES DE TIPO
+           ======================================== */
+        
+        /* Badge de tipo (Evolução, Anamnese, Observação) */
+        .type-badge {
+            padding: 4px 12px;
+            border-radius: 20px; /* Formato de pílula */
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase; /* Texto em maiúsculas */
+        }
+
+        /* Badge de tipo "Evolução" (verde) */
+        .type-evolucao {
+            background: #e8f5e8;
+            color: #2e7d32;
+        }
+
+        /* Badge de tipo "Anamnese" (azul) */
+        .type-anamnese {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+
+        /* Badge de tipo "Observação" (laranja) */
+        .type-observacao {
+            background: #fff3e0;
+            color: #f57c00;
+        }
+
+        /* ========================================
+           AÇÕES (BOTÕES NA TABELA)
+           ======================================== */
+        
+        /* Container dos botões de ação */
+        .actions {
+            display: flex;
+            gap: 5px; /* Espaço entre os botões */
+        }
+
+        /* ========================================
+           ESTADO VAZIO (QUANDO NÃO HÁ EVOLUÇÕES)
+           ======================================== */
+        
+        /* Mensagem quando não há evoluções cadastradas */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #666;
+        }
+
+        /* Ícone grande no estado vazio */
+        .empty-state i {
+            font-size: 64px;
+            color: #dee2e6;
+            margin-bottom: 20px;
+        }
+
+        /* Título no estado vazio */
+        .empty-state h3 {
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        /* ========================================
+           RESPONSIVIDADE (MOBILE)
+           ======================================== */
+        
+        /* Ajustes para telas menores que 768px (tablets e celulares) */
+        @media (max-width: 768px) {
+            /* Esconde o menu lateral em telas pequenas */
+            .sidebar {
+                transform: translateX(-100%); /* Move o menu para fora da tela */
+            }
+
+            /* Remove a margem esquerda do conteúdo principal */
+            .main-content {
+                margin-left: 0;
+            }
+
+            /* Cards de estatísticas em coluna única */
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            /* Filtros em coluna única */
+            .filters-grid {
+                grid-template-columns: 1fr;
+            }
+
+            /* Cabeçalho do conteúdo em coluna */
+            .content-header {
+                flex-direction: column;
+                gap: 15px;
+                align-items: stretch;
+            }
+
+            /* Reduz o tamanho da fonte da tabela */
+            .evolucoes-table {
+                font-size: 14px;
+            }
+
+            /* Reduz o padding das células */
+            .evolucoes-table th,
+            .evolucoes-table td {
+                padding: 10px 8px;
+            }
+
+            /* Botões de ação em coluna */
+            .actions {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- ========================================
+         MENU LATERAL (SIDEBAR)
+         ======================================== -->
+    <div class="sidebar">
+        <!-- Cabeçalho do menu com logo e nome do sistema -->
+        <div class="sidebar-header">
+            <h2>MindCarePro</h2>
+            <p>Sistema de Gestão</p>
+        </div>
+        
+        <!-- Navegação do menu lateral -->
+        <nav class="sidebar-menu">
+            <!-- Link para o Dashboard -->
+            <a href="{{ url_for('dashboard') }}" class="menu-item">
+                <i class="fas fa-tachometer-alt"></i>
+                Dashboard
+            </a>
+            
+            <!-- Link para Pacientes -->
+            <a href="{{ url_for('pacientes') }}" class="menu-item">
+                <i class="fas fa-users"></i>
+                Pacientes
+            </a>
+            
+            <!-- Link para Sessões -->
+            <a href="{{ url_for('sessoes') }}" class="menu-item">
+                <i class="fas fa-calendar-alt"></i>
+                Sessões
+            </a>
+            
+            <!-- Link para Evoluções (página atual - classe "active" deixa destacado) -->
+            <a href="{{ url_for('evolucoes') }}" class="menu-item active">
+                <i class="fas fa-chart-line"></i>
+                Evoluções
+            </a>
+            
+            <!-- Link para Relatórios -->
+            <a href="{{ url_for('relatorios') }}" class="menu-item">
+                <i class="fas fa-chart-bar"></i>
+                Relatórios
+            </a>
+            
+            <!-- Link para Configurações -->
+            <a href="{{ url_for('configuracoes') }}" class="menu-item">
+                <i class="fas fa-cog"></i>
+                Configurações
+            </a>
+        </nav>
+    </div>
+
+    <!-- ========================================
+         CONTEÚDO PRINCIPAL
+         ======================================== -->
+    <div class="main-content">
+        <!-- Barra superior com título e botão de sair -->
+        <div class="top-bar">
+            <!-- Título da página -->
+            <div class="page-title">
+                <i class="fas fa-chart-line"></i>
+                Evoluções
+            </div>
+            
+            <!-- Informações do usuário logado -->
+            <div class="user-info">
+                <!-- Nome do usuário (vem do backend) -->
+                <span>{{ current_user.nome }}</span>
+                
+                <!-- Botão para fazer logout -->
+                <a href="{{ url_for('logout') }}" class="logout-btn">
+                    <i class="fas fa-sign-out-alt"></i> Sair
+                </a>
+            </div>
+        </div>
+
+        <!-- ========================================
+             CARDS DE ESTATÍSTICAS
+             ======================================== -->
+        <div class="stats-grid">
+            <!-- Card: Total de Evoluções -->
+            <div class="stat-card primary">
+                <h3>{{ total_evolucoes }}</h3>
+                <p>Total de Evoluções</p>
+            </div>
+            
+            <!-- Card: Evoluções do Mês -->
+            <div class="stat-card success">
+                <h3>{{ evolucoes_mes }}</h3>
+                <p>Evoluções do Mês</p>
+            </div>
+        </div>
+
+        <!-- ========================================
+             CABEÇALHO DO CONTEÚDO
+             ======================================== -->
+        <div class="content-header">
+            <h2>Gerenciar Evoluções</h2>
+            
+            <!-- Botão para criar nova evolução -->
+            <a href="{{ url_for('nova_evolucao') }}" class="btn btn-primary">
+                <i class="fas fa-plus"></i>
+                Nova Evolução
+            </a>
+        </div>
+
+        <!-- ========================================
+             SEÇÃO DE FILTROS
+             ======================================== -->
+        <div class="filters-section">
+            <!-- Formulário de filtros (envia dados via GET para a mesma página) -->
+            <form method="GET" action="{{ url_for('evolucoes') }}">
+                <div class="filters-grid">
+                    <!-- Filtro por Paciente -->
+                    <div class="filter-group">
+                        <label>Paciente</label>
+                        <select name="paciente">
+                            <option value="">Todos</option>
+                            <!-- Loop pelos pacientes vindos do backend -->
+                            {% for paciente in pacientes %}
+                            <option value="{{ paciente.id }}" {% if request.args.get('paciente') == paciente.id|string %}selected{% endif %}>
+                                {{ paciente.nome }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <!-- Filtro por Data de Início -->
+                    <div class="filter-group">
+                        <label>Data Início</label>
+                        <input type="date" name="data_inicio" value="{{ request.args.get('data_inicio', '') }}">
+                    </div>
+                    
+                    <!-- Filtro por Data de Fim -->
+                    <div class="filter-group">
+                        <label>Data Fim</label>
+                        <input type="date" name="data_fim" value="{{ request.args.get('data_fim', '') }}">
+                    </div>
+                    
+                    <!-- Botão para aplicar os filtros -->
+                    <div class="filter-group">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-search"></i>
+                            Filtrar
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+
+        <!-- ========================================
+             LISTA DE EVOLUÇÕES
+             ======================================== -->
+        <div class="evolucoes-container">
+            <!-- Cabeçalho da lista -->
+            <div class="evolucoes-header">
+                <h3>
+                    <i class="fas fa-list"></i>
+                    Lista de Evoluções
+                </h3>
+            </div>
+
+            <!-- Verifica se existem evoluções para exibir -->
+            {% if evolucoes %}
+            <!-- Tabela com as evoluções -->
+            <table class="evolucoes-table">
+                <thead>
+                    <tr>
+                        <th>Data</th>
+                        <th>Paciente</th>
+                        <th>Título</th>
+                        <th>Tipo</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Loop por cada evolução -->
+                    {% for evolucao in evolucoes %}
+                    <tr>
+                        <!-- Coluna: Data da Evolução -->
+                        <td>
+                            <strong>{{ evolucao.data_evolucao.strftime('%d/%m/%Y') }}</strong><br>
+                            <small>{{ evolucao.data_evolucao.strftime('%H:%M') }}</small>
+                        </td>
+                        
+                        <!-- Coluna: Nome do Paciente -->
+                        <td>
+                            <strong>{{ evolucao.paciente.nome }}</strong>
+                        </td>
+                        
+                        <!-- Coluna: Título da Evolução -->
+                        <td>{{ evolucao.titulo }}</td>
+                        
+                        <!-- Coluna: Tipo com badge colorido -->
+                        <td>
+                            <span class="type-badge type-{{ evolucao.tipo }}">
+                                {{ evolucao.tipo.title() }}
+                            </span>
+                        </td>
+                        
+                        <!-- Coluna: Botões de ação -->
+                        <td>
+                            <div class="actions">
+                                <!-- Botão: Ver detalhes -->
+                                <a href="{{ url_for('ver_evolucao', id=evolucao.id) }}" class="btn btn-secondary btn-sm" title="Ver detalhes">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                
+                                <!-- Botão: Editar -->
+                                <a href="{{ url_for('editar_evolucao', id=evolucao.id) }}" class="btn btn-warning btn-sm" title="Editar">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                
+                                <!-- Botão: Excluir -->
+                                <button onclick="excluirEvolucao({{ evolucao.id }})" class="btn btn-danger btn-sm" title="Excluir">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+            
+            <!-- Mensagem quando NÃO há evoluções -->
+            {% else %}
+            <div class="empty-state">
+                <i class="fas fa-chart-line"></i>
+                <h3>Nenhuma evolução encontrada</h3>
+                <p>Comece registrando a primeira evolução!</p>
+                <a href="{{ url_for('nova_evolucao') }}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i>
+                    Registrar Primeira Evolução
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- ========================================
+         JAVASCRIPT - FUNÇÕES INTERATIVAS
+         ======================================== -->
+    <script>
+        /**
+         * Exclui uma evolução
+         * @param {number} id - ID da evolução
+         */
+        function excluirEvolucao(id) {
+            // Pede confirmação ao usuário
+            if (confirm('Tem certeza que deseja excluir esta evolução? Esta ação não pode ser desfeita.')) {
+                // Faz uma requisição POST para o backend
+                fetch(`/evolucoes/${id}/excluir`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                })
+                .then(response => response.json()) // Converte a resposta para JSON
+                .then(data => {
+                    if (data.success) {
+                        alert('Evolução excluída com sucesso!');
+                        location.reload(); // Recarrega a página para atualizar a lista
+                    } else {
+                        alert('Erro ao excluir evolução');
+                    }
+                });
+            }
+        }
+    </script>
+</body>
+</html>
