@@ -1,464 +1,110 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <!-- ========================================
-         METADADOS E CONFIGURAÇÕES DA PÁGINA
-         ======================================== -->
-    
-    <!-- Define a codificação de caracteres como UTF-8 (suporta acentos e caracteres especiais) -->
-    <meta charset="UTF-8">
-    
-    <!-- Torna o site responsivo em dispositivos móveis -->
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    
-    <!-- Título que aparece na aba do navegador -->
-    <title>MindCarePro - Nova Evolução</title>
-    
-    <!-- Link para a biblioteca de ícones Font Awesome (fornece ícones) -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    
-    <style>
-        /* ========================================
-           RESET E ESTILOS GLOBAIS
-           ======================================== */
-        
-        /* Remove margens e espaçamentos padrão de todos os elementos */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+{% extends "base.html" %}
 
-        /* Estilo do corpo da página */
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f8f9fa;
-            color: #333;
-        }
+{% block title %}MindCarePro - Nova Evolução{% endblock %}
 
-        /* ========================================
-           MENU LATERAL (SIDEBAR)
-           ======================================== */
-        
-        .sidebar {
-            position: fixed;
-            left: 0;
-            top: 0;
-            width: 250px;
-            height: 100vh;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            z-index: 1000;
-            overflow-y: auto;
-        }
-
-        .sidebar-header {
-            padding: 20px;
-            text-align: center;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
-        }
-
-        .sidebar-header h2 {
-            font-size: 24px;
-            margin-bottom: 5px;
-        }
-
-        .sidebar-header p {
-            font-size: 14px;
-            opacity: 0.8;
-        }
-
-        .sidebar-menu {
-            padding: 20px 0;
-        }
-
-        .menu-item {
-            display: block;
-            padding: 15px 25px;
-            color: white;
-            text-decoration: none;
-            transition: background 0.3s;
-            border-left: 3px solid transparent;
-        }
-
-        .menu-item:hover,
-        .menu-item.active {
-            background: rgba(255,255,255,0.1);
-            border-left-color: white;
-        }
-
-        .menu-item i {
-            width: 20px;
-            margin-right: 10px;
-        }
-
-        /* ========================================
-           CONTEÚDO PRINCIPAL
-           ======================================== */
-        
-        .main-content {
-            margin-left: 250px;
-            padding: 20px;
-            min-height: 100vh;
-        }
-
-        .top-bar {
-            background: white;
-            padding: 15px 25px;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            margin-bottom: 25px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .page-title {
-            font-size: 28px;
-            font-weight: 600;
-            color: #333;
-            display: flex;
-            align-items: center;
-        }
-
-        .page-title i {
-            margin-right: 10px;
-            color: #667eea;
-        }
-
-        .user-info {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-        }
-
-        .logout-btn {
-            background: #dc3545;
-            color: white;
-            padding: 8px 16px;
-            text-decoration: none;
-            border-radius: 5px;
-            font-size: 14px;
-            transition: background 0.3s;
-        }
-
-        .logout-btn:hover {
-            background: #c82333;
-        }
-
-        /* ========================================
-           BREADCRUMB (NAVEGAÇÃO)
-           ======================================== */
-        
-        /* Breadcrumb mostra o caminho: Dashboard > Evoluções > Nova */
-        .breadcrumb {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            color: #666;
-            font-size: 14px;
-            margin-bottom: 20px;
-        }
-
-        .breadcrumb a {
-            color: #667eea;
-            text-decoration: none;
-        }
-
-        .breadcrumb a:hover {
-            text-decoration: underline;
-        }
-
-        /* ========================================
-           FORMULÁRIO
-           ======================================== */
-        
-        /* Container do formulário */
-        .form-container {
-            background: white;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            padding: 30px;
-            max-width: 800px;
-            margin: 0 auto;
-        }
-
-        /* Título do formulário */
-        .form-container h2 {
-            margin-bottom: 25px;
-            color: #333;
-            display: flex;
-            align-items: center;
-        }
-
-        .form-container h2 i {
-            margin-right: 10px;
-            color: #667eea;
-        }
-
-        /* Grupo de campo (label + input) */
-        .form-group {
-            margin-bottom: 20px;
-        }
-
-        /* Label do campo */
-        .form-group label {
-            display: block;
-            font-weight: 600;
-            margin-bottom: 8px;
-            color: #333;
-        }
-
-        /* Indicador de campo obrigatório */
-        .required {
-            color: #dc3545;
-            margin-left: 3px;
-        }
-
-        /* Campos de entrada (input, select, textarea) */
-        .form-control {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid #e1e5e9;
-            border-radius: 5px;
-            font-size: 14px;
-            transition: border-color 0.3s;
-        }
-
-        /* Efeito ao focar no campo */
-        .form-control:focus {
-            outline: none;
-            border-color: #667eea;
-        }
-
-        /* Textarea (campo de texto grande) */
-        textarea.form-control {
-            resize: vertical; /* Permite redimensionar apenas verticalmente */
-            min-height: 120px;
-        }
-
-        /* Texto de ajuda abaixo do campo */
-        .form-text {
-            font-size: 12px;
-            color: #666;
-            margin-top: 5px;
-        }
-
-        /* ========================================
-           BOTÕES
-           ======================================== */
-        
-        .btn {
-            padding: 12px 24px;
-            border: none;
-            border-radius: 8px;
-            font-size: 16px;
-            font-weight: 600;
-            cursor: pointer;
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            transition: all 0.3s;
-        }
-
-        .btn i {
-            margin-right: 8px;
-        }
-
-        .btn-primary {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-        }
-
-        .btn-primary:hover {
-            transform: translateY(-2px);
-        }
-
-        .btn-secondary {
-            background: #6c757d;
-            color: white;
-        }
-
-        .btn-secondary:hover {
-            background: #5a6268;
-        }
-
-        /* Container dos botões do formulário */
-        .form-actions {
-            display: flex;
-            gap: 10px;
-            margin-top: 30px;
-            justify-content: flex-end;
-        }
-
-        /* ========================================
-           RESPONSIVIDADE (MOBILE)
-           ======================================== */
-        
-        @media (max-width: 768px) {
-            .sidebar {
-                transform: translateX(-100%);
-            }
-
-            .main-content {
-                margin-left: 0;
-            }
-
-            .form-container {
-                padding: 20px;
-            }
-
-            .form-actions {
-                flex-direction: column;
-            }
-
-            .btn {
-                width: 100%;
-                justify-content: center;
-            }
-        }
-    </style>
-</head>
-<body>
-    <!-- ========================================
-         MENU LATERAL (SIDEBAR)
-         ======================================== -->
-    <div class="sidebar">
-        <div class="sidebar-header">
-            <h2>MindCarePro</h2>
-            <p>Sistema de Gestão</p>
-        </div>
-        <nav class="sidebar-menu">
-            <a href="{{ url_for('dashboard') }}" class="menu-item">
-                <i class="fas fa-tachometer-alt"></i>
-                Dashboard
-            </a>
-            <a href="{{ url_for('pacientes') }}" class="menu-item">
-                <i class="fas fa-users"></i>
-                Pacientes
-            </a>
-            <a href="{{ url_for('sessoes') }}" class="menu-item">
-                <i class="fas fa-calendar-alt"></i>
-                Sessões
-            </a>
-            <a href="{{ url_for('evolucoes') }}" class="menu-item active">
-                <i class="fas fa-chart-line"></i>
-                Evoluções
-            </a>
-            <a href="{{ url_for('relatorios') }}" class="menu-item">
-                <i class="fas fa-chart-bar"></i>
-                Relatórios
-            </a>
-            <a href="{{ url_for('configuracoes') }}" class="menu-item">
-                <i class="fas fa-cog"></i>
-                Configurações
-            </a>
-        </nav>
+{% block content %}
+<!-- Barra Superior -->
+<div class="top-bar">
+    <div class="page-title">
+        <i class="fas fa-plus-circle"></i>
+        Nova Evolução
     </div>
+    <div class="user-info">
+        <span>{{ current_user.nome }}</span>
+        <a href="{{ url_for('logout') }}" class="logout-btn">
+            <i class="fas fa-sign-out-alt"></i> Sair
+        </a>
+    </div>
+</div>
 
-    <!-- ========================================
-         CONTEÚDO PRINCIPAL
-         ======================================== -->
-    <div class="main-content">
-        <!-- Barra superior -->
-        <div class="top-bar">
-            <div class="page-title">
-                <i class="fas fa-plus-circle"></i>
-                Nova Evolução
+<!-- Breadcrumb -->
+<div class="breadcrumb">
+    <a href="{{ url_for('dashboard') }}">Dashboard</a>
+    <i class="fas fa-chevron-right"></i>
+    <a href="{{ url_for('evolucoes') }}">Evoluções</a>
+    <i class="fas fa-chevron-right"></i>
+    <span>Nova Evolução</span>
+</div>
+
+<!-- Formulário -->
+<div class="form-container">
+    <div class="form-header">
+        <h3>
+            <i class="fas fa-file-medical"></i>
+            Registrar Nova Evolução
+        </h3>
+    </div>
+    
+    <div class="form-content">
+        <form method="POST" action="{{ url_for('nova_evolucao') }}">
+            
+            <!-- Campo: Paciente -->
+            <div class="form-group">
+                <label for="paciente_id">
+                    Paciente <span class="required">*</span>
+                </label>
+                <select id="paciente_id" name="paciente_id" class="form-control" required>
+                    <option value="">Selecione um paciente</option>
+                    {% for paciente in pacientes %}
+                    <option value="{{ paciente.id }}">{{ paciente.nome }}</option>
+                    {% endfor %}
+                </select>
+                <small class="form-help">Selecione o paciente para esta evolução</small>
             </div>
-            <div class="user-info">
-                <span>{{ current_user.nome }}</span>
-                <a href="{{ url_for('logout') }}" class="logout-btn">
-                    <i class="fas fa-sign-out-alt"></i> Sair
+
+            <!-- Campo: Tipo -->
+            <div class="form-group">
+                <label for="tipo">
+                    Tipo <span class="required">*</span>
+                </label>
+                <select id="tipo" name="tipo" class="form-control" required>
+                    <option value="evolucao">Evolução</option>
+                    <option value="anamnese">Anamnese</option>
+                    <option value="observacao">Observação</option>
+                </select>
+                <small class="form-help">Tipo de registro clínico</small>
+            </div>
+
+            <!-- Campo: Título -->
+            <div class="form-group">
+                <label for="titulo">
+                    Título <span class="required">*</span>
+                </label>
+                <input type="text" id="titulo" name="titulo" class="form-control" 
+                       placeholder="Ex: Sessão de acompanhamento" required>
+                <small class="form-help">Título resumido da evolução</small>
+            </div>
+
+            <!-- Campo: Descrição -->
+            <div class="form-group">
+                <label for="descricao">
+                    Descrição <span class="required">*</span>
+                </label>
+                <textarea id="descricao" name="descricao" class="form-control" 
+                          placeholder="Descreva detalhadamente a evolução do paciente..." required></textarea>
+                <small class="form-help">Descrição detalhada da evolução clínica</small>
+            </div>
+
+            <!-- Botões de ação -->
+            <div class="form-actions">
+                <a href="{{ url_for('evolucoes') }}" class="btn btn-secondary">
+                    <i class="fas fa-times"></i>
+                    Cancelar
                 </a>
-            </div>
-        </div>
-
-        <!-- Breadcrumb (navegação) -->
-        <div class="breadcrumb">
-            <a href="{{ url_for('dashboard') }}">Dashboard</a>
-            <i class="fas fa-chevron-right"></i>
-            <a href="{{ url_for('evolucoes') }}">Evoluções</a>
-            <i class="fas fa-chevron-right"></i>
-            <span>Nova Evolução</span>
-        </div>
-
-        <!-- ========================================
-             FORMULÁRIO DE NOVA EVOLUÇÃO
-             ======================================== -->
-        <div class="form-container">
-            <h2>
-                <i class="fas fa-file-medical"></i>
-                Registrar Nova Evolução
-            </h2>
-
-            <!-- Formulário que envia dados via POST -->
-            <form method="POST" action="{{ url_for('nova_evolucao') }}">
                 
-                <!-- Campo: Paciente (obrigatório) -->
-                <div class="form-group">
-                    <label for="paciente_id">
-                        Paciente <span class="required">*</span>
-                    </label>
-                    <select id="paciente_id" name="paciente_id" class="form-control" required>
-                        <option value="">Selecione um paciente</option>
-                        <!-- Loop pelos pacientes vindos do backend -->
-                        {% for paciente in pacientes %}
-                        <option value="{{ paciente.id }}">{{ paciente.nome }}</option>
-                        {% endfor %}
-                    </select>
-                    <small class="form-text">Selecione o paciente para esta evolução</small>
-                </div>
-
-                <!-- Campo: Tipo de Evolução (obrigatório) -->
-                <div class="form-group">
-                    <label for="tipo">
-                        Tipo <span class="required">*</span>
-                    </label>
-                    <select id="tipo" name="tipo" class="form-control" required>
-                        <option value="evolucao">Evolução</option>
-                        <option value="anamnese">Anamnese</option>
-                        <option value="observacao">Observação</option>
-                    </select>
-                    <small class="form-text">Tipo de registro clínico</small>
-                </div>
-
-                <!-- Campo: Título (obrigatório) -->
-                <div class="form-group">
-                    <label for="titulo">
-                        Título <span class="required">*</span>
-                    </label>
-                    <input type="text" id="titulo" name="titulo" class="form-control" 
-                           placeholder="Ex: Sessão de acompanhamento" required>
-                    <small class="form-text">Título resumido da evolução</small>
-                </div>
-
-                <!-- Campo: Descrição (obrigatório) -->
-                <div class="form-group">
-                    <label for="descricao">
-                        Descrição <span class="required">*</span>
-                    </label>
-                    <textarea id="descricao" name="descricao" class="form-control" 
-                              placeholder="Descreva detalhadamente a evolução do paciente..." required></textarea>
-                    <small class="form-text">Descrição detalhada da evolução clínica</small>
-                </div>
-
-                <!-- Botões de ação -->
-                <div class="form-actions">
-                    <!-- Botão: Cancelar (volta para lista de evoluções) -->
-                    <a href="{{ url_for('evolucoes') }}" class="btn btn-secondary">
-                        <i class="fas fa-times"></i>
-                        Cancelar
-                    </a>
-                    
-                    <!-- Botão: Salvar (envia o formulário) -->
-                    <button type="submit" class="btn btn-primary">
-                        <i class="fas fa-save"></i>
-                        Salvar Evolução
-                    </button>
-                </div>
-            </form>
-        </div>
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save"></i>
+                    Salvar Evolução
+                </button>
+            </div>
+        </form>
     </div>
-</body>
-</html>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+// Foco automático no primeiro campo
+document.getElementById('paciente_id').focus();
+</script>
+{% endblock %}
