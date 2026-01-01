@@ -1436,3 +1436,64 @@ body {
         grid-template-columns: 1fr;
     }
 }
+/* ========================================
+   ESTILOS PARA SEÇÃO DE STATUS
+   ======================================== */
+
+.status-section {
+    background: #f8f9fa;
+    padding: 20px;
+    border-radius: 8px;
+    border-left: 4px solid #667eea;
+    margin-bottom: 20px;
+}
+
+.status-section h4 {
+    color: #333;
+    margin-bottom: 15px;
+    display: flex;
+    align-items: center;
+}
+
+.status-section h4 i {
+    margin-right: 10px;
+    color: #667eea;
+}
+
+.status-info {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    margin-bottom: 15px;
+}
+
+.status-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+}
+
+.status-label {
+    font-weight: 600;
+    color: #333;
+}
+
+.status-value {
+    color: #666;
+}
+
+.btn-success {
+    background: #28a745;
+    color: white;
+}
+
+.btn-success:hover {
+    background: #218838;
+}
+
+/* Responsividade para status */
+@media (max-width: 768px) {
+    .status-info {
+        grid-template-columns: 1fr;
+    }
+}
