@@ -927,3 +927,92 @@ body {
         flex-direction: column;
     }
 }
+
+/* ========================================
+   ESTILOS ESPECÍFICOS DE EVOLUÇÕES
+   ======================================== */
+
+.evolucoes-container {
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    overflow: hidden;
+}
+
+.evolucoes-header {
+    background: #f8f9fa;
+    padding: 20px 25px;
+    border-bottom: 1px solid #dee2e6;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.evolucoes-header h3 {
+    color: #333;
+    display: flex;
+    align-items: center;
+}
+
+.evolucoes-header i {
+    margin-right: 10px;
+    color: #667eea;
+}
+
+.evolucoes-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.evolucoes-table th,
+.evolucoes-table td {
+    padding: 15px;
+    text-align: left;
+    border-bottom: 1px solid #dee2e6;
+}
+
+.evolucoes-table th {
+    background: #f8f9fa;
+    font-weight: 600;
+    color: #333;
+}
+
+.evolucoes-table tr:hover {
+    background: #f8f9fa;
+}
+
+/* Badges de tipo */
+.type-badge {
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.type-evolucao {
+    background: #e8f5e8;
+    color: #2e7d32;
+}
+
+.type-anamnese {
+    background: #e3f2fd;
+    color: #1976d2;
+}
+
+.type-observacao {
+    background: #fff3e0;
+    color: #f57c00;
+}
+
+/* Responsividade para evoluções */
+@media (max-width: 768px) {
+    .evolucoes-table {
+        font-size: 14px;
+    }
+
+    .evolucoes-table th,
+    .evolucoes-table td {
+        padding: 10px 8px;
+    }
+}
