@@ -1016,3 +1016,71 @@ body {
         padding: 10px 8px;
     }
 }
+
+/* ========================================
+   ESTILOS ESPECÍFICOS DE RELATÓRIOS
+   ======================================== */
+
+.top-pacientes-list {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.paciente-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem;
+    border-bottom: 1px solid #e9ecef;
+    transition: background-color 0.2s;
+}
+
+.paciente-item:hover {
+    background-color: #f8f9fa;
+}
+
+.paciente-item:last-child {
+    border-bottom: none;
+}
+
+.paciente-nome {
+    font-weight: 600;
+    color: #495057;
+}
+
+.paciente-stats {
+    font-size: 0.875rem;
+    color: #6c757d;
+}
+
+.metric-box {
+    text-align: center;
+    padding: 1rem;
+    border-radius: 8px;
+    background: #f8f9fa;
+    margin-bottom: 1rem;
+}
+
+.metric-value {
+    font-size: 1.5rem;
+    font-weight: bold;
+    margin-bottom: 0.25rem;
+}
+
+.metric-label {
+    font-size: 0.875rem;
+    color: #6c757d;
+}
+
+/* Cores específicas para métricas */
+.metric-primary .metric-value { color: #007bff; }
+.metric-success .metric-value { color: #28a745; }
+.metric-info .metric-value { color: #17a2b8; }
+.metric-warning .metric-value { color: #ffc107; }
+
+/* Responsividade para relatórios */
+@media (max-width: 768px) {
+    .stats-card-reports h3 {
+        font-size: 2rem;
+    }
+}
