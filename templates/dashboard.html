@@ -1,939 +1,114 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <!-- ========================================
-         METADADOS E CONFIGURAÇÕES DA PÁGINA
-         ======================================== -->
+{% extends "base.html" %}
+
+{% block title %}MindCarePro - Dashboard{% endblock %}
+
+{% block content %}
+<!-- Barra Superior -->
+<div class="top-bar">
+    <div class="welcome-text">
+        Bem-vindo, {{ current_user.nome }}!
+    </div>
     
-    <!-- Define a codificação de caracteres como UTF-8 (suporta acentos e caracteres especiais) -->
-    <meta charset="UTF-8">
-    
-    <!-- Torna o site responsivo em dispositivos móveis -->
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    
-    <!-- Título dinâmico da página (pode ser sobrescrito por templates filhos) -->
-    <title>{% block title %}MindCarePro - Dashboard{% endblock %}</title>
-    
-    <!-- Link para a biblioteca de ícones Font Awesome (fornece ícones como calendário, usuário, etc.) -->
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    
-    <!-- ========================================
-         BIBLIOTECA PARA GRÁFICOS (Chart.js)
-         Usada na página de relatórios
-         ======================================== -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    
-    <!-- Bloco para CSS/JS adicional de templates filhos -->
-    {% block extra_head %}{% endblock %}
-    
-    <style>
-        /* ========================================
-           RESET E ESTILOS GLOBAIS
-           ======================================== */
-        
-        /* Remove margens e espaçamentos padrão de todos os elementos */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box; /* Faz com que padding e border sejam incluídos no tamanho total */
-        }
-
-        /* Estilo do corpo da página */
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; /* Fonte padrão */
-            background-color: #f8f9fa; /* Cor de fundo cinza claro */
-            color: #333; /* Cor do texto padrão */
-        }
-
-        /* ========================================
-           MENU LATERAL (SIDEBAR)
-           ======================================== */
-        
-        /* Container do menu lateral */
-        .sidebar {
-            position: fixed; /* Fica fixo na tela mesmo ao rolar a página */
-            left: 0; /* Alinhado à esquerda */
-            top: 0; /* Alinhado ao topo */
-            width: 250px; /* Largura fixa de 250 pixels */
-            height: 100vh; /* Altura de 100% da tela (vh = viewport height) */
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); /* Gradiente roxo/azul */
-            color: white; /* Texto branco */
-            z-index: 1000; /* Fica acima de outros elementos */
-            overflow-y: auto; /* Permite rolagem se o conteúdo for maior que a tela */
-        }
-
-        /* Cabeçalho do menu lateral (logo e nome do sistema) */
-        .sidebar-header {
-            padding: 20px; /* Espaçamento interno */
-            text-align: center; /* Centraliza o texto */
-            border-bottom: 1px solid rgba(255,255,255,0.1); /* Linha divisória sutil */
-        }
-
-        /* Título "MindCarePro" no cabeçalho */
-        .sidebar-header h2 {
-            font-size: 24px;
-            margin-bottom: 5px;
-        }
-
-        /* Subtítulo "Sistema de Gestão" */
-        .sidebar-header p {
-            font-size: 14px;
-            opacity: 0.8; /* Deixa o texto levemente transparente */
-        }
-
-        /* Container dos itens do menu */
-        .sidebar-menu {
-            padding: 20px 0;
-        }
-
-        /* Cada item do menu (Dashboard, Pacientes, etc.) */
-        .menu-item {
-            display: block; /* Ocupa toda a largura disponível */
-            padding: 15px 25px; /* Espaçamento interno */
-            color: white; /* Texto branco */
-            text-decoration: none; /* Remove sublinhado dos links */
-            transition: background 0.3s; /* Animação suave ao passar o mouse */
-            border-left: 3px solid transparent; /* Borda esquerda invisível (aparece ao ativar) */
-        }
-
-        /* Efeito ao passar o mouse sobre o item do menu OU quando está ativo */
-        .menu-item:hover,
-        .menu-item.active {
-            background: rgba(255,255,255,0.1); /* Fundo branco semi-transparente */
-            border-left-color: white; /* Borda esquerda branca */
-        }
-
-        /* Ícones dentro dos itens do menu */
-        .menu-item i {
-            width: 20px; /* Largura fixa para alinhar todos os ícones */
-            margin-right: 10px; /* Espaço entre ícone e texto */
-        }
-
-        /* ========================================
-           CONTEÚDO PRINCIPAL
-           ======================================== */
-        
-        /* Container do conteúdo principal (tudo que não é o menu lateral) */
-        .main-content {
-            margin-left: 250px; /* Deixa espaço para o menu lateral */
-            padding: 20px; /* Espaçamento interno */
-            min-height: 100vh; /* Altura mínima de 100% da tela */
-        }
-
-        /* Barra superior com boas-vindas e botão de sair */
-        .top-bar {
-            background: white;
-            padding: 15px 25px;
-            border-radius: 10px; /* Cantos arredondados */
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1); /* Sombra sutil */
-            margin-bottom: 25px;
-            display: flex; /* Layout flexível */
-            justify-content: space-between; /* Espaça os elementos nas extremidades */
-            align-items: center; /* Alinha verticalmente ao centro */
-        }
-
-        /* Texto de boas-vindas */
-        .welcome-text {
-            font-size: 24px;
-            font-weight: 600;
-            color: #333;
-        }
-
-        /* Container das informações do usuário (email + botão sair) */
-        .user-info {
-            display: flex;
-            align-items: center;
-            gap: 15px; /* Espaço entre email e botão */
-        }
-
-        /* Botão de sair */
-        .logout-btn {
-            background: #dc3545; /* Vermelho */
-            color: white;
-            padding: 8px 16px;
-            text-decoration: none;
-            border-radius: 5px;
-            font-size: 14px;
-            transition: background 0.3s; /* Animação ao passar o mouse */
-        }
-
-        /* Efeito ao passar o mouse no botão de sair */
-        .logout-btn:hover {
-            background: #c82333; /* Vermelho mais escuro */
-        }
-
-        /* ========================================
-           CARDS DE ESTATÍSTICAS
-           ======================================== */
-        
-        /* Grid dos cards de estatísticas (Total de Pacientes, Sessões Hoje, etc.) */
-        .stats-grid {
-            display: grid; /* Layout em grade */
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); /* Colunas responsivas */
-            gap: 20px; /* Espaço entre os cards */
-            margin-bottom: 30px;
-        }
-
-        /* Cada card de estatística */
-        .stat-card {
-            background: white;
-            padding: 25px;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            text-align: center;
-            transition: transform 0.3s; /* Animação ao passar o mouse */
-        }
-
-        /* Efeito ao passar o mouse no card (levanta o card) */
-        .stat-card:hover {
-            transform: translateY(-5px); /* Move o card 5px para cima */
-        }
-
-        /* Ícone grande no card */
-        .stat-icon {
-            font-size: 48px;
-            margin-bottom: 15px;
-            color: #667eea; /* Cor roxa */
-        }
-
-        /* Número grande no card (ex: "42") */
-        .stat-number {
-            font-size: 36px;
-            font-weight: bold;
-            color: #333;
-            margin-bottom: 5px;
-        }
-
-        /* Descrição abaixo do número (ex: "Total de Pacientes") */
-        .stat-label {
-            color: #666;
-            font-size: 16px;
-        }
-
-        /* ========================================
-           AÇÕES RÁPIDAS
-           ======================================== */
-        
-        /* Container da seção de ações rápidas */
-        .quick-actions {
-            background: white;
-            padding: 25px;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            margin-bottom: 30px;
-        }
-
-        /* Título da seção */
-        .quick-actions h3 {
-            margin-bottom: 20px;
-            color: #333;
-        }
-
-        /* Grid dos botões de ação */
-        .action-buttons {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); /* Colunas responsivas */
-            gap: 15px;
-        }
-
-        /* Cada botão de ação */
-        .action-btn {
-            display: flex;
-            align-items: center;
-            padding: 15px 20px;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); /* Gradiente roxo */
-            color: white;
-            text-decoration: none;
-            border-radius: 8px;
-            transition: transform 0.3s; /* Animação ao passar o mouse */
-        }
-
-        /* Efeito ao passar o mouse no botão */
-        .action-btn:hover {
-            transform: translateY(-2px); /* Move o botão 2px para cima */
-        }
-
-        /* Ícone dentro do botão */
-        .action-btn i {
-            margin-right: 10px;
-            font-size: 18px;
-        }
-
-        /* ========================================
-           ATIVIDADES RECENTES / PRÓXIMAS SESSÕES
-           ======================================== */
-        
-        /* Container da seção de atividades recentes */
-        .recent-activity {
-            background: white;
-            padding: 25px;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-
-        /* Título da seção */
-        .recent-activity h3 {
-            margin-bottom: 20px;
-            color: #333;
-        }
-
-        /* Cada item de atividade/sessão */
-        .activity-item {
-            padding: 15px 0;
-            border-bottom: 1px solid #eee; /* Linha divisória */
-            display: flex;
-            align-items: center;
-        }
-
-        /* Remove a linha do último item */
-        .activity-item:last-child {
-            border-bottom: none;
-        }
-
-        /* Ícone circular do item */
-        .activity-icon {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%; /* Formato circular */
-            background: #667eea; /* Fundo roxo */
-            color: white;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-right: 15px;
-        }
-
-        /* Conteúdo do item (nome e data) */
-        .activity-content {
-            flex: 1; /* Ocupa todo o espaço disponível */
-        }
-
-        /* Título do item (nome do paciente) */
-        .activity-title {
-            font-weight: 600;
-            margin-bottom: 5px;
-        }
-
-        /* Horário/data do item */
-        .activity-time {
-            color: #666;
-            font-size: 14px;
-        }
-
-        /* ========================================
-           ESTILOS PARA RELATÓRIOS E GRÁFICOS
-           ======================================== */
-        
-        /* Container dos gráficos */
-        .chart-container {
-            position: relative;
-            height: 300px; /* Altura fixa */
-            margin-bottom: 2rem;
-        }
-
-        /* Canvas do gráfico (Chart.js) */
-        .chart-container canvas {
-            max-height: 300px !important;
-        }
-
-        /* Card de estatísticas nos relatórios (com gradiente) */
-        .stats-card-reports {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border-radius: 15px;
-            padding: 1.5rem;
-            margin-bottom: 1rem;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-        }
-
-        /* Card que contém um gráfico */
-        .chart-card {
-            background: white;
-            border-radius: 15px;
-            padding: 1.5rem;
-            margin-bottom: 2rem;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-            border: 1px solid #e9ecef;
-        }
-
-        /* Título do gráfico */
-        .chart-title {
-            font-size: 1.25rem;
-            font-weight: 600;
-            margin-bottom: 1rem;
-            color: #495057;
-        }
-
-        /* Spinner de carregamento (escondido por padrão) */
-        .loading-spinner {
-            display: none;
-            text-align: center;
-            padding: 2rem;
-        }
-
-        /* Seletor de período (1 mês, 3 meses, etc.) */
-        .period-selector {
-            background: white;
-            border-radius: 10px;
-            padding: 1rem;
-            margin-bottom: 2rem;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-
-        /* Botão de seleção de período */
-        .btn-period {
-            margin-right: 0.5rem;
-            margin-bottom: 0.5rem;
-            padding: 0.5rem 1rem;
-            border: 1px solid #667eea;
-            background: white;
-            color: #667eea;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: all 0.3s;
-            text-decoration: none;
-            display: inline-block;
-        }
-
-        /* Botão de período ao passar o mouse OU quando ativo */
-        .btn-period:hover,
-        .btn-period.active {
-            background: #667eea;
-            color: white;
-        }
-
-        /* Card de métrica (usado em relatórios) */
-        .metric-card {
-            background: white;
-            border-radius: 10px;
-            padding: 1.5rem;
-            text-align: center;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            border: 1px solid #e9ecef;
-            margin-bottom: 1rem;
-        }
-
-        /* Valor da métrica (número grande) */
-        .metric-value {
-            font-size: 2rem;
-            font-weight: bold;
-            margin-bottom: 0.5rem;
-        }
-
-        /* Label da métrica (descrição) */
-        .metric-label {
-            color: #6c757d;
-            font-size: 0.875rem;
-        }
-
-        /* ========================================
-           BADGES DE STATUS
-           ======================================== */
-        
-        /* Badge de status (Realizada, Agendada, etc.) */
-        .status-badge {
-            padding: 0.25rem 0.5rem;
-            border-radius: 0.375rem;
-            font-size: 0.75rem;
-            font-weight: 600;
-        }
-
-        /* Cores específicas para cada status */
-        .status-realizada { background-color: #d4edda; color: #155724; } /* Verde */
-        .status-agendada { background-color: #d1ecf1; color: #0c5460; } /* Azul */
-        .status-cancelada { background-color: #f8d7da; color: #721c24; } /* Vermelho */
-        .status-faltou { background-color: #fff3cd; color: #856404; } /* Amarelo */
-
-        /* ========================================
-           TABELAS
-           ======================================== */
-        
-        /* Container responsivo para tabelas */
-        .table-responsive {
-            overflow-x: auto; /* Permite rolagem horizontal em telas pequenas */
-        }
-
-        /* Estilo da tabela */
-        .table {
-            width: 100%;
-            margin-bottom: 1rem;
-            color: #212529;
-            border-collapse: collapse; /* Remove espaços entre células */
-        }
-
-        /* Células da tabela */
-        .table th,
-        .table td {
-            padding: 0.75rem;
-            vertical-align: top;
-            border-top: 1px solid #dee2e6;
-        }
-
-        /* Cabeçalho da tabela */
-        .table thead th {
-            vertical-align: bottom;
-            border-bottom: 2px solid #dee2e6;
-            background-color: #343a40; /* Fundo escuro */
-            color: white;
-        }
-
-        /* Linhas alternadas (zebra) */
-        .table-striped tbody tr:nth-of-type(odd) {
-            background-color: rgba(0, 0, 0, 0.05);
-        }
-
-        /* Efeito ao passar o mouse sobre uma linha */
-        .table-hover tbody tr:hover {
-            background-color: rgba(0, 0, 0, 0.075);
-        }
-
-        /* ========================================
-           CLASSES UTILITÁRIAS
-           ======================================== */
-        
-        /* Alinhamento de texto */
-        .text-end { text-align: right; }
-        .text-center { text-align: center; }
-        .text-muted { color: #6c757d; }
-
-        /* Badge genérico */
-        .badge {
-            display: inline-block;
-            padding: 0.35em 0.65em;
-            font-size: 0.75em;
-            font-weight: 700;
-            line-height: 1;
-            color: #fff;
-            text-align: center;
-            white-space: nowrap;
-            vertical-align: baseline;
-            border-radius: 0.375rem;
-        }
-
-        /* Cores de fundo para badges */
-        .bg-primary { background-color: #007bff; }
-        .bg-success { background-color: #28a745; }
-        .bg-warning { background-color: #ffc107; color: #212529; }
-        .bg-danger { background-color: #dc3545; }
-
-        /* ========================================
-           BOTÕES
-           ======================================== */
-        
-        /* Estilo base para botões */
-        .btn {
-            display: inline-block;
-            font-weight: 400;
-            line-height: 1.5;
-            color: #212529;
-            text-align: center;
-            text-decoration: none;
-            vertical-align: middle;
-            cursor: pointer;
-            border: 1px solid transparent;
-            padding: 0.375rem 0.75rem;
-            font-size: 1rem;
-            border-radius: 0.375rem;
-            transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
-        }
-
-        /* Botão primário (azul) */
-        .btn-primary {
-            color: #fff;
-            background-color: #007bff;
-            border-color: #007bff;
-        }
-
-        /* Botão primário ao passar o mouse */
-        .btn-primary:hover {
-            color: #fff;
-            background-color: #0056b3;
-            border-color: #004085;
-        }
-
-        /* Botão outline secundário */
-        .btn-outline-secondary {
-            color: #6c757d;
-            border-color: #6c757d;
-        }
-
-        /* Botão outline secundário ao passar o mouse */
-        .btn-outline-secondary:hover {
-            color: #fff;
-            background-color: #6c757d;
-            border-color: #6c757d;
-        }
-
-        /* Botão claro */
-        .btn-light {
-            color: #212529;
-            background-color: #f8f9fa;
-            border-color: #f8f9fa;
-        }
-
-        /* Botão claro ao passar o mouse */
-        .btn-light:hover {
-            color: #212529;
-            background-color: #e2e6ea;
-            border-color: #dae0e5;
-        }
-
-        /* ========================================
-           SISTEMA DE GRID (LAYOUT)
-           ======================================== */
-        
-        /* Container fluido (largura total) */
-        .container-fluid {
-            width: 100%;
-            padding-right: 15px;
-            padding-left: 15px;
-            margin-right: auto;
-            margin-left: auto;
-        }
-
-        /* Linha do grid (contém colunas) */
-        .row {
-            display: flex;
-            flex-wrap: wrap;
-            margin-right: -15px;
-            margin-left: -15px;
-        }
-
-        /* Definição de tamanhos de colunas */
-        .col-12 { flex: 0 0 100%; max-width: 100%; } /* 12 de 12 = 100% */
-        .col-md-3 { flex: 0 0 25%; max-width: 25%; } /* 3 de 12 = 25% */
-        .col-md-4 { flex: 0 0 33.333333%; max-width: 33.333333%; } /* 4 de 12 = 33% */
-        .col-md-6 { flex: 0 0 50%; max-width: 50%; } /* 6 de 12 = 50% */
-        .col-md-8 { flex: 0 0 66.666667%; max-width: 66.666667%; } /* 8 de 12 = 66% */
-        .col-lg-4 { flex: 0 0 33.333333%; max-width: 33.333333%; }
-        .col-lg-6 { flex: 0 0 50%; max-width: 50%; }
-        .col-lg-8 { flex: 0 0 66.666667%; max-width: 66.666667%; }
-
-        /* Padding padrão para todas as colunas */
-        [class*="col-"] {
-            position: relative;
-            width: 100%;
-            padding-right: 15px;
-            padding-left: 15px;
-        }
-
-        /* ========================================
-           ESPAÇAMENTOS (MARGINS)
-           ======================================== */
-        
-        .mb-2 { margin-bottom: 0.5rem; }
-        .mb-3 { margin-bottom: 1rem; }
-        .mb-4 { margin-bottom: 1.5rem; }
-        .mt-4 { margin-top: 1.5rem; }
-
-        /* ========================================
-           FLEXBOX UTILITIES
-           ======================================== */
-        
-        .d-flex { display: flex; }
-        .justify-content-between { justify-content: space-between; }
-        .align-items-center { align-items: center; }
-        .text-md-end { text-align: right; }
-
-        /* ========================================
-           IMPRESSÃO
-           ======================================== */
-        
-        /* Elementos que não devem aparecer na impressão */
-        .no-print { display: block; }
-
-        /* Ajustes para impressão */
-        @media print {
-            .no-print { display: none !important; }
-            .sidebar { display: none !important; }
-            .main-content { margin-left: 0 !important; }
-        }
-
-        /* ========================================
-           RESPONSIVIDADE (MOBILE)
-           ======================================== */
-        
-        /* Ajustes para telas menores que 768px (tablets e celulares) */
-        @media (max-width: 768px) {
-            /* Esconde o menu lateral em telas pequenas */
-            .sidebar {
-                transform: translateX(-100%); /* Move o menu para fora da tela */
-                transition: transform 0.3s;
-            }
-
-            /* Remove a margem esquerda do conteúdo principal */
-            .main-content {
-                margin-left: 0;
-            }
-
-            /* Cards de estatísticas em coluna única */
-            .stats-grid {
-                grid-template-columns: 1fr;
-            }
-
-            /* Reduz a altura dos gráficos em mobile */
-            .chart-container {
-                height: 250px;
-            }
-            
-            /* Botões de período ocupam largura total */
-            .btn-period {
-                width: 100%;
-                margin-bottom: 0.5rem;
-            }
-
-            /* Todas as colunas ocupam largura total em mobile */
-            .col-md-3,
-            .col-md-4,
-            .col-md-6,
-            .col-md-8,
-            .col-lg-4,
-            .col-lg-6,
-            .col-lg-8 {
-                flex: 0 0 100%;
-                max-width: 100%;
-            }
-        }
-    </style>
-</head>
-<body>
-    <!-- ========================================
-         MENU LATERAL (SIDEBAR)
-         ======================================== -->
-    <div class="sidebar">
-        <!-- Cabeçalho do menu com logo e nome do sistema -->
-        <div class="sidebar-header">
-            <h2>MindCarePro</h2>
-            <p>Sistema de Gestão</p>
+    <div class="user-info">
+        <span>{{ current_user.email }}</span>
+        <a href="{{ url_for('logout') }}" class="logout-btn">
+            <i class="fas fa-sign-out-alt"></i> Sair
+        </a>
+    </div>
+</div>
+
+<!-- Cards de Estatísticas -->
+<div class="stats-grid">
+    <div class="stat-card">
+        <div class="stat-icon">
+            <i class="fas fa-users"></i>
         </div>
-        
-        <!-- Navegação do menu lateral -->
-        <nav class="sidebar-menu">
-            <!-- Link para Dashboard (destaca se estiver na página) -->
-            <a href="{{ url_for('dashboard') }}" class="menu-item {% if request.endpoint == 'dashboard' %}active{% endif %}">
-                <i class="fas fa-tachometer-alt"></i>
-                Dashboard
-            </a>
-            
-            <!-- Link para Pacientes (destaca se estiver em qualquer página relacionada a pacientes) -->
-            <a href="{{ url_for('pacientes') }}" class="menu-item {% if request.endpoint in ['pacientes', 'novo_paciente', 'ver_paciente', 'editar_paciente'] %}active{% endif %}">
-                <i class="fas fa-users"></i>
-                Pacientes
-            </a>
-            
-            <!-- Link para Sessões (destaca se estiver em qualquer página relacionada a sessões) -->
-            <a href="{{ url_for('sessoes') }}" class="menu-item {% if request.endpoint in ['sessoes', 'nova_sessao', 'ver_sessao', 'editar_sessao'] %}active{% endif %}">
-                <i class="fas fa-calendar-alt"></i>
-                Sessões
-            </a>
-            
-            <!-- ✅ CORRIGIDO: Link para Evoluções -->
-            <a href="{{ url_for('evolucoes') }}" class="menu-item {% if request.endpoint in ['evolucoes', 'nova_evolucao', 'ver_evolucao', 'editar_evolucao'] %}active{% endif %}">
-                <i class="fas fa-chart-line"></i>
-                Evoluções
-            </a>
-            
-            <!-- Link para Relatórios (destaca se estiver em qualquer página de relatórios) -->
-            <a href="{{ url_for('relatorios') }}" class="menu-item {% if request.endpoint in ['relatorios', 'relatorio_financeiro'] %}active{% endif %}">
-                <i class="fas fa-chart-bar"></i>
-                Relatórios
-            </a>
-            
-            <!-- ✅ CORRIGIDO: Link para Configurações -->
-            <a href="{{ url_for('configuracoes') }}" class="menu-item {% if request.endpoint in ['configuracoes', 'configuracoes_perfil', 'configuracoes_senha'] %}active{% endif %}">
-                <i class="fas fa-cog"></i>
-                Configurações
-            </a>
-        </nav>
+        <div class="stat-number">{{ total_pacientes or 0 }}</div>
+        <div class="stat-label">Total de Pacientes</div>
     </div>
 
-    <!-- ========================================
-         CONTEÚDO PRINCIPAL
-         ======================================== -->
-    <div class="main-content">
-        <!-- Bloco de conteúdo (pode ser sobrescrito por templates filhos) -->
-        {% block content %}
-        
-        <!-- Barra superior com boas-vindas e botão de sair -->
-        <div class="top-bar">
-            <!-- Mensagem de boas-vindas com nome do usuário -->
-            <div class="welcome-text">
-                Bem-vindo, {{ current_user.nome }}!
-            </div>
-            
-            <!-- Informações do usuário logado -->
-            <div class="user-info">
-                <!-- Email do usuário -->
-                <span>{{ current_user.email }}</span>
-                
-                <!-- Botão para fazer logout -->
-                <a href="{{ url_for('logout') }}" class="logout-btn">
-                    <i class="fas fa-sign-out-alt"></i> Sair
-                </a>
-            </div>
+    <div class="stat-card">
+        <div class="stat-icon">
+            <i class="fas fa-calendar-check"></i>
         </div>
-
-        <!-- ========================================
-             CARDS DE ESTATÍSTICAS
-             ======================================== -->
-        <div class="stats-grid">
-            <!-- Card: Total de Pacientes -->
-            <div class="stat-card">
-                <div class="stat-icon">
-                    <i class="fas fa-users"></i>
-                </div>
-                <div class="stat-number">{{ total_pacientes or 0 }}</div>
-                <div class="stat-label">Total de Pacientes</div>
-            </div>
-
-            <!-- Card: Sessões Hoje -->
-            <div class="stat-card">
-                <div class="stat-icon">
-                    <i class="fas fa-calendar-check"></i>
-                </div>
-                <div class="stat-number">{{ sessoes_hoje or 0 }}</div>
-                <div class="stat-label">Sessões Hoje</div>
-            </div>
-
-            <!-- Card: Próximas Sessões (conta quantos itens tem na lista) -->
-            <div class="stat-card">
-                <div class="stat-icon">
-                    <i class="fas fa-clock"></i>
-                </div>
-                <div class="stat-number">{{ proximas_sessoes|length or 0 }}</div>
-                <div class="stat-label">Próximas Sessões</div>
-            </div>
-
-            <!-- Card: Receita do Mês -->
-            <div class="stat-card">
-                <div class="stat-icon">
-                    <i class="fas fa-dollar-sign"></i>
-                </div>
-                <div class="stat-number">R$ {{ "%.0f"|format(receita_mes or 0) }}</div>
-                <div class="stat-label">Receita do Mês</div>
-            </div>
-        </div>
-
-        <!-- ========================================
-             AÇÕES RÁPIDAS
-             ======================================== -->
-        <div class="quick-actions">
-            <h3><i class="fas fa-bolt"></i> Ações Rápidas</h3>
-            <div class="action-buttons">
-                <!-- Botão: Novo Paciente -->
-                <a href="{{ url_for('novo_paciente') }}" class="action-btn">
-                    <i class="fas fa-user-plus"></i>
-                    Novo Paciente
-                </a>
-                
-                <!-- Botão: Agendar Sessão -->
-                <a href="{{ url_for('nova_sessao') }}" class="action-btn">
-                    <i class="fas fa-calendar-plus"></i>
-                    Agendar Sessão
-                </a>
-                
-                <!-- Botão: Ver Sessões -->
-                <a href="{{ url_for('sessoes') }}" class="action-btn">
-                    <i class="fas fa-calendar-alt"></i>
-                    Ver Sessões
-                </a>
-                
-                <!-- Botão: Ver Pacientes -->
-                <a href="{{ url_for('pacientes') }}" class="action-btn">
-                    <i class="fas fa-users"></i>
-                    Ver Pacientes
-                </a>
-                
-                <!-- Botão: Ver Relatórios -->
-                <a href="{{ url_for('relatorios') }}" class="action-btn">
-                    <i class="fas fa-chart-bar"></i>
-                    Ver Relatórios
-                </a>
-            </div>
-        </div>
-
-        <!-- ========================================
-             PRÓXIMAS SESSÕES
-             ======================================== -->
-        <div class="recent-activity">
-            <h3><i class="fas fa-history"></i> Próximas Sessões</h3>
-            
-            <!-- Verifica se existem sessões para exibir -->
-            {% if proximas_sessoes %}
-                <!-- Loop por cada sessão -->
-                {% for sessao in proximas_sessoes %}
-                <div class="activity-item">
-                    <!-- Ícone da sessão -->
-                    <div class="activity-icon">
-                        <i class="fas fa-calendar-check"></i>
-                    </div>
-                    
-                    <!-- Conteúdo da sessão (nome do paciente e data/hora) -->
-                    <div class="activity-content">
-                        <div class="activity-title">{{ sessao.paciente.nome }}</div>
-                        <div class="activity-time">{{ sessao.data_sessao.strftime('%d/%m/%Y às %H:%M') }}</div>
-                    </div>
-                </div>
-                {% endfor %}
-            
-            <!-- Mensagem quando NÃO há sessões -->
-            {% else %}
-                <div class="activity-item">
-                    <div class="activity-icon">
-                        <i class="fas fa-calendar-times"></i>
-                    </div>
-                    <div class="activity-content">
-                        <div class="activity-title">Nenhuma sessão agendada</div>
-                        <div class="activity-time">Que tal agendar uma nova sessão?</div>
-                    </div>
-                </div>
-            {% endif %}
-        </div>
-        {% endblock %}
+        <div class="stat-number">{{ sessoes_hoje or 0 }}</div>
+        <div class="stat-label">Sessões Hoje</div>
     </div>
 
-    <!-- Bloco para JavaScript adicional de templates filhos -->
-    {% block extra_scripts %}{% endblock %}
+    <div class="stat-card">
+        <div class="stat-icon">
+            <i class="fas fa-clock"></i>
+        </div>
+        <div class="stat-number">{{ proximas_sessoes|length or 0 }}</div>
+        <div class="stat-label">Próximas Sessões</div>
+    </div>
 
-<!-- ===== CORREÇÃO DO MENU LATERAL ===== -->
-<script>
-console.log('🔧 Iniciando correção do menu...');
+    <div class="stat-card">
+        <div class="stat-icon">
+            <i class="fas fa-dollar-sign"></i>
+        </div>
+        <div class="stat-number">R$ {{ "%.0f"|format(receita_mes or 0) }}</div>
+        <div class="stat-label">Receita do Mês</div>
+    </div>
+</div>
 
-// Espera a página carregar completamente
-document.addEventListener('DOMContentLoaded', function() {
-    console.log('✅ Página carregada, aplicando correções...');
-    
-    // Pega todos os links do menu
-    const menuLinks = document.querySelectorAll('.menu-item');
-    console.log(`📋 Encontrados ${menuLinks.length} itens de menu`);
-    
-    // Para cada link do menu
-    menuLinks.forEach(function(link, index) {
-        console.log(`🔗 Link ${index + 1}: ${link.textContent.trim()} → ${link.href}`);
+<!-- Ações Rápidas -->
+<div class="quick-actions">
+    <h3><i class="fas fa-bolt"></i> Ações Rápidas</h3>
+    <div class="action-buttons">
+        <a href="{{ url_for('novo_paciente') }}" class="action-btn">
+            <i class="fas fa-user-plus"></i>
+            Novo Paciente
+        </a>
         
-        // Remove qualquer evento anterior
-        const novoLink = link.cloneNode(true);
-        link.parentNode.replaceChild(novoLink, link);
+        <a href="{{ url_for('nova_sessao') }}" class="action-btn">
+            <i class="fas fa-calendar-plus"></i>
+            Agendar Sessão
+        </a>
         
-        // Adiciona novo evento de clique
-        novoLink.addEventListener('click', function(evento) {
-            evento.preventDefault(); // Impede comportamento padrão
-            evento.stopPropagation(); // Impede propagação
-            
-            const url = this.getAttribute('href');
-            console.log(`✅ Clicou em: ${this.textContent.trim()}`);
-            console.log(`🔗 Indo para: ${url}`);
-            
-            // Redireciona para a URL
-            window.location.href = url;
-        });
-    });
+        <a href="{{ url_for('sessoes') }}" class="action-btn">
+            <i class="fas fa-calendar-alt"></i>
+            Ver Sessões
+        </a>
+        
+        <a href="{{ url_for('pacientes') }}" class="action-btn">
+            <i class="fas fa-users"></i>
+            Ver Pacientes
+        </a>
+        
+        <a href="{{ url_for('relatorios') }}" class="action-btn">
+            <i class="fas fa-chart-bar"></i>
+            Ver Relatórios
+        </a>
+    </div>
+</div>
+
+<!-- Próximas Sessões -->
+<div class="recent-activity">
+    <h3><i class="fas fa-history"></i> Próximas Sessões</h3>
     
-    console.log('✅ Correção do menu aplicada com sucesso!');
-});
-</script>    
-
-</body>
-</html>
-
-
+    {% if proximas_sessoes %}
+        {% for sessao in proximas_sessoes %}
+        <div class="activity-item">
+            <div class="activity-icon">
+                <i class="fas fa-calendar-check"></i>
+            </div>
+            <div class="activity-content">
+                <div class="activity-title">{{ sessao.paciente.nome }}</div>
+                <div class="activity-time">{{ sessao.data_sessao.strftime('%d/%m/%Y às %H:%M') }}</div>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="activity-item">
+            <div class="activity-icon">
+                <i class="fas fa-calendar-times"></i>
+            </div>
+            <div class="activity-content">
+                <div class="activity-title">Nenhuma sessão agendada</div>
+                <div class="activity-time">Que tal agendar uma nova sessão?</div>
+            </div>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
