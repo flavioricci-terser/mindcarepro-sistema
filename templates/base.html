@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}MindCarePro - Sistema de Gestão{% endblock %}</title>
+    
+    <!-- Font Awesome Icons -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    
+    <!-- CSS Principal -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+    
+    <!-- Chart.js para gráficos -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Bloco para CSS adicional -->
+    {% block extra_head %}{% endblock %}
+</head>
+<body>
+    <!-- ========================================
+         MENU LATERAL (SIDEBAR)
+         ======================================== -->
+    <div class="sidebar">
+        <div class="sidebar-header">
+            <h2>MindCarePro</h2>
+            <p>Sistema de Gestão</p>
+        </div>
+        
+        <nav class="sidebar-menu">
+            <a href="{{ url_for('dashboard') }}" class="menu-item {% if request.endpoint == 'dashboard' %}active{% endif %}">
+                <i class="fas fa-tachometer-alt"></i>
+                Dashboard
+            </a>
+            
+            <a href="{{ url_for('pacientes') }}" class="menu-item {% if request.endpoint in ['pacientes', 'novo_paciente', 'ver_paciente', 'editar_paciente'] %}active{% endif %}">
+                <i class="fas fa-users"></i>
+                Pacientes
+            </a>
+            
+            <a href="{{ url_for('sessoes') }}" class="menu-item {% if request.endpoint in ['sessoes', 'nova_sessao', 'ver_sessao', 'editar_sessao'] %}active{% endif %}">
+                <i class="fas fa-calendar-alt"></i>
+                Sessões
+            </a>
+            
+            <a href="{{ url_for('evolucoes') }}" class="menu-item {% if request.endpoint in ['evolucoes', 'nova_evolucao', 'ver_evolucao', 'editar_evolucao'] %}active{% endif %}">
+                <i class="fas fa-chart-line"></i>
+                Evoluções
+            </a>
+            
+            <a href="{{ url_for('relatorios') }}" class="menu-item {% if request.endpoint in ['relatorios', 'relatorio_financeiro'] %}active{% endif %}">
+                <i class="fas fa-chart-bar"></i>
+                Relatórios
+            </a>
+            
+            <a href="{{ url_for('configuracoes') }}" class="menu-item {% if request.endpoint in ['configuracoes', 'configuracoes_perfil', 'configuracoes_senha'] %}active{% endif %}">
+                <i class="fas fa-cog"></i>
+                Configurações
+            </a>
+        </nav>
+    </div>
+
+    <!-- ========================================
+         CONTEÚDO PRINCIPAL
+         ======================================== -->
+    <div class="main-content">
+        {% block content %}{% endblock %}
+    </div>
+
+    <!-- JavaScript de correção do menu -->
+    <script src="{{ url_for('static', filename='js/menu-fix.js') }}"></script>
+    
+    <!-- Bloco para JavaScript adicional -->
+    {% block extra_scripts %}{% endblock %}
+</body>
+</html>
