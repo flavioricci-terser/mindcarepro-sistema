@@ -1,52 +1,104 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
+    <!-- ========================================
+         METADADOS E CONFIGURAÇÕES DA PÁGINA
+         ======================================== -->
+    
+    <!-- Define a codificação de caracteres como UTF-8 (suporta acentos e caracteres especiais) -->
     <meta charset="UTF-8">
+    
+    <!-- Torna o site responsivo em dispositivos móveis -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- Título que aparece na aba do navegador -->
     <title>Configurações - MindCarePro</title>
+    
+    <!-- Link para o framework Bootstrap 5 (fornece estilos prontos e responsivos) -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Link para os ícones do Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    
     <style>
+        /* ========================================
+           ESTILOS PERSONALIZADOS
+           ======================================== -->
+        
+        /* Menu lateral de configurações - fica fixo ao rolar a página */
         .config-sidebar {
-            position: sticky;
-            top: 20px;
+            position: sticky; /* Fica fixo ao rolar, mas respeita o fluxo do documento */
+            top: 20px; /* Distância do topo quando fixo */
         }
+        
+        /* Item ativo no menu lateral (seção selecionada) */
         .list-group-item.active {
-            background-color: #0d6efd;
+            background-color: #0d6efd; /* Azul do Bootstrap */
             border-color: #0d6efd;
         }
+        
+        /* Cards de seção (Dados Profissionais, Consultório, etc.) - inicialmente escondidos */
         .section-card {
-            display: none;
+            display: none; /* Esconde por padrão */
         }
+        
+        /* Card de seção ativo (visível) */
         .section-card.active {
-            display: block;
+            display: block; /* Mostra quando tem a classe "active" */
         }
     </style>
 </head>
 <body>
+    <!-- ========================================
+         BARRA DE NAVEGAÇÃO SUPERIOR
+         ======================================== -->
+    
+    <!-- Navbar do Bootstrap (barra de navegação responsiva) -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
         <div class="container-fluid">
+            <!-- Logo/Nome do sistema -->
             <a class="navbar-brand" href="/dashboard">MindCarePro</a>
+            
+            <!-- Botão hambúrguer para mobile (aparece em telas pequenas) -->
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
             </button>
+            
+            <!-- Menu de navegação (colapsa em mobile) -->
             <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
+                <ul class="navbar-nav ms-auto"> <!-- ms-auto = margin-start auto (alinha à direita) -->
+                    
+                    <!-- Link para Dashboard -->
                     <li class="nav-item">
                         <a class="nav-link" href="/dashboard">Dashboard</a>
                     </li>
+                    
+                    <!-- Link para Pacientes -->
                     <li class="nav-item">
                         <a class="nav-link" href="/pacientes">Pacientes</a>
                     </li>
+                    
+                    <!-- Link para Sessões -->
                     <li class="nav-item">
                         <a class="nav-link" href="/sessoes">Sessões</a>
                     </li>
+                    
+                    <!-- ✅ CORRIGIDO: Link para Evoluções -->
+                    <li class="nav-item">
+                        <a class="nav-link" href="/evolucoes">Evoluções</a>
+                    </li>
+                    
+                    <!-- Link para Relatórios -->
                     <li class="nav-item">
                         <a class="nav-link" href="/relatorios">Relatórios</a>
                     </li>
+                    
+                    <!-- Link para Configurações (página atual - classe "active" deixa destacado) -->
                     <li class="nav-item">
                         <a class="nav-link active" href="/configuracoes">Configurações</a>
                     </li>
+                    
+                    <!-- Link para Sair (logout) -->
                     <li class="nav-item">
                         <a class="nav-link" href="/logout">Sair</a>
                     </li>
@@ -55,28 +107,51 @@
         </div>
     </nav>
 
-    <div class="container mt-4">
-        <div class="row">
-            <!-- Menu Lateral -->
+    <!-- ========================================
+         CONTEÚDO PRINCIPAL
+         ======================================== -->
+    
+    <!-- Container principal (centraliza e adiciona margem) -->
+    <div class="container mt-4"> <!-- mt-4 = margin-top 4 (espaçamento superior) -->
+        <div class="row"> <!-- Sistema de grid do Bootstrap (12 colunas) -->
+            
+            <!-- ========================================
+                 MENU LATERAL (SIDEBAR)
+                 ======================================== -->
+            
+            <!-- Coluna do menu lateral (3 de 12 colunas = 25% da largura) -->
             <div class="col-md-3">
                 <div class="config-sidebar">
                     <div class="card">
+                        <!-- Cabeçalho do card -->
                         <div class="card-header">
                             <h6 class="mb-0"><i class="bi bi-gear"></i> Configurações</h6>
                         </div>
-                        <div class="list-group list-group-flush">
+                        
+                        <!-- Lista de itens do menu -->
+                        <div class="list-group list-group-flush"> <!-- list-group-flush = remove bordas laterais -->
+                            
+                            <!-- Item: Dados Profissionais (ativo por padrão) -->
                             <a href="#" class="list-group-item list-group-item-action active" data-section="dados-profissionais">
                                 <i class="bi bi-person-badge"></i> Dados Profissionais
                             </a>
+                            
+                            <!-- Item: Consultório -->
                             <a href="#" class="list-group-item list-group-item-action" data-section="consultorio">
                                 <i class="bi bi-building"></i> Consultório
                             </a>
+                            
+                            <!-- Item: Atendimento -->
                             <a href="#" class="list-group-item list-group-item-action" data-section="atendimento">
                                 <i class="bi bi-calendar-check"></i> Atendimento
                             </a>
+                            
+                            <!-- Item: Notificações -->
                             <a href="#" class="list-group-item list-group-item-action" data-section="notificacoes">
                                 <i class="bi bi-bell"></i> Notificações
                             </a>
+                            
+                            <!-- Item: Segurança -->
                             <a href="#" class="list-group-item list-group-item-action" data-section="seguranca">
                                 <i class="bi bi-shield-lock"></i> Segurança
                             </a>
@@ -85,24 +160,39 @@
                 </div>
             </div>
 
-            <!-- Conteúdo -->
+            <!-- ========================================
+                 CONTEÚDO PRINCIPAL (FORMULÁRIOS)
+                 ======================================== -->
+            
+            <!-- Coluna do conteúdo (9 de 12 colunas = 75% da largura) -->
             <div class="col-md-9">
+                <!-- Formulário que envia todos os dados para salvar -->
                 <form method="POST" action="/configuracoes/salvar">
                     
-                    <!-- Dados Profissionais -->
+                    <!-- ========================================
+                         SEÇÃO: DADOS PROFISSIONAIS
+                         ======================================== -->
+                    
+                    <!-- Card da seção (visível por padrão - classe "active") -->
                     <div class="section-card active" id="dados-profissionais">
                         <div class="card">
+                            <!-- Cabeçalho da seção -->
                             <div class="card-header">
                                 <h5 class="mb-0"><i class="bi bi-person-badge"></i> Dados Profissionais</h5>
                             </div>
+                            
+                            <!-- Corpo da seção com os campos -->
                             <div class="card-body">
                                 <div class="row">
-                                    <div class="col-md-8 mb-3">
+                                    <!-- Campo: Nome Completo (8 colunas de 12) -->
+                                    <div class="col-md-8 mb-3"> <!-- mb-3 = margin-bottom 3 -->
                                         <label class="form-label">Nome Completo</label>
                                         <input type="text" class="form-control" name="nome_completo" 
                                                value="{{ config.nome_completo if config else '' }}"
                                                placeholder="Seu nome completo">
                                     </div>
+                                    
+                                    <!-- Campo: CRP (4 colunas de 12) -->
                                     <div class="col-md-4 mb-3">
                                         <label class="form-label">CRP</label>
                                         <input type="text" class="form-control" name="crp" 
@@ -110,19 +200,25 @@
                                                placeholder="00/00000">
                                     </div>
                                 </div>
+                                
+                                <!-- Campo: Especialidade (largura total) -->
                                 <div class="mb-3">
                                     <label class="form-label">Especialidade</label>
                                     <input type="text" class="form-control" name="especialidade" 
                                            value="{{ config.especialidade if config else '' }}" 
                                            placeholder="Ex: Psicanálise, TCC, Gestalt...">
                                 </div>
+                                
                                 <div class="row">
+                                    <!-- Campo: Telefone Profissional (metade da largura) -->
                                     <div class="col-md-6 mb-3">
                                         <label class="form-label">Telefone Profissional</label>
                                         <input type="tel" class="form-control" name="telefone_profissional" 
                                                value="{{ config.telefone_profissional if config else '' }}"
                                                placeholder="(00) 00000-0000">
                                     </div>
+                                    
+                                    <!-- Campo: E-mail Profissional (metade da largura) -->
                                     <div class="col-md-6 mb-3">
                                         <label class="form-label">E-mail Profissional</label>
                                         <input type="email" class="form-control" name="email_profissional" 
@@ -134,30 +230,40 @@
                         </div>
                     </div>
 
-                    <!-- Consultório -->
+                    <!-- ========================================
+                         SEÇÃO: CONSULTÓRIO
+                         ======================================== -->
+                    
+                    <!-- Card da seção (escondido por padrão - sem classe "active") -->
                     <div class="section-card" id="consultorio">
                         <div class="card">
                             <div class="card-header">
                                 <h5 class="mb-0"><i class="bi bi-building"></i> Endereço do Consultório</h5>
                             </div>
                             <div class="card-body">
+                                <!-- Campo: Endereço Completo -->
                                 <div class="mb-3">
                                     <label class="form-label">Endereço Completo</label>
                                     <input type="text" class="form-control" name="endereco" 
                                            value="{{ config.endereco if config else '' }}" 
                                            placeholder="Rua, número, complemento">
                                 </div>
+                                
                                 <div class="row">
+                                    <!-- Campo: Cidade (5 colunas) -->
                                     <div class="col-md-5 mb-3">
                                         <label class="form-label">Cidade</label>
                                         <input type="text" class="form-control" name="cidade" 
                                                value="{{ config.cidade if config else '' }}"
                                                placeholder="Sua cidade">
                                     </div>
+                                    
+                                    <!-- Campo: Estado (3 colunas) - Select com todos os estados brasileiros -->
                                     <div class="col-md-3 mb-3">
                                         <label class="form-label">Estado</label>
                                         <select class="form-select" name="estado">
                                             <option value="">Selecione</option>
+                                            <!-- Lista de todos os estados com verificação se está selecionado -->
                                             <option value="AC" {% if config and config.estado == 'AC' %}selected{% endif %}>AC</option>
                                             <option value="AL" {% if config and config.estado == 'AL' %}selected{% endif %}>AL</option>
                                             <option value="AP" {% if config and config.estado == 'AP' %}selected{% endif %}>AP</option>
@@ -187,6 +293,8 @@
                                             <option value="TO" {% if config and config.estado == 'TO' %}selected{% endif %}>TO</option>
                                         </select>
                                     </div>
+                                    
+                                    <!-- Campo: CEP (4 colunas) -->
                                     <div class="col-md-4 mb-3">
                                         <label class="form-label">CEP</label>
                                         <input type="text" class="form-control" name="cep" 
@@ -198,7 +306,10 @@
                         </div>
                     </div>
 
-                    <!-- Atendimento -->
+                    <!-- ========================================
+                         SEÇÃO: ATENDIMENTO
+                         ======================================== -->
+                    
                     <div class="section-card" id="atendimento">
                         <div class="card">
                             <div class="card-header">
@@ -206,12 +317,15 @@
                             </div>
                             <div class="card-body">
                                 <div class="row">
+                                    <!-- Campo: Duração da Sessão (em minutos) -->
                                     <div class="col-md-6 mb-3">
                                         <label class="form-label">Duração da Sessão (minutos)</label>
                                         <input type="number" class="form-control" name="duracao_sessao" 
                                                value="{{ config.duracao_sessao if config else 50 }}"
                                                min="30" max="120">
                                     </div>
+                                    
+                                    <!-- Campo: Valor da Sessão (em reais) -->
                                     <div class="col-md-6 mb-3">
                                         <label class="form-label">Valor da Sessão (R$)</label>
                                         <input type="number" step="0.01" class="form-control" name="valor_sessao" 
@@ -219,41 +333,55 @@
                                                placeholder="0,00">
                                     </div>
                                 </div>
+                                
                                 <div class="row">
+                                    <!-- Campo: Horário de Início do Atendimento -->
                                     <div class="col-md-6 mb-3">
                                         <label class="form-label">Horário de Início</label>
                                         <input type="time" class="form-control" name="horario_inicio" 
                                                value="{{ config.horario_inicio.strftime('%H:%M') if config and config.horario_inicio else '' }}">
                                     </div>
+                                    
+                                    <!-- Campo: Horário de Término do Atendimento -->
                                     <div class="col-md-6 mb-3">
                                         <label class="form-label">Horário de Término</label>
                                         <input type="time" class="form-control" name="horario_fim" 
                                                value="{{ config.horario_fim.strftime('%H:%M') if config and config.horario_fim else '' }}">
                                     </div>
                                 </div>
+                                
+                                <!-- Campo: Dias de Atendimento (checkboxes estilizados como botões) -->
                                 <div class="mb-3">
                                     <label class="form-label">Dias de Atendimento</label>
-                                    <div class="btn-group w-100" role="group">
+                                    <div class="btn-group w-100" role="group"> <!-- w-100 = width 100% -->
+                                        <!-- Divide os dias salvos em uma lista (se existir) -->
                                         {% set dias = config.dias_atendimento.split(',') if config and config.dias_atendimento else [] %}
                                         
+                                        <!-- Checkbox: Segunda-feira -->
                                         <input type="checkbox" class="btn-check" name="dias_atendimento" value="seg" id="seg" {% if 'seg' in dias %}checked{% endif %}>
                                         <label class="btn btn-outline-primary" for="seg">Seg</label>
                                         
+                                        <!-- Checkbox: Terça-feira -->
                                         <input type="checkbox" class="btn-check" name="dias_atendimento" value="ter" id="ter" {% if 'ter' in dias %}checked{% endif %}>
                                         <label class="btn btn-outline-primary" for="ter">Ter</label>
                                         
+                                        <!-- Checkbox: Quarta-feira -->
                                         <input type="checkbox" class="btn-check" name="dias_atendimento" value="qua" id="qua" {% if 'qua' in dias %}checked{% endif %}>
                                         <label class="btn btn-outline-primary" for="qua">Qua</label>
                                         
+                                        <!-- Checkbox: Quinta-feira -->
                                         <input type="checkbox" class="btn-check" name="dias_atendimento" value="qui" id="qui" {% if 'qui' in dias %}checked{% endif %}>
                                         <label class="btn btn-outline-primary" for="qui">Qui</label>
                                         
+                                        <!-- Checkbox: Sexta-feira -->
                                         <input type="checkbox" class="btn-check" name="dias_atendimento" value="sex" id="sex" {% if 'sex' in dias %}checked{% endif %}>
                                         <label class="btn btn-outline-primary" for="sex">Sex</label>
                                         
+                                        <!-- Checkbox: Sábado -->
                                         <input type="checkbox" class="btn-check" name="dias_atendimento" value="sab" id="sab" {% if 'sab' in dias %}checked{% endif %}>
                                         <label class="btn btn-outline-primary" for="sab">Sáb</label>
                                         
+                                        <!-- Checkbox: Domingo -->
                                         <input type="checkbox" class="btn-check" name="dias_atendimento" value="dom" id="dom" {% if 'dom' in dias %}checked{% endif %}>
                                         <label class="btn btn-outline-primary" for="dom">Dom</label>
                                     </div>
@@ -262,13 +390,17 @@
                         </div>
                     </div>
 
-                    <!-- Notificações -->
+                    <!-- ========================================
+                         SEÇÃO: NOTIFICAÇÕES
+                         ======================================== -->
+                    
                     <div class="section-card" id="notificacoes">
                         <div class="card">
                             <div class="card-header">
                                 <h5 class="mb-0"><i class="bi bi-bell"></i> Configurações de Notificações</h5>
                             </div>
                             <div class="card-body">
+                                <!-- Switch: Ativar/Desativar lembretes automáticos -->
                                 <div class="form-check form-switch mb-3">
                                     <input class="form-check-input" type="checkbox" name="lembrete_paciente" id="lembrete_paciente" 
                                            {% if not config or config.lembrete_paciente %}checked{% endif %}>
@@ -278,6 +410,8 @@
                                         <small class="text-muted">Os pacientes receberão lembretes sobre suas sessões agendadas</small>
                                     </label>
                                 </div>
+                                
+                                <!-- Campo: Antecedência do lembrete (em horas) -->
                                 <div class="mb-3">
                                     <label class="form-label">Antecedência do Lembrete (horas)</label>
                                     <input type="number" class="form-control" name="antecedencia_lembrete" 
@@ -285,6 +419,8 @@
                                            min="1" max="168">
                                     <small class="text-muted">Pacientes receberão lembrete X horas antes da sessão</small>
                                 </div>
+                                
+                                <!-- Alerta informativo sobre funcionalidade futura -->
                                 <div class="alert alert-info">
                                     <i class="bi bi-info-circle"></i> <strong>Em breve:</strong> Integração com WhatsApp e E-mail para envio automático de lembretes.
                                 </div>
@@ -292,7 +428,10 @@
                         </div>
                     </div>
 
-                    <!-- Segurança -->
+                    <!-- ========================================
+                         SEÇÃO: SEGURANÇA
+                         ======================================== -->
+                    
                     <div class="section-card" id="seguranca">
                         <div class="card">
                             <div class="card-header">
@@ -300,18 +439,26 @@
                             </div>
                             <div class="card-body">
                                 <h6 class="mb-3">Alterar Senha</h6>
+                                
+                                <!-- Campo: Senha Atual (para validar a troca) -->
                                 <div class="mb-3">
                                     <label class="form-label">Senha Atual</label>
                                     <input type="password" class="form-control" name="senha_atual" placeholder="Digite sua senha atual">
                                 </div>
+                                
+                                <!-- Campo: Nova Senha -->
                                 <div class="mb-3">
                                     <label class="form-label">Nova Senha</label>
                                     <input type="password" class="form-control" name="nova_senha" placeholder="Digite a nova senha (mínimo 6 caracteres)">
                                 </div>
+                                
+                                <!-- Campo: Confirmar Nova Senha -->
                                 <div class="mb-3">
                                     <label class="form-label">Confirmar Nova Senha</label>
                                     <input type="password" class="form-control" name="confirmar_senha" placeholder="Digite novamente a nova senha">
                                 </div>
+                                
+                                <!-- Alerta de aviso sobre alteração de senha -->
                                 <div class="alert alert-warning">
                                     <i class="bi bi-exclamation-triangle"></i> <strong>Atenção:</strong> Deixe os campos em branco se não quiser alterar a senha.
                                 </div>
@@ -319,11 +466,17 @@
                         </div>
                     </div>
 
-                    <!-- Botão Salvar -->
-                    <div class="mt-4 text-end">
+                    <!-- ========================================
+                         BOTÕES DE AÇÃO (CANCELAR E SALVAR)
+                         ======================================== -->
+                    
+                    <div class="mt-4 text-end"> <!-- mt-4 = margin-top 4, text-end = alinha à direita -->
+                        <!-- Botão: Cancelar (volta para o dashboard) -->
                         <a href="/dashboard" class="btn btn-secondary">
                             <i class="bi bi-x-circle"></i> Cancelar
                         </a>
+                        
+                        <!-- Botão: Salvar Configurações (envia o formulário) -->
                         <button type="submit" class="btn btn-primary btn-lg">
                             <i class="bi bi-check-circle"></i> Salvar Configurações
                         </button>
@@ -334,20 +487,43 @@
         </div>
     </div>
 
+    <!-- ========================================
+         JAVASCRIPT DO BOOTSTRAP
+         ======================================== -->
+    
+    <!-- Biblioteca JavaScript do Bootstrap (necessária para componentes interativos) -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- ========================================
+         JAVASCRIPT PERSONALIZADO
+         ======================================== -->
+    
     <script>
-        // Navegação entre seções
+        /**
+         * NAVEGAÇÃO ENTRE SEÇÕES
+         * Quando o usuário clica em um item do menu lateral,
+         * mostra a seção correspondente e esconde as outras
+         */
+        
+        // Seleciona todos os itens do menu lateral
         document.querySelectorAll('.list-group-item').forEach(item => {
+            // Adiciona um evento de clique em cada item
             item.addEventListener('click', function(e) {
-                e.preventDefault();
+                e.preventDefault(); // Previne o comportamento padrão do link (não navega para #)
                 
-                // Remove active de todos
+                // Remove a classe "active" de todos os itens do menu
                 document.querySelectorAll('.list-group-item').forEach(i => i.classList.remove('active'));
+                
+                // Remove a classe "active" de todas as seções (esconde todas)
                 document.querySelectorAll('.section-card').forEach(s => s.classList.remove('active'));
                 
-                // Adiciona active no clicado
+                // Adiciona a classe "active" no item clicado (destaca no menu)
                 this.classList.add('active');
+                
+                // Pega o ID da seção correspondente (do atributo data-section)
                 const section = this.getAttribute('data-section');
+                
+                // Adiciona a classe "active" na seção correspondente (mostra a seção)
                 document.getElementById(section).classList.add('active');
             });
         });
