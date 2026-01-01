@@ -774,51 +774,104 @@ def nova_evolucao_prontuario(paciente_id):
 @app.route('/evolucoes')
 @login_required
 def evolucoes():
-    print("✅ Rota /evolucoes acessada")
+    print("=" * 80)
+    print("🔍 DEBUG: ROTA /EVOLUCOES ACESSADA")
+    print("=" * 80)
+    
     try:
+        print(f"✅ PASSO 1: Usuário autenticado: {current_user.nome} (ID: {current_user.id})")
+        
+        # Recebe filtros
         paciente_filter = request.args.get('paciente', '')
         data_inicio = request.args.get('data_inicio', '')
         data_fim = request.args.get('data_fim', '')
+        print(f"✅ PASSO 2: Filtros recebidos:")
+        print(f"   - Paciente: {paciente_filter}")
+        print(f"   - Data início: {data_inicio}")
+        print(f"   - Data fim: {data_fim}")
         
+        # Inicia query
+        print("✅ PASSO 3: Iniciando query de evoluções...")
         query = Evolucao.query.join(Paciente).filter(Paciente.psicologo_id == current_user.id)
+        print("✅ PASSO 4: Query base criada com sucesso")
         
+        # Aplica filtros
         if paciente_filter:
+            print(f"✅ PASSO 5: Aplicando filtro de paciente: {paciente_filter}")
             query = query.filter(Evolucao.paciente_id == paciente_filter)
         
         if data_inicio:
             try:
                 data_inicio_obj = datetime.strptime(data_inicio, '%Y-%m-%d').date()
+                print(f"✅ PASSO 6: Aplicando filtro de data início: {data_inicio_obj}")
                 query = query.filter(func.date(Evolucao.data_evolucao) >= data_inicio_obj)
-            except:
-                pass
+            except Exception as e:
+                print(f"⚠️ AVISO: Erro ao aplicar filtro de data início: {e}")
         
         if data_fim:
             try:
                 data_fim_obj = datetime.strptime(data_fim, '%Y-%m-%d').date()
+                print(f"✅ PASSO 7: Aplicando filtro de data fim: {data_fim_obj}")
                 query = query.filter(func.date(Evolucao.data_evolucao) <= data_fim_obj)
-            except:
-                pass
+            except Exception as e:
+                print(f"⚠️ AVISO: Erro ao aplicar filtro de data fim: {e}")
         
+        # Executa query
+        print("✅ PASSO 8: Executando query de evoluções...")
         evolucoes_lista = query.order_by(Evolucao.data_evolucao.desc()).all()
-        pacientes_lista = Paciente.query.filter_by(psicologo_id=current_user.id, ativo=True).order_by(Paciente.nome).all()
+        print(f"✅ PASSO 9: Query executada! Total de evoluções encontradas: {len(evolucoes_lista)}")
         
+        # Busca pacientes
+        print("✅ PASSO 10: Buscando lista de pacientes...")
+        pacientes_lista = Paciente.query.filter_by(psicologo_id=current_user.id, ativo=True).order_by(Paciente.nome).all()
+        print(f"✅ PASSO 11: Total de pacientes encontrados: {len(pacientes_lista)}")
+        
+        # Calcula estatísticas
+        print("✅ PASSO 12: Calculando estatísticas...")
         total_evolucoes = Evolucao.query.join(Paciente).filter(Paciente.psicologo_id == current_user.id).count()
+        print(f"✅ PASSO 13: Total de evoluções: {total_evolucoes}")
         
         primeiro_dia_mes = date.today().replace(day=1)
         evolucoes_mes = Evolucao.query.join(Paciente).filter(
             Paciente.psicologo_id == current_user.id,
             func.date(Evolucao.data_evolucao) >= primeiro_dia_mes
         ).count()
+        print(f"✅ PASSO 14: Evoluções do mês: {evolucoes_mes}")
         
-        return render_template('evolucoes.html',
-                             evolucoes=evolucoes_lista,
-                             pacientes=pacientes_lista,
-                             total_evolucoes=total_evolucoes,
-                             evolucoes_mes=evolucoes_mes,
-                             today=date.today())
+        # Verifica se template existe
+        print("✅ PASSO 15: Verificando se template evolucoes.html existe...")
+        import os
+        template_path = os.path.join(app.template_folder, 'evolucoes.html')
+        if os.path.exists(template_path):
+            print(f"✅ PASSO 16: Template encontrado em: {template_path}")
+        else:
+            print(f"❌ ERRO: Template NÃO encontrado em: {template_path}")
+            print(f"❌ Pasta de templates: {app.template_folder}")
+            print(f"❌ Arquivos na pasta templates:")
+            if os.path.exists(app.template_folder):
+                for arquivo in os.listdir(app.template_folder):
+                    print(f"   - {arquivo}")
+        
+        # Renderiza template
+        print("✅ PASSO 17: Tentando renderizar template evolucoes.html...")
+        resultado = render_template('evolucoes.html',
+                                   evolucoes=evolucoes_lista,
+                                   pacientes=pacientes_lista,
+                                   total_evolucoes=total_evolucoes,
+                                   evolucoes_mes=evolucoes_mes,
+                                   today=date.today())
+        print("✅ PASSO 18: Template renderizado com sucesso!")
+        print("=" * 80)
+        return resultado
+    
     except Exception as e:
-        print(f"❌ Erro na página de evoluções: {e}")
+        print("=" * 80)
+        print("❌ ERRO CAPTURADO NA ROTA /EVOLUCOES:")
+        print(f"❌ Tipo do erro: {type(e).__name__}")
+        print(f"❌ Mensagem: {str(e)}")
+        print("❌ Traceback completo:")
         traceback.print_exc()
+        print("=" * 80)
         flash('Erro ao carregar evoluções', 'error')
         return redirect(url_for('dashboard'))
 
@@ -1415,4 +1468,3 @@ with app.app_context():
 
 if __name__ == '__main__':
     app.run(debug=True)
-
