@@ -1692,3 +1692,58 @@ body {
         grid-template-columns: 1fr;
     }
 }
+/* ========================================
+   ESTILOS PARA FORMULÁRIOS DE SESSÃO
+   ======================================== */
+
+.form-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 25px;
+    text-align: center;
+}
+
+.form-header h2 {
+    font-size: 24px;
+    margin-bottom: 5px;
+}
+
+.form-header p {
+    opacity: 0.9;
+    margin: 0;
+}
+
+.help-text {
+    font-size: 14px;
+    color: #666;
+    margin-top: 5px;
+}
+
+.help-text a {
+    color: #667eea;
+    text-decoration: none;
+}
+
+.help-text a:hover {
+    text-decoration: underline;
+}
+
+.datetime-group {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+}
+
+.value-group {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+    .datetime-group,
+    .value-group {
+        grid-template-columns: 1fr;
+    }
+}
