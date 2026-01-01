@@ -1084,3 +1084,21 @@ body {
         font-size: 2rem;
     }
 }
+
+/* ========================================
+   ESTILOS ESPECÍFICOS DE CONFIGURAÇÕES
+   ======================================== */
+
+.config-sidebar {
+    position: sticky;
+    top: 20px;
+}
+
+.section-card {
+    display: none;
+}
+
+.section-card.active {
+    display: block;
+}
+
