@@ -1,208 +1,213 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Prontuário - {{ paciente.nome }}</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
-    <style>
-        .timeline {
-            position: relative;
-            padding: 20px 0;
-        }
-        .timeline-item {
-            position: relative;
-            padding-left: 50px;
-            margin-bottom: 30px;
-        }
-        .timeline-icon {
-            position: absolute;
-            left: 0;
-            top: 0;
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: white;
-        }
-        .timeline-icon.anamnese { background: #0d6efd; }
-        .timeline-icon.evolucao { background: #198754; }
-        .timeline-icon.observacao { background: #ffc107; }
-        .humor-badge {
-            font-size: 1.5rem;
-            margin-right: 10px;
-        }
-    </style>
-</head>
-<body>
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
-        <div class="container-fluid">
-            <a class="navbar-brand" href="/dashboard">MindCarePro</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav ms-auto">
-                    <li class="nav-item">
-                        <a class="nav-link" href="/pacientes">Pacientes</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="/logout">Sair</a>
-                    </li>
-                </ul>
+{% extends "base.html" %}
+
+{% block title %}Prontuário - {{ paciente.nome }}{% endblock %}
+
+{% block extra_css %}
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+<style>
+.timeline {
+    position: relative;
+    padding: 20px 0;
+}
+.timeline-item {
+    position: relative;
+    padding-left: 50px;
+    margin-bottom: 30px;
+}
+.timeline-icon {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+}
+.timeline-icon.anamnese { background: #0d6efd; }
+.timeline-icon.evolucao { background: #198754; }
+.timeline-icon.observacao { background: #ffc107; }
+.humor-badge {
+    font-size: 1.5rem;
+    margin-right: 10px;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Barra Superior -->
+<div class="top-bar">
+    <div class="page-title">
+        <i class="fas fa-file-medical"></i>
+        Prontuário
+    </div>
+    <div class="user-info">
+        <span>{{ current_user.nome }}</span>
+        <a href="{{ url_for('logout') }}" class="logout-btn">
+            <i class="fas fa-sign-out-alt"></i> Sair
+        </a>
+    </div>
+</div>
+
+<!-- Breadcrumb -->
+<div class="breadcrumb">
+    <a href="{{ url_for('dashboard') }}">Dashboard</a>
+    <i class="fas fa-chevron-right"></i>
+    <a href="{{ url_for('pacientes') }}">Pacientes</a>
+    <i class="fas fa-chevron-right"></i>
+    <a href="{{ url_for('ver_paciente', id=paciente.id) }}">{{ paciente.nome }}</a>
+    <i class="fas fa-chevron-right"></i>
+    <span>Prontuário</span>
+</div>
+
+<!-- Cabeçalho do Paciente -->
+<div class="card mb-4">
+    <div class="card-body">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h2 class="mb-0">{{ paciente.nome }}</h2>
+                <p class="text-muted mb-0">
+                    <i class="bi bi-envelope"></i> {{ paciente.email or 'Não informado' }} | 
+                    <i class="bi bi-telephone"></i> {{ paciente.telefone or 'Não informado' }}
+                </p>
+            </div>
+            <div class="col-md-4 text-end">
+                <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#novaEvolucaoModal">
+                    <i class="bi bi-plus-circle"></i> Nova Evolução
+                </button>
+                <a href="{{ url_for('ver_paciente', id=paciente.id) }}" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left"></i> Voltar
+                </a>
             </div>
         </div>
-    </nav>
+    </div>
+</div>
 
-    <div class="container mt-4">
-        <!-- Cabeçalho do Paciente -->
-        <div class="card mb-4">
-            <div class="card-body">
-                <div class="row align-items-center">
-                    <div class="col-md-8">
-                        <h2 class="mb-0">{{ paciente.nome }}</h2>
-                        <p class="text-muted mb-0">
-                            <i class="bi bi-envelope"></i> {{ paciente.email }} | 
-                            <i class="bi bi-telephone"></i> {{ paciente.telefone }}
-                        </p>
-                    </div>
-                    <div class="col-md-4 text-end">
-                        <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#novaEvolucaoModal">
-                            <i class="bi bi-plus-circle"></i> Nova Evolução
-                        </button>
-                        <a href="/pacientes/{{ paciente.id }}" class="btn btn-outline-secondary">
-                            <i class="bi bi-arrow-left"></i> Voltar
-                        </a>
-                    </div>
+<!-- Timeline de Evoluções -->
+<div class="card">
+    <div class="card-header">
+        <h5 class="mb-0">Histórico de Evoluções</h5>
+    </div>
+    <div class="card-body">
+        {% if evolucoes %}
+        <div class="timeline">
+            {% for evolucao in evolucoes %}
+            <div class="timeline-item">
+                <div class="timeline-icon {{ evolucao.tipo }}">
+                    {% if evolucao.tipo == 'anamnese' %}
+                        <i class="bi bi-file-medical"></i>
+                    {% elif evolucao.tipo == 'evolucao' %}
+                        <i class="bi bi-graph-up"></i>
+                    {% else %}
+                        <i class="bi bi-chat-left-text"></i>
+                    {% endif %}
                 </div>
-            </div>
-        </div>
-
-        <!-- Timeline de Evoluções -->
-        <div class="card">
-            <div class="card-header">
-                <h5 class="mb-0">Histórico de Evoluções</h5>
-            </div>
-            <div class="card-body">
-                {% if evolucoes %}
-                <div class="timeline">
-                    {% for evolucao in evolucoes %}
-                    <div class="timeline-item">
-                        <div class="timeline-icon {{ evolucao.tipo }}">
-                            {% if evolucao.tipo == 'anamnese' %}
-                                <i class="bi bi-file-medical"></i>
-                            {% elif evolucao.tipo == 'evolucao' %}
-                                <i class="bi bi-graph-up"></i>
-                            {% else %}
-                                <i class="bi bi-chat-left-text"></i>
+                <div class="card">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <div>
+                                <h6 class="mb-1">{{ evolucao.titulo }}</h6>
+                                <small class="text-muted">
+                                    {{ evolucao.data_evolucao.strftime('%d/%m/%Y às %H:%M') }}
+                                </small>
+                            </div>
+                            {% if evolucao.humor %}
+                            <span class="humor-badge">
+                                {% if evolucao.humor == 'otimo' %}😊
+                                {% elif evolucao.humor == 'bom' %}🙂
+                                {% elif evolucao.humor == 'neutro' %}😐
+                                {% elif evolucao.humor == 'ruim' %}😟
+                                {% else %}😢
+                                {% endif %}
+                            </span>
                             {% endif %}
                         </div>
-                        <div class="card">
-                            <div class="card-body">
-                                <div class="d-flex justify-content-between align-items-start mb-2">
-                                    <div>
-                                        <h6 class="mb-1">{{ evolucao.titulo }}</h6>
-                                        <small class="text-muted">
-                                            {{ evolucao.data_evolucao.strftime('%d/%m/%Y às %H:%M') }}
-                                        </small>
-                                    </div>
-                                    {% if evolucao.humor %}
-                                    <span class="humor-badge">
-                                        {% if evolucao.humor == 'otimo' %}😊
-                                        {% elif evolucao.humor == 'bom' %}🙂
-                                        {% elif evolucao.humor == 'neutro' %}😐
-                                        {% elif evolucao.humor == 'ruim' %}😟
-                                        {% else %}😢
-                                        {% endif %}
-                                    </span>
-                                    {% endif %}
-                                </div>
-                                <p class="mb-2">{{ evolucao.descricao }}</p>
-                                {% if evolucao.medicamentos %}
-                                <div class="alert alert-info mb-2">
-                                    <strong><i class="bi bi-capsule"></i> Medicamentos:</strong> {{ evolucao.medicamentos }}
-                                </div>
-                                {% endif %}
-                                {% if evolucao.observacoes_privadas %}
-                                <div class="alert alert-warning mb-0">
-                                    <strong><i class="bi bi-lock"></i> Observações Privadas:</strong> {{ evolucao.observacoes_privadas }}
-                                </div>
-                                {% endif %}
-                            </div>
+                        <p class="mb-2">{{ evolucao.descricao }}</p>
+                        {% if evolucao.medicamentos %}
+                        <div class="alert alert-info mb-2">
+                            <strong><i class="bi bi-capsule"></i> Medicamentos:</strong> {{ evolucao.medicamentos }}
                         </div>
+                        {% endif %}
+                        {% if evolucao.observacoes_privadas %}
+                        <div class="alert alert-warning mb-0">
+                            <strong><i class="bi bi-lock"></i> Observações Privadas:</strong> {{ evolucao.observacoes_privadas }}
+                        </div>
+                        {% endif %}
                     </div>
-                    {% endfor %}
                 </div>
-                {% else %}
-                <div class="text-center py-5">
-                    <i class="bi bi-inbox" style="font-size: 3rem; color: #ccc;"></i>
-                    <p class="text-muted mt-3">Nenhuma evolução registrada ainda.</p>
-                </div>
-                {% endif %}
             </div>
+            {% endfor %}
         </div>
+        {% else %}
+        <div class="text-center py-5">
+            <i class="bi bi-inbox" style="font-size: 3rem; color: #ccc;"></i>
+            <p class="text-muted mt-3">Nenhuma evolução registrada ainda.</p>
+        </div>
+        {% endif %}
     </div>
+</div>
 
-    <!-- Modal Nova Evolução -->
-    <div class="modal fade" id="novaEvolucaoModal" tabindex="-1">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <form method="POST" action="/prontuario/{{ paciente.id }}/nova">
-                    <div class="modal-header">
-                        <h5 class="modal-title">Nova Evolução</h5>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+<!-- Modal Nova Evolução -->
+<div class="modal fade" id="novaEvolucaoModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <form method="POST" action="{{ url_for('prontuario', paciente_id=paciente.id) }}">
+                <div class="modal-header">
+                    <h5 class="modal-title">Nova Evolução</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Tipo de Registro</label>
+                        <select class="form-select" name="tipo" required>
+                            <option value="evolucao">Evolução da Sessão</option>
+                            <option value="anamnese">Anamnese</option>
+                            <option value="observacao">Observação</option>
+                        </select>
                     </div>
-                    <div class="modal-body">
-                        <div class="mb-3">
-                            <label class="form-label">Tipo de Registro</label>
-                            <select class="form-select" name="tipo" required>
-                                <option value="evolucao">Evolução da Sessão</option>
-                                <option value="anamnese">Anamnese</option>
-                                <option value="observacao">Observação</option>
+                    <div class="mb-3">
+                        <label class="form-label">Título</label>
+                        <input type="text" class="form-control" name="titulo" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Conteúdo</label>
+                        <textarea class="form-control" name="descricao" rows="5" required></textarea>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Estado de Humor</label>
+                            <select class="form-select" name="humor">
+                                <option value="">Não informado</option>
+                                <option value="otimo">😊 Ótimo</option>
+                                <option value="bom">🙂 Bom</option>
+                                <option value="neutro">😐 Neutro</option>
+                                <option value="ruim">😟 Ruim</option>
+                                <option value="pessimo">😢 Péssimo</option>
                             </select>
                         </div>
-                        <div class="mb-3">
-                            <label class="form-label">Título</label>
-                            <input type="text" class="form-control" name="titulo" required>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Conteúdo</label>
-                            <textarea class="form-control" name="conteudo" rows="5" required></textarea>
-                        </div>
-                        <div class="row">
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Estado de Humor</label>
-                                <select class="form-select" name="humor">
-                                    <option value="">Não informado</option>
-                                    <option value="otimo">😊 Ótimo</option>
-                                    <option value="bom">🙂 Bom</option>
-                                    <option value="neutro">😐 Neutro</option>
-                                    <option value="ruim">😟 Ruim</option>
-                                    <option value="pessimo">😢 Péssimo</option>
-                                </select>
-                            </div>
-                            <div class="col-md-6 mb-3">
-                                <label class="form-label">Medicamentos</label>
-                                <input type="text" class="form-control" name="medicamentos" placeholder="Opcional">
-                            </div>
-                        </div>
-                        <div class="mb-3">
-                            <label class="form-label">Observações Privadas</label>
-                            <textarea class="form-control" name="observacoes_privadas" rows="3" placeholder="Visível apenas para você"></textarea>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Medicamentos</label>
+                            <input type="text" class="form-control" name="medicamentos" placeholder="Opcional">
                         </div>
                     </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                        <button type="submit" class="btn btn-primary">Salvar Evolução</button>
+                    <div class="mb-3">
+                        <label class="form-label">Observações Privadas</label>
+                        <textarea class="form-control" name="observacoes_privadas" rows="3" placeholder="Visível apenas para você"></textarea>
                     </div>
-                </form>
-            </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-primary">Salvar Evolução</button>
+                </div>
+            </form>
         </div>
     </div>
+</div>
+{% endblock %}
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-</body>
-</html>
+{% block extra_scripts %}
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+{% endblock %}
