@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MindCarePro - Criar Conta</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .register-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+            max-width: 500px;
+            width: 100%;
+        }
+
+        .register-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px 30px;
+            text-align: center;
+        }
+
+        .register-header h1 {
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+
+        .register-header p {
+            opacity: 0.9;
+            font-size: 16px;
+        }
+
+        .register-form {
+            padding: 40px 30px;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: #333;
+        }
+
+        .required {
+            color: #dc3545;
+        }
+
+        .input-group {
+            position: relative;
+        }
+
+        .input-group i {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #667eea;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px 15px 12px 45px;
+            border: 2px solid #e1e5e9;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .form-help {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .divider {
+            text-align: center;
+            margin: 25px 0;
+            position: relative;
+        }
+
+        .divider::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            width: 100%;
+            height: 1px;
+            background: #e1e5e9;
+        }
+
+        .divider span {
+            background: white;
+            padding: 0 15px;
+            position: relative;
+            color: #666;
+            font-size: 14px;
+        }
+
+        .login-link {
+            text-align: center;
+            color: #666;
+        }
+
+        .login-link a {
+            color: #667eea;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .login-link a:hover {
+            text-decoration: underline;
+        }
+
+        .alert {
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+
+        .password-strength {
+            margin-top: 8px;
+            height: 4px;
+            background: #e1e5e9;
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .password-strength-bar {
+            height: 100%;
+            width: 0%;
+            transition: all 0.3s;
+        }
+
+        .strength-weak { 
+            width: 33%; 
+            background: #dc3545; 
+        }
+
+        .strength-medium { 
+            width: 66%; 
+            background: #ffc107; 
+        }
+
+        .strength-strong { 
+            width: 100%; 
+            background: #28a745; 
+        }
+
+        @media (max-width: 768px) {
+            .register-header {
+                padding: 30px 20px;
+            }
+
+            .register-header h1 {
+                font-size: 26px;
+            }
+
+            .register-form {
+                padding: 30px 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="register-container">
+        <!-- Cabeçalho -->
+        <div class="register-header">
+            <h1><i class="fas fa-brain"></i> MindCarePro</h1>
+            <p>Crie sua conta e comece a gerenciar seus pacientes</p>
+        </div>
+
+        <!-- Formulário -->
+        <div class="register-form">
+            <!-- Alertas -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ 'success' if category == 'success' else 'error' }}">
+                            <i class="fas fa-{{ 'check-circle' if category == 'success' else 'exclamation-triangle' }}"></i>
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            <form method="POST" action="{{ url_for('registro') }}" id="registerForm">
+                <!-- Nome Completo -->
+                <div class="form-group">
+                    <label for="nome">
+                        Nome Completo <span class="required">*</span>
+                    </label>
+                    <div class="input-group">
+                        <i class="fas fa-user"></i>
+                        <input type="text" id="nome" name="nome" class="form-control" 
+                               placeholder="Seu nome completo" required>
+                    </div>
+                </div>
+
+                <!-- Email -->
+                <div class="form-group">
+                    <label for="email">
+                        Email <span class="required">*</span>
+                    </label>
+                    <div class="input-group">
+                        <i class="fas fa-envelope"></i>
+                        <input type="email" id="email" name="email" class="form-control" 
+                               placeholder="seu@email.com" required>
+                    </div>
+                    <small class="form-help">Use um email válido para recuperação de senha</small>
+                </div>
+
+                <!-- Senha -->
+                <div class="form-group">
+                    <label for="senha">
+                        Senha <span class="required">*</span>
+                    </label>
+                    <div class="input-group">
+                        <i class="fas fa-lock"></i>
+                        <input type="password" id="senha" name="senha" class="form-control" 
+                               placeholder="Mínimo 6 caracteres" required minlength="6">
+                    </div>
+                    <div class="password-strength">
+                        <div class="password-strength-bar" id="strengthBar"></div>
+                    </div>
+                    <small class="form-help" id="strengthText">Digite uma senha forte</small>
+                </div>
+
+                <!-- Confirmar Senha -->
+                <div class="form-group">
+                    <label for="confirmar_senha">
+                        Confirmar Senha <span class="required">*</span>
+                    </label>
+                    <div class="input-group">
+                        <i class="fas fa-lock"></i>
+                        <input type="password" id="confirmar_senha" name="confirmar_senha" 
+                               class="form-control" placeholder="Digite a senha novamente" required>
+                    </div>
+                </div>
+
+                <!-- CRP (Opcional) -->
+                <div class="form-group">
+                    <label for="crp">
+                        CRP (Opcional)
+                    </label>
+                    <div class="input-group">
+                        <i class="fas fa-id-card"></i>
+                        <input type="text" id="crp" name="crp" class="form-control" 
+                               placeholder="Ex: 06/123456">
+                    </div>
+                    <small class="form-help">Número do registro profissional</small>
+                </div>
+
+                <!-- Botão -->
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-user-plus"></i>
+                    Criar Conta
+                </button>
+            </form>
+
+            <!-- Divider -->
+            <div class="divider">
+                <span>Já tem uma conta?</span>
+            </div>
+
+            <!-- Link para Login -->
+            <div class="login-link">
+                <a href="{{ url_for('login') }}">
+                    <i class="fas fa-sign-in-alt"></i> Fazer Login
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Validação de força da senha
+        const senhaInput = document.getElementById('senha');
+        const strengthBar = document.getElementById('strengthBar');
+        const strengthText = document.getElementById('strengthText');
+
+        senhaInput.addEventListener('input', function() {
+            const senha = this.value;
+            let strength = 0;
+
+            if (senha.length >= 6) strength++;
+            if (senha.length >= 10) strength++;
+            if (/[a-z]/.test(senha) && /[A-Z]/.test(senha)) strength++;
+            if (/\d/.test(senha)) strength++;
+            if (/[^a-zA-Z0-9]/.test(senha)) strength++;
+
+            strengthBar.className = 'password-strength-bar';
+            
+            if (strength <= 2) {
+                strengthBar.classList.add('strength-weak');
+                strengthText.textContent = 'Senha fraca';
+                strengthText.style.color = '#dc3545';
+            } else if (strength <= 3) {
+                strengthBar.classList.add('strength-medium');
+                strengthText.textContent = 'Senha média';
+                strengthText.style.color = '#ffc107';
+            } else {
+                strengthBar.classList.add('strength-strong');
+                strengthText.textContent = 'Senha forte';
+                strengthText.style.color = '#28a745';
+            }
+        });
+
+        // Validação de confirmação de senha
+        const form = document.getElementById('registerForm');
+        form.addEventListener('submit', function(e) {
+            const senha = document.getElementById('senha').value;
+            const confirmarSenha = document.getElementById('confirmar_senha').value;
+
+            if (senha !== confirmarSenha) {
+                e.preventDefault();
+                alert('As senhas não coincidem!');
+                return false;
+            }
+
+            if (senha.length < 6) {
+                e.preventDefault();
+                alert('A senha deve ter no mínimo 6 caracteres!');
+                return false;
+            }
+        });
+    </script>
+</body>
+</html>
