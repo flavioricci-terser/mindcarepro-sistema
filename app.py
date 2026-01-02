@@ -412,6 +412,7 @@ def pacientes():
         traceback.print_exc()
         flash('Erro ao carregar pacientes', 'error')
         return redirect(url_for('dashboard'))
+        
         @app.route('/pacientes/novo', methods=['GET', 'POST'])
 @login_required
 def novo_paciente():
@@ -1456,3 +1457,4 @@ with app.app_context():
 if __name__ == '__main__':
     app.run(debug=True)
     
+
