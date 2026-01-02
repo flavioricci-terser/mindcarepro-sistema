@@ -1380,6 +1380,7 @@ with app.app_context():
         
         inspector = inspect(db.engine)
         
+        # Migração 1: Adicionar coluna 'crp' em usuarios
         colunas_usuarios = [col['name'] for col in inspector.get_columns('usuarios')]
         if 'crp' not in colunas_usuarios:
             try:
@@ -1391,6 +1392,64 @@ with app.app_context():
                 print(f"⚠️ Erro ao adicionar coluna 'crp': {e}")
                 db.session.rollback()
         
+        # Migração 2: Adicionar coluna 'terapeuta_id' em pacientes
+        colunas_pacientes = [col['name'] for col in inspector.get_columns('pacientes')]
+        if 'terapeuta_id' not in colunas_pacientes:
+            try:
+                # Se existe psicologo_id, copia os dados
+                if 'psicologo_id' in colunas_pacientes:
+                    sql = 'ALTER TABLE pacientes ADD COLUMN terapeuta_id INTEGER;'
+                    db.session.execute(text(sql))
+                    sql = 'UPDATE pacientes SET terapeuta_id = psicologo_id;'
+                    db.session.execute(text(sql))
+                    sql = 'ALTER TABLE pacientes ALTER COLUMN terapeuta_id SET NOT NULL;'
+                    db.session.execute(text(sql))
+                    sql = 'ALTER TABLE pacientes ADD CONSTRAINT fk_pacientes_terapeuta FOREIGN KEY (terapeuta_id) REFERENCES usuarios(id);'
+                    db.session.execute(text(sql))
+                else:
+                    sql = 'ALTER TABLE pacientes ADD COLUMN terapeuta_id INTEGER NOT NULL REFERENCES usuarios(id);'
+                    db.session.execute(text(sql))
+                db.session.commit()
+                print("✅ Coluna 'terapeuta_id' adicionada à tabela 'pacientes'!")
+            except Exception as e:
+                print(f"⚠️ Erro ao adicionar coluna 'terapeuta_id' em pacientes: {e}")
+                db.session.rollback()
+        
+        # Migração 3: Adicionar coluna 'terapeuta_id' em sessoes
+        colunas_sessoes = [col['name'] for col in inspector.get_columns('sessoes')]
+        if 'terapeuta_id' not in colunas_sessoes:
+            try:
+                # Se existe psicologo_id, copia os dados
+                if 'psicologo_id' in colunas_sessoes:
+                    sql = 'ALTER TABLE sessoes ADD COLUMN terapeuta_id INTEGER;'
+                    db.session.execute(text(sql))
+                    sql = 'UPDATE sessoes SET terapeuta_id = psicologo_id;'
+                    db.session.execute(text(sql))
+                    sql = 'ALTER TABLE sessoes ALTER COLUMN terapeuta_id SET NOT NULL;'
+                    db.session.execute(text(sql))
+                    sql = 'ALTER TABLE sessoes ADD CONSTRAINT fk_sessoes_terapeuta FOREIGN KEY (terapeuta_id) REFERENCES usuarios(id);'
+                    db.session.execute(text(sql))
+                else:
+                    sql = 'ALTER TABLE sessoes ADD COLUMN terapeuta_id INTEGER NOT NULL REFERENCES usuarios(id);'
+                    db.session.execute(text(sql))
+                db.session.commit()
+                print("✅ Coluna 'terapeuta_id' adicionada à tabela 'sessoes'!")
+            except Exception as e:
+                print(f"⚠️ Erro ao adicionar coluna 'terapeuta_id' em sessoes: {e}")
+                db.session.rollback()
+        
+        # Migração 4: Adicionar coluna 'data_atualizacao' em sessoes
+        if 'data_atualizacao' not in colunas_sessoes:
+            try:
+                sql = 'ALTER TABLE sessoes ADD COLUMN data_atualizacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP;'
+                db.session.execute(text(sql))
+                db.session.commit()
+                print("✅ Coluna 'data_atualizacao' adicionada à tabela 'sessoes'!")
+            except Exception as e:
+                print(f"⚠️ Erro ao adicionar coluna 'data_atualizacao': {e}")
+                db.session.rollback()
+        
+        # Migração 5: Adicionar colunas em evolucoes
         colunas_evolucoes = [col['name'] for col in inspector.get_columns('evolucoes')]
         colunas_necessarias_evolucoes = {
             'humor': 'VARCHAR(20)',
@@ -1408,17 +1467,6 @@ with app.app_context():
                 except Exception as e:
                     print(f"⚠️ Erro ao adicionar coluna '{coluna}': {e}")
                     db.session.rollback()
-        
-        colunas_sessoes = [col['name'] for col in inspector.get_columns('sessoes')]
-        if 'data_atualizacao' not in colunas_sessoes:
-            try:
-                sql = 'ALTER TABLE sessoes ADD COLUMN data_atualizacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP;'
-                db.session.execute(text(sql))
-                db.session.commit()
-                print("✅ Coluna 'data_atualizacao' adicionada à tabela 'sessoes'!")
-            except Exception as e:
-                print(f"⚠️ Erro ao adicionar coluna 'data_atualizacao': {e}")
-                db.session.rollback()
         
         print("=" * 60)
         print("\n🔗 ROTAS REGISTRADAS:")
