@@ -39,6 +39,7 @@ class Usuario(UserMixin, db.Model):
     nome = db.Column(db.String(100), nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
     senha_hash = db.Column(db.String(255), nullable=False)
+    crp = db.Column(db.String(20))
     tipo = db.Column(db.String(20), nullable=False, default='psicologo')
     ativo = db.Column(db.Boolean, default=True)
     data_criacao = db.Column(db.DateTime, default=datetime.utcnow)
@@ -78,6 +79,7 @@ class Sessao(db.Model):
     status = db.Column(db.String(20), default='agendada')
     observacoes = db.Column(db.Text)
     data_criacao = db.Column(db.DateTime, default=datetime.utcnow)
+    data_atualizacao = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
     psicologo = db.relationship('Usuario', backref='sessoes_psicologo', lazy=True)
 
@@ -173,7 +175,7 @@ def obter_estatisticas_gerais(data_inicio, data_fim):
         traceback.print_exc()
         return {}
 
-# ========== ROTAS PRINCIPAIS ==========
+# ========== ROTAS DE AUTENTICAÇÃO ==========
 
 @app.route('/', methods=['GET', 'POST'])
 def index():
@@ -196,6 +198,71 @@ def login():
     if current_user.is_authenticated:
         return redirect(url_for('dashboard'))
     return render_template('login.html')
+
+@app.route('/registro', methods=['GET', 'POST'])
+def registro():
+    """Rota para registro de novos usuários"""
+    if current_user.is_authenticated:
+        return redirect(url_for('dashboard'))
+    
+    if request.method == 'POST':
+        try:
+            nome = request.form.get('nome', '').strip()
+            email = request.form.get('email', '').strip()
+            senha = request.form.get('senha', '')
+            confirmar_senha = request.form.get('confirmar_senha', '')
+            crp = request.form.get('crp', '').strip()
+            
+            # Validações
+            if not nome:
+                flash('Nome é obrigatório', 'error')
+                return render_template('registro.html')
+            
+            if not email:
+                flash('Email é obrigatório', 'error')
+                return render_template('registro.html')
+            
+            if not senha:
+                flash('Senha é obrigatória', 'error')
+                return render_template('registro.html')
+            
+            if len(senha) < 6:
+                flash('A senha deve ter no mínimo 6 caracteres', 'error')
+                return render_template('registro.html')
+            
+            if senha != confirmar_senha:
+                flash('As senhas não coincidem', 'error')
+                return render_template('registro.html')
+            
+            # Verifica se email já existe
+            usuario_existente = Usuario.query.filter_by(email=email).first()
+            if usuario_existente:
+                flash('Este email já está cadastrado', 'error')
+                return render_template('registro.html')
+            
+            # Cria novo usuário
+            novo_usuario = Usuario(
+                nome=nome,
+                email=email,
+                crp=crp if crp else None
+            )
+            novo_usuario.set_password(senha)
+            
+            db.session.add(novo_usuario)
+            db.session.commit()
+            
+            print(f"✅ Novo usuário criado: {nome} ({email})")
+            flash('Conta criada com sucesso! Faça login para continuar.', 'success')
+            return redirect(url_for('login'))
+            
+        except Exception as e:
+            print(f"❌ Erro ao criar usuário: {e}")
+            traceback.print_exc()
+            flash('Erro ao criar conta. Tente novamente.', 'error')
+            db.session.rollback()
+            return render_template('registro.html')
+    
+    return render_template('registro.html')
 
 @app.route('/logout')
 @login_required
@@ -299,8 +366,7 @@ def pacientes():
         traceback.print_exc()
         flash('Erro ao carregar pacientes', 'error')
         return redirect(url_for('dashboard'))
-
-@app.route('/pacientes/novo', methods=['GET', 'POST'])
+        @app.route('/pacientes/novo', methods=['GET', 'POST'])
 @login_required
 def novo_paciente():
     if request.method == 'POST':
@@ -718,12 +784,42 @@ def reagendar_sessao(id):
 
 # ========== ROTAS DE PRONTUÁRIO/EVOLUÇÃO ==========
 
-@app.route('/prontuario/<int:paciente_id>')
+@app.route('/prontuario/<int:paciente_id>', methods=['GET', 'POST'])
 @login_required
 def prontuario(paciente_id):
     print("✅ Rota /prontuario acessada")
     try:
         paciente = Paciente.query.filter_by(id=paciente_id, psicologo_id=current_user.id).first_or_404()
+        
+        if request.method == 'POST':
+            tipo = request.form.get('tipo', 'evolucao')
+            titulo = request.form.get('titulo', '').strip()
+            descricao = request.form.get('descricao', '').strip()
+            humor = request.form.get('humor', '')
+            medicamentos = request.form.get('medicamentos', '').strip()
+            observacoes_privadas = request.form.get('observacoes_privadas', '').strip()
+            
+            if not titulo or not descricao:
+                flash('Título e descrição são obrigatórios', 'error')
+                evolucoes = Evolucao.query.filter_by(paciente_id=paciente_id).order_by(Evolucao.data_evolucao.desc()).all()
+                return render_template('prontuario.html', paciente=paciente, evolucoes=evolucoes, today=date.today())
+            
+            nova_evolucao = Evolucao(
+                paciente_id=paciente_id,
+                tipo=tipo,
+                titulo=titulo,
+                descricao=descricao,
+                humor=humor if humor else None,
+                medicamentos=medicamentos if medicamentos else None,
+                observacoes_privadas=observacoes_privadas if observacoes_privadas else None
+            )
+            
+            db.session.add(nova_evolucao)
+            db.session.commit()
+            
+            flash('Evolução registrada com sucesso!', 'success')
+            return redirect(url_for('prontuario', paciente_id=paciente_id))
+        
         evolucoes = Evolucao.query.filter_by(paciente_id=paciente_id).order_by(Evolucao.data_evolucao.desc()).all()
         return render_template('prontuario.html', paciente=paciente, evolucoes=evolucoes, today=date.today())
     except Exception as e:
@@ -731,45 +827,6 @@ def prontuario(paciente_id):
         traceback.print_exc()
         flash('Paciente não encontrado', 'error')
         return redirect(url_for('pacientes'))
-
-@app.route('/prontuario/<int:paciente_id>/nova', methods=['POST'])
-@login_required
-def nova_evolucao_prontuario(paciente_id):
-    try:
-        paciente = Paciente.query.filter_by(id=paciente_id, psicologo_id=current_user.id).first_or_404()
-        
-        tipo = request.form.get('tipo', 'evolucao')
-        titulo = request.form.get('titulo', '').strip()
-        conteudo = request.form.get('conteudo', '').strip()
-        humor = request.form.get('humor', '')
-        medicamentos = request.form.get('medicamentos', '').strip()
-        observacoes_privadas = request.form.get('observacoes_privadas', '').strip()
-        
-        if not titulo or not conteudo:
-            flash('Título e conteúdo são obrigatórios', 'error')
-            return redirect(url_for('prontuario', paciente_id=paciente_id))
-        
-        nova_evolucao = Evolucao(
-            paciente_id=paciente_id,
-            tipo=tipo,
-            titulo=titulo,
-            descricao=conteudo,
-            humor=humor if humor else None,
-            medicamentos=medicamentos if medicamentos else None,
-            observacoes_privadas=observacoes_privadas if observacoes_privadas else None
-        )
-        
-        db.session.add(nova_evolucao)
-        db.session.commit()
-        
-        flash('Evolução registrada com sucesso!', 'success')
-        return redirect(url_for('prontuario', paciente_id=paciente_id))
-    except Exception as e:
-        print(f"❌ Erro ao criar evolução: {e}")
-        traceback.print_exc()
-        flash('Erro ao registrar evolução', 'error')
-        db.session.rollback()
-        return redirect(url_for('prontuario', paciente_id=paciente_id))
 
 @app.route('/evolucoes')
 @login_required
@@ -781,7 +838,6 @@ def evolucoes():
     try:
         print(f"✅ PASSO 1: Usuário autenticado: {current_user.nome} (ID: {current_user.id})")
         
-        # Recebe filtros
         paciente_filter = request.args.get('paciente', '')
         data_inicio = request.args.get('data_inicio', '')
         data_fim = request.args.get('data_fim', '')
@@ -790,12 +846,10 @@ def evolucoes():
         print(f"   - Data início: {data_inicio}")
         print(f"   - Data fim: {data_fim}")
         
-        # Inicia query
         print("✅ PASSO 3: Iniciando query de evoluções...")
         query = Evolucao.query.join(Paciente).filter(Paciente.psicologo_id == current_user.id)
         print("✅ PASSO 4: Query base criada com sucesso")
         
-        # Aplica filtros
         if paciente_filter:
             print(f"✅ PASSO 5: Aplicando filtro de paciente: {paciente_filter}")
             query = query.filter(Evolucao.paciente_id == paciente_filter)
@@ -816,17 +870,14 @@ def evolucoes():
             except Exception as e:
                 print(f"⚠️ AVISO: Erro ao aplicar filtro de data fim: {e}")
         
-        # Executa query
         print("✅ PASSO 8: Executando query de evoluções...")
         evolucoes_lista = query.order_by(Evolucao.data_evolucao.desc()).all()
         print(f"✅ PASSO 9: Query executada! Total de evoluções encontradas: {len(evolucoes_lista)}")
         
-        # Busca pacientes
         print("✅ PASSO 10: Buscando lista de pacientes...")
         pacientes_lista = Paciente.query.filter_by(psicologo_id=current_user.id, ativo=True).order_by(Paciente.nome).all()
         print(f"✅ PASSO 11: Total de pacientes encontrados: {len(pacientes_lista)}")
         
-        # Calcula estatísticas
         print("✅ PASSO 12: Calculando estatísticas...")
         total_evolucoes = Evolucao.query.join(Paciente).filter(Paciente.psicologo_id == current_user.id).count()
         print(f"✅ PASSO 13: Total de evoluções: {total_evolucoes}")
@@ -838,29 +889,14 @@ def evolucoes():
         ).count()
         print(f"✅ PASSO 14: Evoluções do mês: {evolucoes_mes}")
         
-        # Verifica se template existe
-        print("✅ PASSO 15: Verificando se template evolucoes.html existe...")
-        import os
-        template_path = os.path.join(app.template_folder, 'evolucoes.html')
-        if os.path.exists(template_path):
-            print(f"✅ PASSO 16: Template encontrado em: {template_path}")
-        else:
-            print(f"❌ ERRO: Template NÃO encontrado em: {template_path}")
-            print(f"❌ Pasta de templates: {app.template_folder}")
-            print(f"❌ Arquivos na pasta templates:")
-            if os.path.exists(app.template_folder):
-                for arquivo in os.listdir(app.template_folder):
-                    print(f"   - {arquivo}")
-        
-        # Renderiza template
-        print("✅ PASSO 17: Tentando renderizar template evolucoes.html...")
+        print("✅ PASSO 15: Renderizando template evolucoes.html...")
         resultado = render_template('evolucoes.html',
                                    evolucoes=evolucoes_lista,
                                    pacientes=pacientes_lista,
                                    total_evolucoes=total_evolucoes,
                                    evolucoes_mes=evolucoes_mes,
                                    today=date.today())
-        print("✅ PASSO 18: Template renderizado com sucesso!")
+        print("✅ PASSO 16: Template renderizado com sucesso!")
         print("=" * 80)
         return resultado
     
@@ -874,8 +910,7 @@ def evolucoes():
         print("=" * 80)
         flash('Erro ao carregar evoluções', 'error')
         return redirect(url_for('dashboard'))
-
-@app.route('/evolucoes/nova', methods=['GET', 'POST'])
+        @app.route('/evolucoes/nova', methods=['GET', 'POST'])
 @login_required
 def nova_evolucao():
     if request.method == 'POST':
@@ -1094,82 +1129,6 @@ def salvar_configuracoes():
         db.session.rollback()
         return redirect(url_for('configuracoes'))
 
-@app.route('/configuracoes/perfil', methods=['GET', 'POST'])
-@login_required
-def configuracoes_perfil():
-    if request.method == 'POST':
-        try:
-            nome = request.form.get('nome', '').strip()
-            email = request.form.get('email', '').strip()
-            
-            if not nome:
-                flash('Nome é obrigatório', 'error')
-                return render_template('configuracoes_perfil.html', usuario=current_user, today=date.today())
-            
-            if not email:
-                flash('Email é obrigatório', 'error')
-                return render_template('configuracoes_perfil.html', usuario=current_user, today=date.today())
-            
-            if email != current_user.email:
-                usuario_existente = Usuario.query.filter_by(email=email).first()
-                if usuario_existente:
-                    flash('Este email já está sendo usado por outro usuário', 'error')
-                    return render_template('configuracoes_perfil.html', usuario=current_user, today=date.today())
-            
-            current_user.nome = nome
-            current_user.email = email
-            db.session.commit()
-            
-            flash('Perfil atualizado com sucesso!', 'success')
-            return redirect(url_for('configuracoes'))
-        except Exception as e:
-            print(f"❌ Erro ao atualizar perfil: {e}")
-            flash('Erro ao atualizar perfil', 'error')
-            db.session.rollback()
-    
-    return render_template('configuracoes_perfil.html', usuario=current_user, today=date.today())
-
-@app.route('/configuracoes/senha', methods=['GET', 'POST'])
-@login_required
-def configuracoes_senha():
-    if request.method == 'POST':
-        try:
-            senha_atual = request.form.get('senha_atual', '')
-            nova_senha = request.form.get('nova_senha', '')
-            confirmar_senha = request.form.get('confirmar_senha', '')
-            
-            if not senha_atual:
-                flash('Senha atual é obrigatória', 'error')
-                return render_template('configuracoes_senha.html', today=date.today())
-            
-            if not nova_senha:
-                flash('Nova senha é obrigatória', 'error')
-                return render_template('configuracoes_senha.html', today=date.today())
-            
-            if len(nova_senha) < 6:
-                flash('Nova senha deve ter pelo menos 6 caracteres', 'error')
-                return render_template('configuracoes_senha.html', today=date.today())
-            
-            if nova_senha != confirmar_senha:
-                flash('Confirmação de senha não confere', 'error')
-                return render_template('configuracoes_senha.html', today=date.today())
-            
-            if not current_user.check_password(senha_atual):
-                flash('Senha atual incorreta', 'error')
-                return render_template('configuracoes_senha.html', today=date.today())
-            
-            current_user.set_password(nova_senha)
-            db.session.commit()
-            
-            flash('Senha alterada com sucesso!', 'success')
-            return redirect(url_for('configuracoes'))
-        except Exception as e:
-            print(f"❌ Erro ao alterar senha: {e}")
-            flash('Erro ao alterar senha', 'error')
-            db.session.rollback()
-    
-    return render_template('configuracoes_senha.html', today=date.today())
-
 # ========== ROTAS DE RELATÓRIOS ==========
 
 @app.route('/relatorios')
@@ -1201,55 +1160,6 @@ def relatorios():
         traceback.print_exc()
         flash('Erro ao carregar relatórios', 'error')
         return redirect(url_for('dashboard'))
-
-@app.route('/relatorios/financeiro')
-@login_required
-def relatorio_financeiro():
-    try:
-        data_inicio = request.args.get('data_inicio', '')
-        data_fim = request.args.get('data_fim', '')
-        
-        if not data_inicio or not data_fim:
-            hoje = date.today()
-            data_fim = hoje.strftime('%Y-%m-%d')
-            data_inicio = hoje.replace(day=1).strftime('%Y-%m-%d')
-        
-        data_inicio_obj = datetime.strptime(data_inicio, '%Y-%m-%d').date()
-        data_fim_obj = datetime.strptime(data_fim, '%Y-%m-%d').date()
-        
-        sessoes = Sessao.query.filter(
-            Sessao.psicologo_id == current_user.id,
-            func.date(Sessao.data_sessao) >= data_inicio_obj,
-            func.date(Sessao.data_sessao) <= data_fim_obj
-        ).order_by(Sessao.data_sessao.desc()).all()
-        
-        total_receita = sum(float(s.valor or 0) for s in sessoes if s.status == 'realizada')
-        total_sessoes = len([s for s in sessoes if s.status == 'realizada'])
-        receita_pendente = sum(float(s.valor or 0) for s in sessoes if s.status == 'agendada')
-        sessoes_canceladas = len([s for s in sessoes if s.status in ['cancelada', 'faltou']])
-        
-        receita_mensal = {}
-        for sessao in sessoes:
-            if sessao.status == 'realizada' and sessao.valor:
-                mes_ano = sessao.data_sessao.strftime('%m/%Y')
-                if mes_ano not in receita_mensal:
-                    receita_mensal[mes_ano] = 0
-                receita_mensal[mes_ano] += float(sessao.valor)
-        
-        return render_template('relatorio_financeiro.html',
-                             sessoes=sessoes,
-                             total_receita=total_receita,
-                             total_sessoes=total_sessoes,
-                             receita_pendente=receita_pendente,
-                             sessoes_canceladas=sessoes_canceladas,
-                             receita_mensal=receita_mensal,
-                             data_inicio=data_inicio,
-                             data_fim=data_fim)
-    except Exception as e:
-        print(f"❌ Erro no relatório financeiro: {e}")
-        traceback.print_exc()
-        flash('Erro ao gerar relatório financeiro', 'error')
-        return redirect(url_for('relatorios'))
 
 # ========== APIs PARA GRÁFICOS ==========
 
@@ -1450,13 +1360,31 @@ with app.app_context():
         print("=" * 60)
         print("✅ Tabelas criadas/verificadas com sucesso!")
         
-        # ===== MIGRAÇÃO: ADICIONA COLUNAS NA TABELA EVOLUCOES =====
+        # ===== MIGRAÇÃO: ADICIONA COLUNAS NA TABELA USUARIOS =====
         from sqlalchemy import text, inspect
         
+        print("\n🔄 Verificando colunas da tabela 'usuarios'...")
+        
+        # Verifica quais colunas existem na tabela usuarios
+        inspector = inspect(db.engine)
+        colunas_usuarios = [col['name'] for col in inspector.get_columns('usuarios')]
+        print(f"✅ Colunas existentes em 'usuarios': {', '.join(colunas_usuarios)}")
+        
+        # Adiciona coluna CRP se não existir
+        if 'crp' not in colunas_usuarios:
+            try:
+                sql = 'ALTER TABLE usuarios ADD COLUMN crp VARCHAR(20);'
+                db.session.execute(text(sql))
+                db.session.commit()
+                print("✅ Coluna 'crp' adicionada à tabela 'usuarios'!")
+            except Exception as e:
+                print(f"⚠️ Erro ao adicionar coluna 'crp': {e}")
+                db.session.rollback()
+        
+        # ===== MIGRAÇÃO: ADICIONA COLUNAS NA TABELA EVOLUCOES =====
         print("\n🔄 Verificando colunas da tabela 'evolucoes'...")
         
         # Verifica quais colunas existem na tabela
-        inspector = inspect(db.engine)
         colunas_existentes = [col['name'] for col in inspector.get_columns('evolucoes')]
         print(f"✅ Colunas existentes: {', '.join(colunas_existentes)}")
         
@@ -1486,8 +1414,26 @@ with app.app_context():
         else:
             print("✅ Todas as colunas já existem. Nenhuma migração necessária.")
         
+        # ===== ADICIONA COLUNA data_atualizacao NA TABELA SESSOES =====
+        print("\n🔄 Verificando coluna 'data_atualizacao' na tabela 'sessoes'...")
+        colunas_sessoes = [col['name'] for col in inspector.get_columns('sessoes')]
+        
+        if 'data_atualizacao' not in colunas_sessoes:
+            try:
+                sql = 'ALTER TABLE sessoes ADD COLUMN data_atualizacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP;'
+                db.session.execute(text(sql))
+                db.session.commit()
+                print("✅ Coluna 'data_atualizacao' adicionada à tabela 'sessoes'!")
+            except Exception as e:
+                print(f"⚠️ Erro ao adicionar coluna 'data_atualizacao': {e}")
+                db.session.rollback()
+        
         print("=" * 60)
         print("\n🔗 ROTAS REGISTRADAS:")
+        print("   - / (login)")
+        print("   - /login")
+        print("   - /registro (NOVA!)")
+        print("   - /logout")
         print("   - /dashboard")
         print("   - /pacientes")
         print("   - /sessoes")
