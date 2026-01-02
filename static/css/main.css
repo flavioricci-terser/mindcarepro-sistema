@@ -1978,3 +1978,129 @@ body {
     cursor: not-allowed;
     opacity: 0.7;
 }
+/* ========================================
+   ESTILOS PARA VISUALIZAÇÃO DE EVOLUÇÃO
+   ======================================== */
+
+.details-container {
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    overflow: hidden;
+    max-width: 900px;
+    margin: 0 auto;
+}
+
+.details-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 30px;
+}
+
+.details-header h2 {
+    font-size: 28px;
+    margin-bottom: 10px;
+}
+
+.details-meta {
+    display: flex;
+    gap: 20px;
+    font-size: 14px;
+    opacity: 0.9;
+    flex-wrap: wrap;
+}
+
+.details-meta i {
+    margin-right: 5px;
+}
+
+.details-body {
+    padding: 30px;
+}
+
+.info-item {
+    margin-bottom: 25px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #eee;
+}
+
+.info-item:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+}
+
+.info-label {
+    font-weight: 600;
+    color: #667eea;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+}
+
+.info-label i {
+    margin-right: 8px;
+}
+
+.info-value {
+    color: #333;
+    line-height: 1.6;
+    white-space: pre-wrap;
+}
+
+.type-badge {
+    display: inline-block;
+    padding: 6px 15px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.type-evolucao {
+    background: #e8f5e8;
+    color: #2e7d32;
+}
+
+.type-anamnese {
+    background: #e3f2fd;
+    color: #1976d2;
+}
+
+.type-observacao {
+    background: #fff3e0;
+    color: #f57c00;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 10px;
+    padding: 20px 30px;
+    background: #f8f9fa;
+    justify-content: flex-end;
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+    .details-header {
+        padding: 20px;
+    }
+
+    .details-body {
+        padding: 20px;
+    }
+
+    .action-buttons {
+        flex-direction: column;
+        padding: 15px;
+    }
+
+    .btn {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .details-meta {
+        flex-direction: column;
+        gap: 10px;
+    }
+}
