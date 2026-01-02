@@ -1415,6 +1415,17 @@ with app.app_context():
                 print(f"⚠️ Erro ao adicionar coluna 'terapeuta_id' em pacientes: {e}")
                 db.session.rollback()
         
+        # Migração 2B: Remover constraint NOT NULL de psicologo_id
+        if 'psicologo_id' in colunas_pacientes:
+            try:
+                sql = 'ALTER TABLE pacientes ALTER COLUMN psicologo_id DROP NOT NULL;'
+                db.session.execute(text(sql))
+                db.session.commit()
+                print("✅ Constraint NOT NULL removida de 'psicologo_id' em pacientes!")
+            except Exception as e:
+                print(f"⚠️ Erro ao remover constraint: {e}")
+                db.session.rollback()
+        
         # Migração 3: Adicionar coluna 'terapeuta_id' em sessoes
         colunas_sessoes = [col['name'] for col in inspector.get_columns('sessoes')]
         if 'terapeuta_id' not in colunas_sessoes:
@@ -1493,3 +1504,4 @@ with app.app_context():
 
 if __name__ == '__main__':
     app.run(debug=True)
+
