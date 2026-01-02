@@ -40,7 +40,7 @@ class Usuario(UserMixin, db.Model):
     email = db.Column(db.String(120), unique=True, nullable=False)
     senha_hash = db.Column(db.String(255), nullable=False)
     crp = db.Column(db.String(20))
-    tipo = db.Column(db.String(20), nullable=False, default='psicologo')
+    tipo = db.Column(db.String(20), nullable=False, default='terapeuta')
     ativo = db.Column(db.Boolean, default=True)
     data_criacao = db.Column(db.DateTime, default=datetime.utcnow)
     
@@ -62,26 +62,27 @@ class Paciente(db.Model):
     observacoes = db.Column(db.Text)
     ativo = db.Column(db.Boolean, default=True)
     data_cadastro = db.Column(db.DateTime, default=datetime.utcnow)
-    psicologo_id = db.Column(db.Integer, db.ForeignKey('usuarios.id'), nullable=False)
+    terapeuta_id = db.Column(db.Integer, db.ForeignKey('usuarios.id'), nullable=False)
     
     sessoes = db.relationship('Sessao', backref='paciente', lazy=True)
     evolucoes = db.relationship('Evolucao', backref='paciente', lazy=True)
+    agendamentos = db.relationship('Agendamento', backref='paciente', lazy=True)
 
 class Sessao(db.Model):
     __tablename__ = 'sessoes'
     
     id = db.Column(db.Integer, primary_key=True)
     paciente_id = db.Column(db.Integer, db.ForeignKey('pacientes.id'), nullable=False)
-    psicologo_id = db.Column(db.Integer, db.ForeignKey('usuarios.id'), nullable=False)
+    terapeuta_id = db.Column(db.Integer, db.ForeignKey('usuarios.id'), nullable=False)
     data_sessao = db.Column(db.DateTime, nullable=False)
-    duracao = db.Column(db.Integer, default=50)
+    duracao = db.Column(db.Integer, default=60)
     valor = db.Column(db.Numeric(10, 2))
     status = db.Column(db.String(20), default='agendada')
     observacoes = db.Column(db.Text)
     data_criacao = db.Column(db.DateTime, default=datetime.utcnow)
     data_atualizacao = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
-    psicologo = db.relationship('Usuario', backref='sessoes_psicologo', lazy=True)
+    terapeuta = db.relationship('Usuario', backref='sessoes_terapeuta', lazy=True)
 
 class Evolucao(db.Model):
     __tablename__ = 'evolucoes'
@@ -95,6 +96,51 @@ class Evolucao(db.Model):
     humor = db.Column(db.String(20))
     medicamentos = db.Column(db.Text)
     observacoes_privadas = db.Column(db.Text)
+
+class Agendamento(db.Model):
+    __tablename__ = 'agendamentos'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    paciente_id = db.Column(db.Integer, db.ForeignKey('pacientes.id'), nullable=False)
+    terapeuta_id = db.Column(db.Integer, db.ForeignKey('usuarios.id'), nullable=False)
+    
+    # Data e hora
+    data_inicio = db.Column(db.DateTime, nullable=False)
+    data_fim = db.Column(db.DateTime, nullable=False)
+    duracao = db.Column(db.Integer, default=60)  # minutos
+    
+    # Status
+    status = db.Column(db.String(20), default='agendada')
+    # Valores: agendada, confirmada, em_andamento, realizada, faltou, cancelada, reagendada
+    
+    # Tipo
+    tipo = db.Column(db.String(20), default='online')
+    # Valores: online, presencial
+    
+    # Financeiro
+    valor = db.Column(db.Numeric(10, 2))
+    pago = db.Column(db.Boolean, default=False)
+    
+    # Observações
+    observacoes = db.Column(db.Text)
+    observacoes_terapeuta = db.Column(db.Text)  # Anotações privadas do terapeuta
+    
+    # Google Meet
+    link_meet = db.Column(db.String(500))
+    transcricao = db.Column(db.Text)  # Futura integração
+    analise_ia = db.Column(db.Text)  # Futura integração
+    
+    # Recorrência
+    recorrente = db.Column(db.Boolean, default=False)
+    recorrencia_tipo = db.Column(db.String(20))  # semanal, quinzenal, mensal
+    recorrencia_ate = db.Column(db.Date)
+    
+    # Auditoria
+    data_criacao = db.Column(db.DateTime, default=datetime.utcnow)
+    data_atualizacao = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    
+    # Relacionamentos
+    terapeuta = db.relationship('Usuario', backref='agendamentos_terapeuta')
 
 class Configuracao(db.Model):
     __tablename__ = 'configuracoes'
@@ -110,7 +156,7 @@ class Configuracao(db.Model):
     cidade = db.Column(db.String(100))
     estado = db.Column(db.String(2))
     cep = db.Column(db.String(10))
-    duracao_sessao = db.Column(db.Integer, default=50)
+    duracao_sessao = db.Column(db.Integer, default=60)
     valor_sessao = db.Column(db.Numeric(10, 2))
     horario_inicio = db.Column(db.Time)
     horario_fim = db.Column(db.Time)
@@ -142,11 +188,11 @@ def processar_login():
 def obter_estatisticas_gerais(data_inicio, data_fim):
     try:
         stats = {}
-        stats['total_pacientes'] = Paciente.query.filter_by(psicologo_id=current_user.id).count()
-        stats['pacientes_ativos'] = Paciente.query.filter_by(psicologo_id=current_user.id, ativo=True).count()
+        stats['total_pacientes'] = Paciente.query.filter_by(terapeuta_id=current_user.id).count()
+        stats['pacientes_ativos'] = Paciente.query.filter_by(terapeuta_id=current_user.id, ativo=True).count()
         
         sessoes_periodo = Sessao.query.filter(
-            Sessao.psicologo_id == current_user.id,
+            Sessao.terapeuta_id == current_user.id,
             func.date(Sessao.data_sessao) >= data_inicio,
             func.date(Sessao.data_sessao) <= data_fim
         ).all()
@@ -281,14 +327,14 @@ def dashboard():
     receita_mes = 0
     
     try:
-        total_pacientes = Paciente.query.filter_by(psicologo_id=current_user.id, ativo=True).count()
+        total_pacientes = Paciente.query.filter_by(terapeuta_id=current_user.id, ativo=True).count()
         hoje = date.today()
-        sessoes_hoje = Sessao.query.filter_by(psicologo_id=current_user.id).filter(
+        sessoes_hoje = Sessao.query.filter_by(terapeuta_id=current_user.id).filter(
             db.func.date(Sessao.data_sessao) == hoje
         ).count()
         
         proximas_sessoes = Sessao.query.filter_by(
-            psicologo_id=current_user.id,
+            terapeuta_id=current_user.id,
             status='agendada'
         ).filter(
             Sessao.data_sessao >= datetime.now(),
@@ -296,13 +342,13 @@ def dashboard():
         ).order_by(Sessao.data_sessao).limit(5).all()
         
         primeiro_dia_mes = hoje.replace(day=1)
-        sessoes_mes = Sessao.query.filter_by(psicologo_id=current_user.id).filter(
+        sessoes_mes = Sessao.query.filter_by(terapeuta_id=current_user.id).filter(
             db.func.date(Sessao.data_sessao) >= primeiro_dia_mes,
             Sessao.status.in_(['realizada', 'agendada'])
         ).count()
         
         receita_query = db.session.query(db.func.sum(Sessao.valor)).filter_by(
-            psicologo_id=current_user.id,
+            terapeuta_id=current_user.id,
             status='realizada'
         ).filter(
             db.func.date(Sessao.data_sessao) >= primeiro_dia_mes
@@ -329,7 +375,7 @@ def pacientes():
         search = request.args.get('search', '')
         
         if search:
-            pacientes_lista = Paciente.query.filter_by(psicologo_id=current_user.id).filter(
+            pacientes_lista = Paciente.query.filter_by(terapeuta_id=current_user.id).filter(
                 db.or_(
                     Paciente.nome.ilike(f'%{search}%'),
                     Paciente.email.ilike(f'%{search}%'),
@@ -337,17 +383,17 @@ def pacientes():
                 )
             ).order_by(Paciente.nome).all()
         else:
-            pacientes_lista = Paciente.query.filter_by(psicologo_id=current_user.id).order_by(Paciente.nome).all()
+            pacientes_lista = Paciente.query.filter_by(terapeuta_id=current_user.id).order_by(Paciente.nome).all()
         
-        total_pacientes = Paciente.query.filter_by(psicologo_id=current_user.id).count()
-        pacientes_ativos = Paciente.query.filter_by(psicologo_id=current_user.id, ativo=True).count()
+        total_pacientes = Paciente.query.filter_by(terapeuta_id=current_user.id).count()
+        pacientes_ativos = Paciente.query.filter_by(terapeuta_id=current_user.id, ativo=True).count()
         primeiro_dia_mes = date.today().replace(day=1)
-        novos_mes = Paciente.query.filter_by(psicologo_id=current_user.id).filter(
+        novos_mes = Paciente.query.filter_by(terapeuta_id=current_user.id).filter(
             Paciente.data_cadastro >= primeiro_dia_mes
         ).count()
         
         try:
-            sessoes_mes = Sessao.query.filter_by(psicologo_id=current_user.id).filter(
+            sessoes_mes = Sessao.query.filter_by(terapeuta_id=current_user.id).filter(
                 db.func.extract('month', Sessao.data_sessao) == date.today().month,
                 db.func.extract('year', Sessao.data_sessao) == date.today().year
             ).count()
@@ -391,7 +437,7 @@ def novo_paciente():
                     return render_template('novo_paciente.html')
             
             if email:
-                paciente_existente = Paciente.query.filter_by(email=email, psicologo_id=current_user.id).first()
+                paciente_existente = Paciente.query.filter_by(email=email, terapeuta_id=current_user.id).first()
                 if paciente_existente:
                     flash('Já existe um paciente com este email', 'error')
                     return render_template('novo_paciente.html')
@@ -403,7 +449,7 @@ def novo_paciente():
                 data_nascimento=data_nascimento,
                 endereco=endereco if endereco else None,
                 observacoes=observacoes if observacoes else None,
-                psicologo_id=current_user.id
+                terapeuta_id=current_user.id
             )
             
             db.session.add(novo_paciente)
@@ -423,7 +469,7 @@ def novo_paciente():
 @login_required
 def ver_paciente(id):
     try:
-        paciente = Paciente.query.filter_by(id=id, psicologo_id=current_user.id).first_or_404()
+        paciente = Paciente.query.filter_by(id=id, terapeuta_id=current_user.id).first_or_404()
         sessoes = Sessao.query.filter_by(paciente_id=id).order_by(Sessao.data_sessao.desc()).limit(10).all()
         evolucoes = Evolucao.query.filter_by(paciente_id=id).order_by(Evolucao.data_evolucao.desc()).limit(5).all()
         
@@ -442,7 +488,7 @@ def ver_paciente(id):
 @login_required
 def editar_paciente(id):
     try:
-        paciente = Paciente.query.filter_by(id=id, psicologo_id=current_user.id).first_or_404()
+        paciente = Paciente.query.filter_by(id=id, terapeuta_id=current_user.id).first_or_404()
         
         if request.method == 'POST':
             nome = request.form.get('nome', '').strip()
@@ -465,7 +511,7 @@ def editar_paciente(id):
                     return render_template('editar_paciente.html', paciente=paciente, today=date.today())
             
             if email and email != paciente.email:
-                paciente_existente = Paciente.query.filter_by(email=email, psicologo_id=current_user.id).first()
+                paciente_existente = Paciente.query.filter_by(email=email, terapeuta_id=current_user.id).first()
                 if paciente_existente:
                     flash('Já existe um paciente com este email', 'error')
                     return render_template('editar_paciente.html', paciente=paciente, today=date.today())
@@ -493,7 +539,7 @@ def editar_paciente(id):
 @login_required
 def desativar_paciente(id):
     try:
-        paciente = Paciente.query.filter_by(id=id, psicologo_id=current_user.id).first_or_404()
+        paciente = Paciente.query.filter_by(id=id, terapeuta_id=current_user.id).first_or_404()
         paciente.ativo = False
         db.session.commit()
         return jsonify({'success': True, 'message': f'Paciente {paciente.nome} desativado com sucesso'})
@@ -505,7 +551,7 @@ def desativar_paciente(id):
 @login_required
 def ativar_paciente(id):
     try:
-        paciente = Paciente.query.filter_by(id=id, psicologo_id=current_user.id).first_or_404()
+        paciente = Paciente.query.filter_by(id=id, terapeuta_id=current_user.id).first_or_404()
         paciente.ativo = True
         db.session.commit()
         return jsonify({'success': True, 'message': f'Paciente {paciente.nome} ativado com sucesso'})
@@ -525,7 +571,7 @@ def sessoes():
         data_inicio = request.args.get('data_inicio', '')
         data_fim = request.args.get('data_fim', '')
         
-        query = Sessao.query.filter_by(psicologo_id=current_user.id)
+        query = Sessao.query.filter_by(terapeuta_id=current_user.id)
         
         if status_filter:
             query = query.filter(Sessao.status == status_filter)
@@ -548,14 +594,14 @@ def sessoes():
                 pass
         
         sessoes_lista = query.order_by(Sessao.data_sessao.desc()).all()
-        pacientes_lista = Paciente.query.filter_by(psicologo_id=current_user.id, ativo=True).order_by(Paciente.nome).all()
+        pacientes_lista = Paciente.query.filter_by(terapeuta_id=current_user.id, ativo=True).order_by(Paciente.nome).all()
         
-        total_sessoes = Sessao.query.filter_by(psicologo_id=current_user.id).count()
-        sessoes_agendadas = Sessao.query.filter_by(psicologo_id=current_user.id, status='agendada').count()
-        sessoes_realizadas = Sessao.query.filter_by(psicologo_id=current_user.id, status='realizada').count()
+        total_sessoes = Sessao.query.filter_by(terapeuta_id=current_user.id).count()
+        sessoes_agendadas = Sessao.query.filter_by(terapeuta_id=current_user.id, status='agendada').count()
+        sessoes_realizadas = Sessao.query.filter_by(terapeuta_id=current_user.id, status='realizada').count()
         
         receita_query = db.session.query(db.func.sum(Sessao.valor)).filter_by(
-            psicologo_id=current_user.id,
+            terapeuta_id=current_user.id,
             status='realizada'
         ).scalar()
         receita_total = float(receita_query) if receita_query else 0
@@ -582,54 +628,54 @@ def nova_sessao():
             paciente_id = request.form.get('paciente_id')
             data_sessao_str = request.form.get('data_sessao')
             hora_sessao = request.form.get('hora_sessao')
-            duracao = request.form.get('duracao', 50)
+            duracao = request.form.get('duracao', 60)
             valor_str = request.form.get('valor', '').strip()
             observacoes = request.form.get('observacoes', '').strip()
             
             if not paciente_id or paciente_id == '' or paciente_id == 'None':
                 flash('Paciente é obrigatório', 'error')
-                pacientes_lista = Paciente.query.filter_by(psicologo_id=current_user.id, ativo=True).order_by(Paciente.nome).all()
+                pacientes_lista = Paciente.query.filter_by(terapeuta_id=current_user.id, ativo=True).order_by(Paciente.nome).all()
                 return render_template('nova_sessao.html', pacientes=pacientes_lista)
             
             try:
                 paciente_id_int = int(paciente_id)
             except (ValueError, TypeError):
                 flash('Paciente inválido', 'error')
-                pacientes_lista = Paciente.query.filter_by(psicologo_id=current_user.id, ativo=True).order_by(Paciente.nome).all()
+                pacientes_lista = Paciente.query.filter_by(terapeuta_id=current_user.id, ativo=True).order_by(Paciente.nome).all()
                 return render_template('nova_sessao.html', pacientes=pacientes_lista)
             
             if not data_sessao_str or not hora_sessao:
                 flash('Data e hora são obrigatórios', 'error')
-                pacientes_lista = Paciente.query.filter_by(psicologo_id=current_user.id, ativo=True).order_by(Paciente.nome).all()
+                pacientes_lista = Paciente.query.filter_by(terapeuta_id=current_user.id, ativo=True).order_by(Paciente.nome).all()
                 return render_template('nova_sessao.html', pacientes=pacientes_lista)
             
             try:
                 data_sessao = datetime.strptime(f"{data_sessao_str} {hora_sessao}", '%Y-%m-%d %H:%M')
             except Exception:
                 flash('Data ou hora inválida', 'error')
-                pacientes_lista = Paciente.query.filter_by(psicologo_id=current_user.id, ativo=True).order_by(Paciente.nome).all()
+                pacientes_lista = Paciente.query.filter_by(terapeuta_id=current_user.id, ativo=True).order_by(Paciente.nome).all()
                 return render_template('nova_sessao.html', pacientes=pacientes_lista)
             
             if data_sessao < datetime.now():
                 flash('Não é possível agendar sessão no passado', 'error')
-                pacientes_lista = Paciente.query.filter_by(psicologo_id=current_user.id, ativo=True).order_by(Paciente.nome).all()
+                pacientes_lista = Paciente.query.filter_by(terapeuta_id=current_user.id, ativo=True).order_by(Paciente.nome).all()
                 return render_template('nova_sessao.html', pacientes=pacientes_lista)
             
-            paciente = Paciente.query.filter_by(id=paciente_id_int, psicologo_id=current_user.id).first()
+            paciente = Paciente.query.filter_by(id=paciente_id_int, terapeuta_id=current_user.id).first()
             if not paciente:
                 flash('Paciente não encontrado', 'error')
-                pacientes_lista = Paciente.query.filter_by(psicologo_id=current_user.id, ativo=True).order_by(Paciente.nome).all()
+                pacientes_lista = Paciente.query.filter_by(terapeuta_id=current_user.id, ativo=True).order_by(Paciente.nome).all()
                 return render_template('nova_sessao.html', pacientes=pacientes_lista)
             
             conflito = Sessao.query.filter(
-                Sessao.psicologo_id == current_user.id,
+                Sessao.terapeuta_id == current_user.id,
                 Sessao.status == 'agendada',
                 Sessao.data_sessao == data_sessao
             ).first()
             
             if conflito:
                 flash('Já existe uma sessão agendada para este horário', 'error')
-                pacientes_lista = Paciente.query.filter_by(psicologo_id=current_user.id, ativo=True).order_by(Paciente.nome).all()
+                pacientes_lista = Paciente.query.filter_by(terapeuta_id=current_user.id, ativo=True).order_by(Paciente.nome).all()
                 return render_template('nova_sessao.html', pacientes=pacientes_lista)
             
             valor = None
@@ -639,12 +685,12 @@ def nova_sessao():
                     valor = Decimal(valor_limpo)
                 except Exception:
                     flash('Valor inválido', 'error')
-                    pacientes_lista = Paciente.query.filter_by(psicologo_id=current_user.id, ativo=True).order_by(Paciente.nome).all()
+                    pacientes_lista = Paciente.query.filter_by(terapeuta_id=current_user.id, ativo=True).order_by(Paciente.nome).all()
                     return render_template('nova_sessao.html', pacientes=pacientes_lista)
             
             nova_sessao_obj = Sessao(
                 paciente_id=paciente_id_int,
-                psicologo_id=current_user.id,
+                terapeuta_id=current_user.id,
                 data_sessao=data_sessao,
                 duracao=int(duracao),
                 valor=valor,
@@ -663,7 +709,7 @@ def nova_sessao():
             db.session.rollback()
     
     try:
-        pacientes_lista = Paciente.query.filter_by(psicologo_id=current_user.id, ativo=True).order_by(Paciente.nome).all()
+        pacientes_lista = Paciente.query.filter_by(terapeuta_id=current_user.id, ativo=True).order_by(Paciente.nome).all()
     except Exception:
         pacientes_lista = []
     
@@ -673,7 +719,7 @@ def nova_sessao():
 @login_required
 def ver_sessao(id):
     try:
-        sessao = Sessao.query.filter_by(id=id, psicologo_id=current_user.id).first_or_404()
+        sessao = Sessao.query.filter_by(id=id, terapeuta_id=current_user.id).first_or_404()
         return render_template('ver_sessao.html', sessao=sessao, today=date.today())
     except Exception as e:
         print(f"❌ Erro ao ver sessão: {e}")
@@ -684,12 +730,12 @@ def ver_sessao(id):
 @login_required
 def editar_sessao(id):
     try:
-        sessao = Sessao.query.filter_by(id=id, psicologo_id=current_user.id).first_or_404()
+        sessao = Sessao.query.filter_by(id=id, terapeuta_id=current_user.id).first_or_404()
         
         if request.method == 'POST':
             data_sessao_str = request.form.get('data_sessao')
             hora_sessao = request.form.get('hora_sessao')
-            duracao = request.form.get('duracao', 50)
+            duracao = request.form.get('duracao', 60)
             valor_str = request.form.get('valor', '').strip()
             observacoes = request.form.get('observacoes', '').strip()
             
@@ -704,7 +750,7 @@ def editar_sessao(id):
                 return render_template('editar_sessao.html', sessao=sessao, today=date.today())
             
             conflito = Sessao.query.filter(
-                Sessao.psicologo_id == current_user.id,
+                Sessao.terapeuta_id == current_user.id,
                 Sessao.status == 'agendada',
                 Sessao.data_sessao == data_sessao,
                 Sessao.id != id
@@ -742,7 +788,7 @@ def editar_sessao(id):
 @login_required
 def marcar_sessao_realizada(id):
     try:
-        sessao = Sessao.query.filter_by(id=id, psicologo_id=current_user.id).first_or_404()
+        sessao = Sessao.query.filter_by(id=id, terapeuta_id=current_user.id).first_or_404()
         sessao.status = 'realizada'
         db.session.commit()
         return jsonify({'success': True, 'message': 'Sessão marcada como realizada'})
@@ -753,7 +799,7 @@ def marcar_sessao_realizada(id):
 @login_required
 def marcar_sessao_faltou(id):
     try:
-        sessao = Sessao.query.filter_by(id=id, psicologo_id=current_user.id).first_or_404()
+        sessao = Sessao.query.filter_by(id=id, terapeuta_id=current_user.id).first_or_404()
         sessao.status = 'faltou'
         db.session.commit()
         return jsonify({'success': True, 'message': 'Sessão marcada como falta'})
@@ -764,7 +810,7 @@ def marcar_sessao_faltou(id):
 @login_required
 def cancelar_sessao(id):
     try:
-        sessao = Sessao.query.filter_by(id=id, psicologo_id=current_user.id).first_or_404()
+        sessao = Sessao.query.filter_by(id=id, terapeuta_id=current_user.id).first_or_404()
         sessao.status = 'cancelada'
         db.session.commit()
         return jsonify({'success': True, 'message': 'Sessão cancelada'})
@@ -775,7 +821,7 @@ def cancelar_sessao(id):
 @login_required
 def reagendar_sessao(id):
     try:
-        sessao = Sessao.query.filter_by(id=id, psicologo_id=current_user.id).first_or_404()
+        sessao = Sessao.query.filter_by(id=id, terapeuta_id=current_user.id).first_or_404()
         sessao.status = 'agendada'
         db.session.commit()
         return jsonify({'success': True, 'message': 'Sessão reagendada'})
@@ -789,7 +835,7 @@ def reagendar_sessao(id):
 def prontuario(paciente_id):
     print("✅ Rota /prontuario acessada")
     try:
-        paciente = Paciente.query.filter_by(id=paciente_id, psicologo_id=current_user.id).first_or_404()
+        paciente = Paciente.query.filter_by(id=paciente_id, terapeuta_id=current_user.id).first_or_404()
         
         if request.method == 'POST':
             tipo = request.form.get('tipo', 'evolucao')
@@ -841,23 +887,15 @@ def evolucoes():
         paciente_filter = request.args.get('paciente', '')
         data_inicio = request.args.get('data_inicio', '')
         data_fim = request.args.get('data_fim', '')
-        print(f"✅ PASSO 2: Filtros recebidos:")
-        print(f"   - Paciente: {paciente_filter}")
-        print(f"   - Data início: {data_inicio}")
-        print(f"   - Data fim: {data_fim}")
         
-        print("✅ PASSO 3: Iniciando query de evoluções...")
-        query = Evolucao.query.join(Paciente).filter(Paciente.psicologo_id == current_user.id)
-        print("✅ PASSO 4: Query base criada com sucesso")
+        query = Evolucao.query.join(Paciente).filter(Paciente.terapeuta_id == current_user.id)
         
         if paciente_filter:
-            print(f"✅ PASSO 5: Aplicando filtro de paciente: {paciente_filter}")
             query = query.filter(Evolucao.paciente_id == paciente_filter)
         
         if data_inicio:
             try:
                 data_inicio_obj = datetime.strptime(data_inicio, '%Y-%m-%d').date()
-                print(f"✅ PASSO 6: Aplicando filtro de data início: {data_inicio_obj}")
                 query = query.filter(func.date(Evolucao.data_evolucao) >= data_inicio_obj)
             except Exception as e:
                 print(f"⚠️ AVISO: Erro ao aplicar filtro de data início: {e}")
@@ -865,49 +903,31 @@ def evolucoes():
         if data_fim:
             try:
                 data_fim_obj = datetime.strptime(data_fim, '%Y-%m-%d').date()
-                print(f"✅ PASSO 7: Aplicando filtro de data fim: {data_fim_obj}")
                 query = query.filter(func.date(Evolucao.data_evolucao) <= data_fim_obj)
             except Exception as e:
                 print(f"⚠️ AVISO: Erro ao aplicar filtro de data fim: {e}")
         
-        print("✅ PASSO 8: Executando query de evoluções...")
         evolucoes_lista = query.order_by(Evolucao.data_evolucao.desc()).all()
-        print(f"✅ PASSO 9: Query executada! Total de evoluções encontradas: {len(evolucoes_lista)}")
+        pacientes_lista = Paciente.query.filter_by(terapeuta_id=current_user.id, ativo=True).order_by(Paciente.nome).all()
         
-        print("✅ PASSO 10: Buscando lista de pacientes...")
-        pacientes_lista = Paciente.query.filter_by(psicologo_id=current_user.id, ativo=True).order_by(Paciente.nome).all()
-        print(f"✅ PASSO 11: Total de pacientes encontrados: {len(pacientes_lista)}")
-        
-        print("✅ PASSO 12: Calculando estatísticas...")
-        total_evolucoes = Evolucao.query.join(Paciente).filter(Paciente.psicologo_id == current_user.id).count()
-        print(f"✅ PASSO 13: Total de evoluções: {total_evolucoes}")
+        total_evolucoes = Evolucao.query.join(Paciente).filter(Paciente.terapeuta_id == current_user.id).count()
         
         primeiro_dia_mes = date.today().replace(day=1)
         evolucoes_mes = Evolucao.query.join(Paciente).filter(
-            Paciente.psicologo_id == current_user.id,
+            Paciente.terapeuta_id == current_user.id,
             func.date(Evolucao.data_evolucao) >= primeiro_dia_mes
         ).count()
-        print(f"✅ PASSO 14: Evoluções do mês: {evolucoes_mes}")
         
-        print("✅ PASSO 15: Renderizando template evolucoes.html...")
-        resultado = render_template('evolucoes.html',
-                                   evolucoes=evolucoes_lista,
-                                   pacientes=pacientes_lista,
-                                   total_evolucoes=total_evolucoes,
-                                   evolucoes_mes=evolucoes_mes,
-                                   today=date.today())
-        print("✅ PASSO 16: Template renderizado com sucesso!")
-        print("=" * 80)
-        return resultado
+        return render_template('evolucoes.html',
+                             evolucoes=evolucoes_lista,
+                             pacientes=pacientes_lista,
+                             total_evolucoes=total_evolucoes,
+                             evolucoes_mes=evolucoes_mes,
+                             today=date.today())
     
     except Exception as e:
-        print("=" * 80)
-        print("❌ ERRO CAPTURADO NA ROTA /EVOLUCOES:")
-        print(f"❌ Tipo do erro: {type(e).__name__}")
-        print(f"❌ Mensagem: {str(e)}")
-        print("❌ Traceback completo:")
+        print(f"❌ ERRO: {e}")
         traceback.print_exc()
-        print("=" * 80)
         flash('Erro ao carregar evoluções', 'error')
         return redirect(url_for('dashboard'))
         @app.route('/evolucoes/nova', methods=['GET', 'POST'])
@@ -922,23 +942,23 @@ def nova_evolucao():
             
             if not paciente_id or paciente_id == '' or paciente_id == 'None':
                 flash('Paciente é obrigatório', 'error')
-                pacientes_lista = Paciente.query.filter_by(psicologo_id=current_user.id, ativo=True).order_by(Paciente.nome).all()
+                pacientes_lista = Paciente.query.filter_by(terapeuta_id=current_user.id, ativo=True).order_by(Paciente.nome).all()
                 return render_template('nova_evolucao.html', pacientes=pacientes_lista)
             
             if not titulo:
                 flash('Título é obrigatório', 'error')
-                pacientes_lista = Paciente.query.filter_by(psicologo_id=current_user.id, ativo=True).order_by(Paciente.nome).all()
+                pacientes_lista = Paciente.query.filter_by(terapeuta_id=current_user.id, ativo=True).order_by(Paciente.nome).all()
                 return render_template('nova_evolucao.html', pacientes=pacientes_lista)
             
             if not descricao:
                 flash('Descrição é obrigatória', 'error')
-                pacientes_lista = Paciente.query.filter_by(psicologo_id=current_user.id, ativo=True).order_by(Paciente.nome).all()
+                pacientes_lista = Paciente.query.filter_by(terapeuta_id=current_user.id, ativo=True).order_by(Paciente.nome).all()
                 return render_template('nova_evolucao.html', pacientes=pacientes_lista)
             
-            paciente = Paciente.query.filter_by(id=int(paciente_id), psicologo_id=current_user.id).first()
+            paciente = Paciente.query.filter_by(id=int(paciente_id), terapeuta_id=current_user.id).first()
             if not paciente:
                 flash('Paciente não encontrado', 'error')
-                pacientes_lista = Paciente.query.filter_by(psicologo_id=current_user.id, ativo=True).order_by(Paciente.nome).all()
+                pacientes_lista = Paciente.query.filter_by(terapeuta_id=current_user.id, ativo=True).order_by(Paciente.nome).all()
                 return render_template('nova_evolucao.html', pacientes=pacientes_lista)
             
             nova_evolucao_obj = Evolucao(
@@ -960,7 +980,7 @@ def nova_evolucao():
             db.session.rollback()
     
     try:
-        pacientes_lista = Paciente.query.filter_by(psicologo_id=current_user.id, ativo=True).order_by(Paciente.nome).all()
+        pacientes_lista = Paciente.query.filter_by(terapeuta_id=current_user.id, ativo=True).order_by(Paciente.nome).all()
     except Exception:
         pacientes_lista = []
     
@@ -972,7 +992,7 @@ def ver_evolucao(id):
     try:
         evolucao = Evolucao.query.join(Paciente).filter(
             Evolucao.id == id,
-            Paciente.psicologo_id == current_user.id
+            Paciente.terapeuta_id == current_user.id
         ).first_or_404()
         
         return render_template('ver_evolucao.html', evolucao=evolucao, today=date.today())
@@ -987,7 +1007,7 @@ def editar_evolucao(id):
     try:
         evolucao = Evolucao.query.join(Paciente).filter(
             Evolucao.id == id,
-            Paciente.psicologo_id == current_user.id
+            Paciente.terapeuta_id == current_user.id
         ).first_or_404()
         
         if request.method == 'POST':
@@ -1024,7 +1044,7 @@ def excluir_evolucao(id):
     try:
         evolucao = Evolucao.query.join(Paciente).filter(
             Evolucao.id == id,
-            Paciente.psicologo_id == current_user.id
+            Paciente.terapeuta_id == current_user.id
         ).first_or_404()
         
         db.session.delete(evolucao)
@@ -1182,7 +1202,7 @@ def api_receita_mensal():
                 ultimo_dia = mes_atual.replace(month=mes_atual.month+1, day=1) - timedelta(days=1)
             
             receita = db.session.query(func.sum(Sessao.valor)).filter(
-                Sessao.psicologo_id == current_user.id,
+                Sessao.terapeuta_id == current_user.id,
                 Sessao.status == 'realizada',
                 func.date(Sessao.data_sessao) >= primeiro_dia,
                 func.date(Sessao.data_sessao) <= ultimo_dia
@@ -1208,7 +1228,7 @@ def api_sessoes_status():
             Sessao.status,
             func.count(Sessao.id)
         ).filter(
-            Sessao.psicologo_id == current_user.id,
+            Sessao.terapeuta_id == current_user.id,
             func.date(Sessao.data_sessao) >= data_inicio
         ).group_by(Sessao.status).all()
         
@@ -1236,8 +1256,8 @@ def api_sessoes_status():
 @login_required
 def api_pacientes_ativos():
     try:
-        ativos = Paciente.query.filter_by(psicologo_id=current_user.id, ativo=True).count()
-        inativos = Paciente.query.filter_by(psicologo_id=current_user.id, ativo=False).count()
+        ativos = Paciente.query.filter_by(terapeuta_id=current_user.id, ativo=True).count()
+        inativos = Paciente.query.filter_by(terapeuta_id=current_user.id, ativo=False).count()
         
         return jsonify({
             'labels': ['Ativos', 'Inativos'],
@@ -1263,14 +1283,14 @@ def api_evolucao_sessoes():
             fim_semana = inicio_semana + timedelta(days=6)
             
             realizadas = Sessao.query.filter(
-                Sessao.psicologo_id == current_user.id,
+                Sessao.terapeuta_id == current_user.id,
                 Sessao.status == 'realizada',
                 func.date(Sessao.data_sessao) >= inicio_semana,
                 func.date(Sessao.data_sessao) <= fim_semana
             ).count()
             
             agendadas = Sessao.query.filter(
-                Sessao.psicologo_id == current_user.id,
+                Sessao.terapeuta_id == current_user.id,
                 Sessao.status == 'agendada',
                 func.date(Sessao.data_sessao) >= inicio_semana,
                 func.date(Sessao.data_sessao) <= fim_semana
@@ -1316,7 +1336,7 @@ def api_top_pacientes():
             func.count(Sessao.id).label('total_sessoes'),
             func.sum(Sessao.valor).label('total_receita')
         ).join(Sessao).filter(
-            Sessao.psicologo_id == current_user.id,
+            Sessao.terapeuta_id == current_user.id,
             func.date(Sessao.data_sessao) >= data_inicio,
             Sessao.status == 'realizada'
         ).group_by(Paciente.id, Paciente.nome).order_by(
@@ -1360,17 +1380,15 @@ with app.app_context():
         print("=" * 60)
         print("✅ Tabelas criadas/verificadas com sucesso!")
         
-        # ===== MIGRAÇÃO: ADICIONA COLUNAS NA TABELA USUARIOS =====
+        # ===== MIGRAÇÃO: ADICIONA COLUNAS =====
         from sqlalchemy import text, inspect
         
-        print("\n🔄 Verificando colunas da tabela 'usuarios'...")
+        print("\n🔄 Verificando migrações necessárias...")
         
-        # Verifica quais colunas existem na tabela usuarios
         inspector = inspect(db.engine)
-        colunas_usuarios = [col['name'] for col in inspector.get_columns('usuarios')]
-        print(f"✅ Colunas existentes em 'usuarios': {', '.join(colunas_usuarios)}")
         
-        # Adiciona coluna CRP se não existir
+        # Verifica coluna CRP em usuarios
+        colunas_usuarios = [col['name'] for col in inspector.get_columns('usuarios')]
         if 'crp' not in colunas_usuarios:
             try:
                 sql = 'ALTER TABLE usuarios ADD COLUMN crp VARCHAR(20);'
@@ -1381,43 +1399,27 @@ with app.app_context():
                 print(f"⚠️ Erro ao adicionar coluna 'crp': {e}")
                 db.session.rollback()
         
-        # ===== MIGRAÇÃO: ADICIONA COLUNAS NA TABELA EVOLUCOES =====
-        print("\n🔄 Verificando colunas da tabela 'evolucoes'...")
-        
-        # Verifica quais colunas existem na tabela
-        colunas_existentes = [col['name'] for col in inspector.get_columns('evolucoes')]
-        print(f"✅ Colunas existentes: {', '.join(colunas_existentes)}")
-        
-        # Lista de colunas que precisam existir
-        colunas_necessarias = {
+        # Verifica colunas em evolucoes
+        colunas_evolucoes = [col['name'] for col in inspector.get_columns('evolucoes')]
+        colunas_necessarias_evolucoes = {
             'humor': 'VARCHAR(20)',
             'medicamentos': 'TEXT',
             'observacoes_privadas': 'TEXT'
         }
         
-        # Adiciona colunas que estão faltando
-        colunas_adicionadas = []
-        for coluna, tipo in colunas_necessarias.items():
-            if coluna not in colunas_existentes:
+        for coluna, tipo in colunas_necessarias_evolucoes.items():
+            if coluna not in colunas_evolucoes:
                 try:
                     sql = f'ALTER TABLE evolucoes ADD COLUMN {coluna} {tipo};'
                     db.session.execute(text(sql))
                     db.session.commit()
-                    colunas_adicionadas.append(coluna)
-                    print(f"✅ Coluna '{coluna}' adicionada com sucesso!")
+                    print(f"✅ Coluna '{coluna}' adicionada à tabela 'evolucoes'!")
                 except Exception as e:
                     print(f"⚠️ Erro ao adicionar coluna '{coluna}': {e}")
                     db.session.rollback()
         
-        if colunas_adicionadas:
-            print(f"\n✅ Migração concluída! Colunas adicionadas: {', '.join(colunas_adicionadas)}")
-        else:
-            print("✅ Todas as colunas já existem. Nenhuma migração necessária.")
-        
-        # ===== ADICIONA COLUNA data_atualizacao NA TABELA SESSOES =====
-        print("\n🔄 Verificando coluna 'data_atualizacao' na tabela 'sessoes'...")
+        # Verifica coluna data_atualizacao em sessoes
         colunas_sessoes = [col['name'] for col in inspector.get_columns('sessoes')]
-        
         if 'data_atualizacao' not in colunas_sessoes:
             try:
                 sql = 'ALTER TABLE sessoes ADD COLUMN data_atualizacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP;'
@@ -1432,7 +1434,7 @@ with app.app_context():
         print("\n🔗 ROTAS REGISTRADAS:")
         print("   - / (login)")
         print("   - /login")
-        print("   - /registro (NOVA!)")
+        print("   - /registro")
         print("   - /logout")
         print("   - /dashboard")
         print("   - /pacientes")
@@ -1441,6 +1443,8 @@ with app.app_context():
         print("   - /relatorios")
         print("   - /configuracoes")
         print("   - /prontuario/<id>")
+        print("=" * 60)
+        print("\n🎁 MODELO AGENDAMENTO IMPLEMENTADO!")
         print("=" * 60)
         
     except Exception as e:
@@ -1451,3 +1455,4 @@ with app.app_context():
 
 if __name__ == '__main__':
     app.run(debug=True)
+    
