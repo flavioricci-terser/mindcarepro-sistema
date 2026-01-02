@@ -107,15 +107,13 @@ class Agendamento(db.Model):
     # Data e hora
     data_inicio = db.Column(db.DateTime, nullable=False)
     data_fim = db.Column(db.DateTime, nullable=False)
-    duracao = db.Column(db.Integer, default=60)  # minutos
+    duracao = db.Column(db.Integer, default=60)
     
     # Status
     status = db.Column(db.String(20), default='agendada')
-    # Valores: agendada, confirmada, em_andamento, realizada, faltou, cancelada, reagendada
     
     # Tipo
     tipo = db.Column(db.String(20), default='online')
-    # Valores: online, presencial
     
     # Financeiro
     valor = db.Column(db.Numeric(10, 2))
@@ -123,16 +121,16 @@ class Agendamento(db.Model):
     
     # Observações
     observacoes = db.Column(db.Text)
-    observacoes_terapeuta = db.Column(db.Text)  # Anotações privadas do terapeuta
+    observacoes_terapeuta = db.Column(db.Text)
     
     # Google Meet
     link_meet = db.Column(db.String(500))
-    transcricao = db.Column(db.Text)  # Futura integração
-    analise_ia = db.Column(db.Text)  # Futura integração
+    transcricao = db.Column(db.Text)
+    analise_ia = db.Column(db.Text)
     
     # Recorrência
     recorrente = db.Column(db.Boolean, default=False)
-    recorrencia_tipo = db.Column(db.String(20))  # semanal, quinzenal, mensal
+    recorrencia_tipo = db.Column(db.String(20))
     recorrencia_ate = db.Column(db.Date)
     
     # Auditoria
@@ -247,7 +245,6 @@ def login():
 
 @app.route('/registro', methods=['GET', 'POST'])
 def registro():
-    """Rota para registro de novos usuários"""
     if current_user.is_authenticated:
         return redirect(url_for('dashboard'))
     
@@ -259,7 +256,6 @@ def registro():
             confirmar_senha = request.form.get('confirmar_senha', '')
             crp = request.form.get('crp', '').strip()
             
-            # Validações
             if not nome:
                 flash('Nome é obrigatório', 'error')
                 return render_template('registro.html')
@@ -280,13 +276,11 @@ def registro():
                 flash('As senhas não coincidem', 'error')
                 return render_template('registro.html')
             
-            # Verifica se email já existe
             usuario_existente = Usuario.query.filter_by(email=email).first()
             if usuario_existente:
                 flash('Este email já está cadastrado', 'error')
                 return render_template('registro.html')
             
-            # Cria novo usuário
             novo_usuario = Usuario(
                 nome=nome,
                 email=email,
@@ -364,8 +358,8 @@ def dashboard():
                          proximas_sessoes=proximas_sessoes,
                          sessoes_mes=sessoes_mes,
                          receita_mes=receita_mes)
-
-# ========== ROTAS DE PACIENTES ==========
+    
+    # ========== ROTAS DE PACIENTES ==========
 
 @app.route('/pacientes')
 @login_required
@@ -407,7 +401,7 @@ def pacientes():
                              novos_mes=novos_mes,
                              sessoes_mes=sessoes_mes,
                              today=date.today())
-     except Exception as e:
+    except Exception as e:
         print(f"❌ Erro na página de pacientes: {e}")
         traceback.print_exc()
         flash('Erro ao carregar pacientes', 'error')
@@ -715,8 +709,7 @@ def nova_sessao():
         pacientes_lista = []
     
     return render_template('nova_sessao.html', pacientes=pacientes_lista)
-
-@app.route('/sessoes/<int:id>')
+    @app.route('/sessoes/<int:id>')
 @login_required
 def ver_sessao(id):
     try:
@@ -931,7 +924,8 @@ def evolucoes():
         traceback.print_exc()
         flash('Erro ao carregar evoluções', 'error')
         return redirect(url_for('dashboard'))
-        @app.route('/evolucoes/nova', methods=['GET', 'POST'])
+
+@app.route('/evolucoes/nova', methods=['GET', 'POST'])
 @login_required
 def nova_evolucao():
     if request.method == 'POST':
@@ -1054,8 +1048,8 @@ def excluir_evolucao(id):
         return jsonify({'success': True, 'message': 'Evolução excluída com sucesso'})
     except Exception as e:
         return jsonify({'success': False, 'message': 'Erro ao excluir evolução'})
-
-# ========== ROTAS DE CONFIGURAÇÕES ==========
+        
+        # ========== ROTAS DE CONFIGURAÇÕES ==========
 
 @app.route('/configuracoes')
 @login_required
@@ -1362,7 +1356,6 @@ def api_top_pacientes():
 @app.route('/debug/rotas')
 @login_required
 def debug_rotas():
-    """Rota para listar todas as rotas disponíveis"""
     rotas = []
     for rule in app.url_map.iter_rules():
         rotas.append({
@@ -1376,19 +1369,16 @@ def debug_rotas():
 
 with app.app_context():
     try:
-        # Cria as tabelas se não existirem
         db.create_all()
         print("=" * 60)
         print("✅ Tabelas criadas/verificadas com sucesso!")
         
-        # ===== MIGRAÇÃO: ADICIONA COLUNAS =====
         from sqlalchemy import text, inspect
         
         print("\n🔄 Verificando migrações necessárias...")
         
         inspector = inspect(db.engine)
         
-        # Verifica coluna CRP em usuarios
         colunas_usuarios = [col['name'] for col in inspector.get_columns('usuarios')]
         if 'crp' not in colunas_usuarios:
             try:
@@ -1400,7 +1390,6 @@ with app.app_context():
                 print(f"⚠️ Erro ao adicionar coluna 'crp': {e}")
                 db.session.rollback()
         
-        # Verifica colunas em evolucoes
         colunas_evolucoes = [col['name'] for col in inspector.get_columns('evolucoes')]
         colunas_necessarias_evolucoes = {
             'humor': 'VARCHAR(20)',
@@ -1419,7 +1408,6 @@ with app.app_context():
                     print(f"⚠️ Erro ao adicionar coluna '{coluna}': {e}")
                     db.session.rollback()
         
-        # Verifica coluna data_atualizacao em sessoes
         colunas_sessoes = [col['name'] for col in inspector.get_columns('sessoes')]
         if 'data_atualizacao' not in colunas_sessoes:
             try:
@@ -1456,6 +1444,3 @@ with app.app_context():
 
 if __name__ == '__main__':
     app.run(debug=True)
-    
-
-
