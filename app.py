@@ -407,13 +407,13 @@ def pacientes():
                              novos_mes=novos_mes,
                              sessoes_mes=sessoes_mes,
                              today=date.today())
-    except Exception as e:
+     except Exception as e:
         print(f"❌ Erro na página de pacientes: {e}")
         traceback.print_exc()
         flash('Erro ao carregar pacientes', 'error')
         return redirect(url_for('dashboard'))
-        
-        @app.route('/pacientes/novo', methods=['GET', 'POST'])
+
+@app.route('/pacientes/novo', methods=['GET', 'POST'])
 @login_required
 def novo_paciente():
     if request.method == 'POST':
@@ -1457,4 +1457,5 @@ with app.app_context():
 if __name__ == '__main__':
     app.run(debug=True)
     
+
 
