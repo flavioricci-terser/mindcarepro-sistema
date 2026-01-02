@@ -709,7 +709,8 @@ def nova_sessao():
         pacientes_lista = []
     
     return render_template('nova_sessao.html', pacientes=pacientes_lista)
-    @app.route('/sessoes/<int:id>')
+
+@app.route('/sessoes/<int:id>')
 @login_required
 def ver_sessao(id):
     try:
