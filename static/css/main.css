@@ -705,6 +705,8 @@ body {
 .patient-name {
     font-weight: 600;
     color: #333;
+    font-size: 16px !important;
+    line-height: 1.4;
 }
 
 .patient-email {
