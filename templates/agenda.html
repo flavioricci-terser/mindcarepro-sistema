@@ -4,34 +4,65 @@
 
 {% block content %}
 <!-- ==========================================
-     PÁGINA: AGENDA
+     PÁGINA: AGENDA INTERATIVA
      
      Descrição: 
-     Calendário interativo para gerenciamento de agendamentos de sessões.
-     Utiliza FullCalendar.js para visualização e manipulação de eventos.
+     Calendário interativo para gerenciamento completo de agendamentos de sessões terapêuticas.
+     Utiliza FullCalendar.js v6.1.10 para visualização e manipulação de eventos.
      
-     Funcionalidades:
-     - Visualização em Mês, Semana e Dia
-     - Criar novos agendamentos
-     - Editar agendamentos existentes
-     - Deletar agendamentos
-     - Reagendar via drag & drop
-     - Filtrar por status
-     - Visualizar detalhes completos
+     Funcionalidades Principais:
+     ✓ Visualização em Mês, Semana e Dia
+     ✓ Criar novos agendamentos com validação
+     ✓ Editar agendamentos existentes
+     ✓ Deletar agendamentos com confirmação
+     ✓ Reagendar via drag & drop
+     ✓ Filtrar por status (agendada, confirmada, realizada, etc.)
+     ✓ Visualizar detalhes completos de cada agendamento
+     ✓ Integração com Google Meet (links de reunião)
+     ✓ Controle de pagamento
+     ✓ Observações e anotações
      
-     Dependências:
-     - FullCalendar 6.x (carregado via CDN)
+     Dependências Externas:
+     - FullCalendar 6.1.10 (carregado via CDN jsDelivr)
      - Bootstrap 5.3.0 (já carregado no base.html)
-     - agenda.js (lógica JavaScript separada)
-     - main.css (estilos separados)
+     - Bootstrap Icons (já carregado no base.html)
+     
+     Arquivos Relacionados:
+     - /static/js/agenda.js (lógica JavaScript separada)
+     - /static/css/main.css (estilos customizados)
+     - /api/agendamentos (endpoints REST do backend)
+     - /api/pacientes (lista de pacientes ativos)
+     
+     Estrutura de Dados (JSON):
+     {
+       "id": 1,
+       "paciente_id": 5,
+       "data_inicio": "2026-01-10T14:00:00",
+       "data_fim": "2026-01-10T15:00:00",
+       "duracao": 60,
+       "tipo": "online",
+       "status": "agendada",
+       "valor": 150.00,
+       "pago": false,
+       "link_meet": "https://meet.google.com/...",
+       "observacoes": "Primeira sessão"
+     }
      
      Desenvolvido por: Flavio Ricci + IA Adapta ONE 26
      Data: Janeiro 2026
+     Versão: 2.0.0
+     Última Atualização: 04/01/2026
      ========================================== -->
 
 <div class="container-fluid py-4">
     
-    <!-- ========== CABEÇALHO DA PÁGINA ========== -->
+    <!-- ==========================================
+         SEÇÃO: CABEÇALHO DA PÁGINA
+         
+         Descrição:
+         Título da página e botão de ação principal (Novo Agendamento).
+         Layout responsivo com flexbox para diferentes tamanhos de tela.
+         ========================================== -->
     <div class="row mb-4">
         <div class="col-12">
             <div class="d-flex justify-content-between align-items-center flex-wrap">
@@ -41,15 +72,16 @@
                     <h1 class="h3 mb-2">
                         <i class="bi bi-calendar3"></i> Agenda
                     </h1>
-                    <p class="text-muted mb-0">Gerencie seus agendamentos e sessões</p>
+                    <p class="text-muted mb-0">Gerencie seus agendamentos e sessões terapêuticas</p>
                 </div>
                 
-                <!-- Botão Novo Agendamento -->
+                <!-- Botão de Ação Principal -->
                 <div class="mt-3 mt-md-0">
                     <button type="button" 
                             class="btn btn-primary" 
                             data-bs-toggle="modal" 
-                            data-bs-target="#modalNovoAgendamento">
+                            data-bs-target="#modalNovoAgendamento"
+                            title="Criar novo agendamento (Ctrl+N)">
                         <i class="bi bi-plus-circle"></i> Novo Agendamento
                     </button>
                 </div>
@@ -58,7 +90,18 @@
         </div>
     </div>
     
-    <!-- ========== FILTROS E CONTROLES ========== -->
+    <!-- ==========================================
+         SEÇÃO: FILTROS E CONTROLES
+         
+         Descrição:
+         Barra de ferramentas com filtros e controles de navegação.
+         Permite filtrar agendamentos por status e navegar rapidamente.
+         
+         Elementos:
+         - Filtro por Status (dropdown)
+         - Botão "Hoje" (navegação rápida)
+         - Legenda de cores (identificação visual dos status)
+         ========================================== -->
     <div class="row mb-3">
         <div class="col-12">
             <div class="card shadow-sm">
@@ -70,8 +113,10 @@
                             <label for="filtroStatus" class="form-label small mb-1">
                                 Filtrar por Status:
                             </label>
-                            <select id="filtroStatus" class="form-select form-select-sm">
-                                <option value="todos">Todos</option>
+                            <select id="filtroStatus" 
+                                    class="form-select form-select-sm"
+                                    aria-label="Filtrar agendamentos por status">
+                                <option value="todos" selected>Todos os Status</option>
                                 <option value="agendada">Agendada</option>
                                 <option value="confirmada">Confirmada</option>
                                 <option value="em_andamento">Em Andamento</option>
@@ -84,21 +129,23 @@
                         <!-- Botão Hoje -->
                         <div class="col-md-2 mb-2 mb-md-0">
                             <label class="form-label small mb-1 d-none d-md-block">&nbsp;</label>
-                            <button id="btnHoje" class="btn btn-outline-secondary btn-sm w-100">
+                            <button id="btnHoje" 
+                                    class="btn btn-outline-secondary btn-sm w-100"
+                                    title="Ir para hoje (Atalho: T)">
                                 <i class="bi bi-calendar-day"></i> Hoje
                             </button>
                         </div>
                         
                         <!-- Legenda de Cores -->
                         <div class="col-md-7">
-                            <label class="form-label small mb-1">Legenda:</label>
+                            <label class="form-label small mb-1">Legenda de Status:</label>
                             <div class="d-flex flex-wrap gap-2">
-                                <span class="badge badge-status-agendada">Agendada</span>
-                                <span class="badge badge-status-confirmada">Confirmada</span>
-                                <span class="badge badge-status-em-andamento">Em Andamento</span>
-                                <span class="badge badge-status-realizada">Realizada</span>
-                                <span class="badge badge-status-faltou">Faltou</span>
-                                <span class="badge badge-status-cancelada">Cancelada</span>
+                                <span class="badge" style="background-color: #2196F3;">Agendada</span>
+                                <span class="badge" style="background-color: #4CAF50;">Confirmada</span>
+                                <span class="badge" style="background-color: #FF9800;">Em Andamento</span>
+                                <span class="badge" style="background-color: #388E3C;">Realizada</span>
+                                <span class="badge" style="background-color: #F44336;">Faltou</span>
+                                <span class="badge" style="background-color: #9E9E9E;">Cancelada</span>
                             </div>
                         </div>
                         
@@ -108,16 +155,34 @@
         </div>
     </div>
     
-    <!-- ========== CALENDÁRIO ========== -->
-    <!-- 
-         O FullCalendar será renderizado dentro desta div.
-         A inicialização e configuração estão em agenda.js
-    -->
+    <!-- ==========================================
+         SEÇÃO: CALENDÁRIO PRINCIPAL
+         
+         Descrição:
+         Container onde o FullCalendar será renderizado.
+         A inicialização e toda a configuração são feitas
+         no arquivo agenda.js para separação de responsabilidades.
+         
+         Configurações do FullCalendar (definidas em agenda.js):
+         - Locale: pt-br
+         - Visualizações: dayGridMonth, timeGridWeek, timeGridDay
+         - Horário: 07:00 - 22:00
+         - Slot Duration: 30 minutos
+         - Drag & Drop: habilitado
+         - Event Click: abre modal de detalhes
+         - Date Click: abre modal de novo agendamento
+         
+         ID: #calendar (referenciado em agenda.js)
+         ========================================== -->
     <div class="row">
         <div class="col-12">
             <div class="card shadow-sm">
                 <div class="card-body">
-                    <div id="calendar"></div>
+                    <!-- 
+                        FullCalendar será renderizado aqui via JavaScript.
+                        Não adicione conteúdo dentro desta div.
+                    -->
+                    <div id="calendar" aria-label="Calendário de agendamentos"></div>
                 </div>
             </div>
         </div>
@@ -129,43 +194,61 @@
      MODAL: NOVO AGENDAMENTO
      
      Descrição:
-     Formulário para criação de novos agendamentos.
-     Validação e envio são tratados em agenda.js
+     Formulário modal para criação de novos agendamentos.
+     Validação de campos e envio para API são tratados em agenda.js
      
-     Campos obrigatórios:
-     - Paciente
-     - Data
-     - Hora Início
+     Campos Obrigatórios (marcados com *):
+     - Paciente: Select com lista de pacientes ativos
+     - Data: Input tipo date
+     - Hora Início: Input tipo time
      
-     Campos opcionais:
-     - Duração (padrão: 60 minutos)
-     - Tipo (padrão: online)
-     - Valor
-     - Link Google Meet
-     - Observações
+     Campos Opcionais:
+     - Duração: Número (padrão: 60 minutos, incremento: 15 min)
+     - Tipo: Select (online/presencial, padrão: online)
+     - Valor: Número decimal (R$)
+     - Link Google Meet: URL
+     - Observações: Textarea
+     
+     Validações (implementadas em agenda.js):
+     - Paciente não pode ser vazio
+     - Data não pode ser no passado
+     - Hora início é obrigatória
+     - Duração mínima: 15 minutos
+     - Valor não pode ser negativo
+     - Link Meet deve ser URL válida (se preenchido)
+     - Verifica conflito de horários antes de salvar
+     
+     Eventos:
+     - Submit: agenda.js → salvarNovoAgendamento()
+     - Close: limpa formulário
+     
+     ID: #modalNovoAgendamento
+     Form ID: #formNovoAgendamento
      ========================================== -->
 <div class="modal fade" 
      id="modalNovoAgendamento" 
      tabindex="-1" 
      aria-labelledby="modalNovoAgendamentoLabel" 
-     aria-hidden="true">
+     aria-hidden="true"
+     data-bs-backdrop="static"
+     data-bs-keyboard="false">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             
             <!-- Header do Modal -->
-            <div class="modal-header">
+            <div class="modal-header bg-primary text-white">
                 <h5 class="modal-title" id="modalNovoAgendamentoLabel">
                     <i class="bi bi-calendar-plus"></i> Novo Agendamento
                 </h5>
                 <button type="button" 
-                        class="btn-close" 
+                        class="btn-close btn-close-white" 
                         data-bs-dismiss="modal" 
                         aria-label="Fechar"></button>
             </div>
             
             <!-- Body do Modal -->
             <div class="modal-body">
-                <form id="formNovoAgendamento">
+                <form id="formNovoAgendamento" novalidate>
                     
                     <div class="row">
                         
@@ -177,10 +260,14 @@
                             <select id="novoPaciente" 
                                     name="paciente_id" 
                                     class="form-select" 
-                                    required>
+                                    required
+                                    aria-required="true">
                                 <option value="">Selecione um paciente...</option>
-                                <!-- Opções carregadas via JavaScript (agenda.js) -->
+                                <!-- Opções carregadas dinamicamente via JavaScript (agenda.js → carregarPacientes()) -->
                             </select>
+                            <div class="invalid-feedback">
+                                Por favor, selecione um paciente.
+                            </div>
                         </div>
                         
                         <!-- Campo: Data -->
@@ -192,7 +279,11 @@
                                    id="novaData" 
                                    name="data" 
                                    class="form-control" 
-                                   required>
+                                   required
+                                   aria-required="true">
+                            <div class="invalid-feedback">
+                                Por favor, selecione uma data válida.
+                            </div>
                         </div>
                         
                         <!-- Campo: Hora Início -->
@@ -204,7 +295,11 @@
                                    id="novaHoraInicio" 
                                    name="hora_inicio" 
                                    class="form-control" 
-                                   required>
+                                   required
+                                   aria-required="true">
+                            <div class="invalid-feedback">
+                                Por favor, informe a hora de início.
+                            </div>
                         </div>
                         
                         <!-- Campo: Duração -->
@@ -218,7 +313,9 @@
                                    class="form-control" 
                                    value="60" 
                                    min="15" 
-                                   step="15">
+                                   step="15"
+                                   aria-label="Duração da sessão em minutos">
+                            <small class="form-text text-muted">Padrão: 60 minutos</small>
                         </div>
                         
                         <!-- Campo: Tipo de Atendimento -->
@@ -226,8 +323,11 @@
                             <label for="novoTipo" class="form-label">
                                 Tipo de Atendimento
                             </label>
-                            <select id="novoTipo" name="tipo" class="form-select">
-                                <option value="online">Online</option>
+                            <select id="novoTipo" 
+                                    name="tipo" 
+                                    class="form-select"
+                                    aria-label="Tipo de atendimento">
+                                <option value="online" selected>Online (Google Meet)</option>
                                 <option value="presencial">Presencial</option>
                             </select>
                         </div>
@@ -243,19 +343,25 @@
                                    class="form-control" 
                                    step="0.01" 
                                    min="0" 
-                                   placeholder="0,00">
+                                   placeholder="0,00"
+                                   aria-label="Valor da sessão em reais">
+                            <small class="form-text text-muted">Deixe em branco se não aplicável</small>
                         </div>
                         
                         <!-- Campo: Link Google Meet -->
                         <div class="col-md-12 mb-3">
                             <label for="novoLinkMeet" class="form-label">
-                                Link Google Meet (opcional)
+                                <i class="bi bi-camera-video"></i> Link Google Meet (opcional)
                             </label>
                             <input type="url" 
                                    id="novoLinkMeet" 
                                    name="link_meet" 
                                    class="form-control" 
-                                   placeholder="https://meet.google.com/xxx-xxxx-xxx">
+                                   placeholder="https://meet.google.com/xxx-xxxx-xxx"
+                                   aria-label="Link da reunião no Google Meet">
+                            <small class="form-text text-muted">
+                                Cole aqui o link da reunião online (se aplicável)
+                            </small>
                         </div>
                         
                         <!-- Campo: Observações -->
@@ -267,7 +373,8 @@
                                       name="observacoes" 
                                       class="form-control" 
                                       rows="3" 
-                                      placeholder="Anotações sobre o agendamento..."></textarea>
+                                      placeholder="Anotações sobre o agendamento..."
+                                      aria-label="Observações sobre o agendamento"></textarea>
                         </div>
                         
                     </div>
@@ -294,37 +401,71 @@
 </div>
 
 <!-- ==========================================
+     FIM DO BLOCO 1
+     ========================================== -->
+
+<!-- ==========================================
      MODAL: DETALHES DO AGENDAMENTO
      
      Descrição:
-     Exibe informações completas de um agendamento.
-     Permite alternar entre modo visualização e edição.
+     Modal com dois modos de operação para visualização e edição de agendamentos.
+     Alterna dinamicamente entre modo visualização (somente leitura) e modo edição (formulário).
      
-     Modos:
-     1. Visualização: Exibe dados em formato somente leitura
-     2. Edição: Exibe formulário para alterar dados
+     MODO 1: VISUALIZAÇÃO
+     - Exibe todas as informações do agendamento em formato somente leitura
+     - Mostra status com badge colorido
+     - Exibe link do Google Meet como botão (se existir)
+     - Mostra observações (se existirem)
+     - Botões disponíveis: Fechar, Editar, Deletar
      
-     Ações disponíveis:
-     - Editar agendamento
-     - Deletar agendamento
-     - Salvar alterações
-     - Cancelar edição
+     MODO 2: EDIÇÃO
+     - Formulário completo com todos os campos editáveis
+     - Validação de campos obrigatórios
+     - Campo adicional: Status (permite mudar status do agendamento)
+     - Campo adicional: Pagamento (checkbox para marcar como pago)
+     - Botões disponíveis: Cancelar, Salvar Alterações
+     
+     Alternância de Modos:
+     - Visualização → Edição: Clique no botão "Editar"
+     - Edição → Visualização: Clique no botão "Cancelar" ou após salvar com sucesso
+     
+     Controle de Visibilidade:
+     - #visualizacaoAgendamento: visível no modo visualização
+     - #formEditarAgendamento: visível no modo edição
+     - #botoesVisualizacao: visível no modo visualização
+     - #botoesEdicao: visível no modo edição
+     
+     Eventos (implementados em agenda.js):
+     - Abrir modal: carrega dados do agendamento selecionado
+     - Clique "Editar": alterna para modo edição
+     - Clique "Cancelar": volta para modo visualização
+     - Clique "Salvar": valida e envia alterações para API
+     - Clique "Deletar": solicita confirmação e deleta agendamento
+     
+     IDs Importantes:
+     - Modal: #modalDetalhesAgendamento
+     - Visualização: #visualizacaoAgendamento
+     - Formulário: #formEditarAgendamento
+     - Botões: #btnEditarAgendamento, #btnDeletarAgendamento, 
+               #btnCancelarEdicao, #btnSalvarEdicao
      ========================================== -->
 <div class="modal fade" 
      id="modalDetalhesAgendamento" 
      tabindex="-1" 
      aria-labelledby="modalDetalhesAgendamentoLabel" 
-     aria-hidden="true">
+     aria-hidden="true"
+     data-bs-backdrop="static"
+     data-bs-keyboard="false">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             
             <!-- Header do Modal -->
-            <div class="modal-header">
+            <div class="modal-header bg-info text-white">
                 <h5 class="modal-title" id="modalDetalhesAgendamentoLabel">
                     <i class="bi bi-calendar-event"></i> Detalhes do Agendamento
                 </h5>
                 <button type="button" 
-                        class="btn-close" 
+                        class="btn-close btn-close-white" 
                         data-bs-dismiss="modal" 
                         aria-label="Fechar"></button>
             </div>
@@ -332,217 +473,306 @@
             <!-- Body do Modal -->
             <div class="modal-body">
                 
-                <!-- ========== MODO VISUALIZAÇÃO ========== -->
+                <!-- ==========================================
+                     MODO VISUALIZAÇÃO
+                     
+                     Descrição:
+                     Exibe informações do agendamento em formato somente leitura.
+                     Organizado em grid responsivo com labels e valores.
+                     
+                     Elementos Dinâmicos:
+                     - #detalhePaciente: Nome do paciente
+                     - #detalheStatus: Badge com status (cor dinâmica)
+                     - #detalheDataHora: Data e hora formatadas
+                     - #detalheDuracao: Duração em minutos
+                     - #detalheTipo: Tipo de atendimento (online/presencial)
+                     - #detalheValor: Valor formatado em R$
+                     - #detalheLinkMeetContainer: Container (oculto se não houver link)
+                     - #detalheLinkMeet: Link do Google Meet (href dinâmico)
+                     - #detalheObservacoesContainer: Container (oculto se não houver observações)
+                     - #detalheObservacoes: Texto das observações
+                     
+                     Visibilidade Condicional:
+                     - Link Google Meet: exibido apenas se existir
+                     - Observações: exibidas apenas se existirem
+                     ========================================== -->
                 <div id="visualizacaoAgendamento">
                     <div class="row mb-3">
                         <div class="col-md-12">
-                            <h6 class="border-bottom pb-2 mb-3">Informações Gerais</h6>
+                            <h6 class="border-bottom pb-2 mb-3">
+                                <i class="bi bi-info-circle"></i> Informações Gerais
+                            </h6>
                         </div>
                         
                         <!-- Paciente -->
-                        <div class="col-md-6 mb-2">
-                            <strong>Paciente:</strong>
+                        <div class="col-md-6 mb-3">
+                            <strong><i class="bi bi-person"></i> Paciente:</strong>
                             <p class="mb-0" id="detalhePaciente">-</p>
                         </div>
                         
                         <!-- Status -->
-                        <div class="col-md-6 mb-2">
-                            <strong>Status:</strong>
+                        <div class="col-md-6 mb-3">
+                            <strong><i class="bi bi-flag"></i> Status:</strong>
                             <p class="mb-0">
                                 <span id="detalheStatus" class="badge">-</span>
                             </p>
                         </div>
                         
                         <!-- Data e Hora -->
-                        <div class="col-md-6 mb-2">
-                            <strong>Data e Hora:</strong>
+                        <div class="col-md-6 mb-3">
+                            <strong><i class="bi bi-calendar-event"></i> Data e Hora:</strong>
                             <p class="mb-0" id="detalheDataHora">-</p>
                         </div>
                         
                         <!-- Duração -->
-                        <div class="col-md-6 mb-2">
-                            <strong>Duração:</strong>
+                        <div class="col-md-6 mb-3">
+                            <strong><i class="bi bi-clock"></i> Duração:</strong>
                             <p class="mb-0" id="detalheDuracao">-</p>
                         </div>
                         
                         <!-- Tipo -->
-                        <div class="col-md-6 mb-2">
-                            <strong>Tipo:</strong>
+                        <div class="col-md-6 mb-3">
+                            <strong><i class="bi bi-laptop"></i> Tipo:</strong>
                             <p class="mb-0" id="detalheTipo">-</p>
                         </div>
                         
                         <!-- Valor -->
-                        <div class="col-md-6 mb-2">
-                            <strong>Valor:</strong>
+                        <div class="col-md-6 mb-3">
+                            <strong><i class="bi bi-currency-dollar"></i> Valor:</strong>
                             <p class="mb-0" id="detalheValor">-</p>
                         </div>
                         
                         <!-- Link Google Meet (exibido apenas se existir) -->
-                        <div class="col-md-12 mb-2" id="detalheLinkMeetContainer">
-                            <strong>Link Google Meet:</strong>
+                        <div class="col-md-12 mb-3" id="detalheLinkMeetContainer" style="display: none;">
+                            <strong><i class="bi bi-camera-video"></i> Link Google Meet:</strong>
                             <p class="mb-0">
                                 <a href="#" 
                                    id="detalheLinkMeet" 
                                    target="_blank" 
+                                   rel="noopener noreferrer"
                                    class="btn btn-sm btn-outline-primary">
-                                    <i class="bi bi-camera-video"></i> Acessar Reunião
+                                    <i class="bi bi-box-arrow-up-right"></i> Acessar Reunião
                                 </a>
                             </p>
                         </div>
                         
                         <!-- Observações (exibidas apenas se existirem) -->
-                        <div class="col-md-12 mb-2" id="detalheObservacoesContainer">
-                            <strong>Observações:</strong>
-                            <p class="mb-0" id="detalheObservacoes">-</p>
+                        <div class="col-md-12 mb-3" id="detalheObservacoesContainer" style="display: none;">
+                            <strong><i class="bi bi-journal-text"></i> Observações:</strong>
+                            <p class="mb-0 text-muted" id="detalheObservacoes">-</p>
                         </div>
                     </div>
                 </div>
                 
-                <!-- ========== MODO EDIÇÃO ========== -->
-                <form id="formEditarAgendamento">
-                    <div class="row">
-                        <div class="col-md-12 mb-3">
-                            <h6 class="border-bottom pb-2 mb-3">Editar Agendamento</h6>
-                        </div>
-                        
-                        <!-- Campo oculto: ID do agendamento -->
-                        <input type="hidden" id="editarAgendamentoId" name="id">
-                        
-                        <!-- Campo: Paciente -->
-                        <div class="col-md-12 mb-3">
-                            <label for="editarPaciente" class="form-label">
-                                Paciente <span class="text-danger">*</span>
-                            </label>
-                            <select id="editarPaciente" 
-                                    name="paciente_id" 
-                                    class="form-select" 
-                                    required>
-                                <option value="">Selecione um paciente...</option>
-                                <!-- Opções carregadas via JavaScript -->
-                            </select>
-                        </div>
-                        
-                        <!-- Campo: Data -->
-                        <div class="col-md-6 mb-3">
-                            <label for="editarData" class="form-label">
-                                Data <span class="text-danger">*</span>
-                            </label>
-                            <input type="date" 
-                                   id="editarData" 
-                                   name="data" 
-                                   class="form-control" 
-                                   required>
-                        </div>
-                        
-                        <!-- Campo: Hora Início -->
-                        <div class="col-md-3 mb-3">
-                            <label for="editarHoraInicio" class="form-label">
-                                Hora Início <span class="text-danger">*</span>
-                            </label>
-                            <input type="time" 
-                                   id="editarHoraInicio" 
-                                   name="hora_inicio" 
-                                   class="form-control" 
-                                   required>
-                        </div>
-                        
-                        <!-- Campo: Duração -->
-                        <div class="col-md-3 mb-3">
-                            <label for="editarDuracao" class="form-label">
-                                Duração (min)
-                            </label>
-                            <input type="number" 
-                                   id="editarDuracao" 
-                                   name="duracao" 
-                                   class="form-control" 
-                                   min="15" 
-                                   step="15">
-                        </div>
-                        
-                        <!-- Campo: Status -->
-                        <div class="col-md-6 mb-3">
-                            <label for="editarStatus" class="form-label">
-                                Status
-                            </label>
-                            <select id="editarStatus" name="status" class="form-select">
-                                <option value="agendada">Agendada</option>
-                                <option value="confirmada">Confirmada</option>
-                                <option value="em_andamento">Em Andamento</option>
-                                <option value="realizada">Realizada</option>
-                                <option value="faltou">Faltou</option>
-                                <option value="cancelada">Cancelada</option>
-                            </select>
-                        </div>
-                        
-                        <!-- Campo: Tipo -->
-                        <div class="col-md-6 mb-3">
-                            <label for="editarTipo" class="form-label">
-                                Tipo
-                            </label>
-                            <select id="editarTipo" name="tipo" class="form-select">
-                                <option value="online">Online</option>
-                                <option value="presencial">Presencial</option>
-                            </select>
-                        </div>
-                        
-                        <!-- Campo: Valor -->
-                        <div class="col-md-6 mb-3">
-                            <label for="editarValor" class="form-label">
-                                Valor (R$)
-                            </label>
-                            <input type="number" 
-                                   id="editarValor" 
-                                   name="valor" 
-                                   class="form-control" 
-                                   step="0.01" 
-                                   min="0">
-                        </div>
-                        
-                        <!-- Campo: Pagamento -->
-                        <div class="col-md-6 mb-3">
-                            <label class="form-label">Pagamento</label>
-                            <div class="form-check">
-                                <input class="form-check-input" 
-                                       type="checkbox" 
-                                       id="editarPago" 
-                                       name="pago">
-                                <label class="form-check-label" for="editarPago">
-                                    Pagamento realizado
-                                </label>
+                <!-- ==========================================
+                     MODO EDIÇÃO
+                     
+                     Descrição:
+                     Formulário completo para edição de agendamentos existentes.
+                     Todos os campos são editáveis, incluindo status e pagamento.
+                     
+                     Campos Adicionais (não presentes no modal de criação):
+                     - Status: Select com todas as opções de status
+                     - Pagamento: Checkbox para marcar se foi pago
+                     
+                     Campo Oculto:
+                     - #editarAgendamentoId: Armazena o ID do agendamento sendo editado
+                     
+                     Validações (implementadas em agenda.js):
+                     - Mesmas validações do formulário de criação
+                     - Verifica conflito de horários (exceto com o próprio agendamento)
+                     
+                     Eventos:
+                     - Submit: agenda.js → salvarEdicaoAgendamento()
+                     
+                     ID: #formEditarAgendamento
+                     ========================================== -->
+                <div id="edicaoAgendamento" style="display: none;">
+                    <form id="formEditarAgendamento" novalidate>
+                        <div class="row">
+                            <div class="col-md-12 mb-3">
+                                <h6 class="border-bottom pb-2 mb-3">
+                                    <i class="bi bi-pencil-square"></i> Editar Agendamento
+                                </h6>
                             </div>
+                            
+                            <!-- Campo oculto: ID do agendamento -->
+                            <input type="hidden" id="editarAgendamentoId" name="id">
+                            
+                            <!-- Campo: Paciente -->
+                            <div class="col-md-12 mb-3">
+                                <label for="editarPaciente" class="form-label">
+                                    Paciente <span class="text-danger">*</span>
+                                </label>
+                                <select id="editarPaciente" 
+                                        name="paciente_id" 
+                                        class="form-select" 
+                                        required
+                                        aria-required="true">
+                                    <option value="">Selecione um paciente...</option>
+                                    <!-- Opções carregadas dinamicamente via JavaScript -->
+                                </select>
+                                <div class="invalid-feedback">
+                                    Por favor, selecione um paciente.
+                                </div>
+                            </div>
+                            
+                            <!-- Campo: Data -->
+                            <div class="col-md-6 mb-3">
+                                <label for="editarData" class="form-label">
+                                    Data <span class="text-danger">*</span>
+                                </label>
+                                <input type="date" 
+                                       id="editarData" 
+                                       name="data" 
+                                       class="form-control" 
+                                       required
+                                       aria-required="true">
+                                <div class="invalid-feedback">
+                                    Por favor, selecione uma data válida.
+                                </div>
+                            </div>
+                            
+                            <!-- Campo: Hora Início -->
+                            <div class="col-md-3 mb-3">
+                                <label for="editarHoraInicio" class="form-label">
+                                    Hora Início <span class="text-danger">*</span>
+                                </label>
+                                <input type="time" 
+                                       id="editarHoraInicio" 
+                                       name="hora_inicio" 
+                                       class="form-control" 
+                                       required
+                                       aria-required="true">
+                                <div class="invalid-feedback">
+                                    Por favor, informe a hora de início.
+                                </div>
+                            </div>
+                            
+                            <!-- Campo: Duração -->
+                            <div class="col-md-3 mb-3">
+                                <label for="editarDuracao" class="form-label">
+                                    Duração (min)
+                                </label>
+                                <input type="number" 
+                                       id="editarDuracao" 
+                                       name="duracao" 
+                                       class="form-control" 
+                                       min="15" 
+                                       step="15"
+                                       aria-label="Duração da sessão em minutos">
+                            </div>
+                            
+                            <!-- Campo: Status -->
+                            <div class="col-md-6 mb-3">
+                                <label for="editarStatus" class="form-label">
+                                    Status
+                                </label>
+                                <select id="editarStatus" 
+                                        name="status" 
+                                        class="form-select"
+                                        aria-label="Status do agendamento">
+                                    <option value="agendada">Agendada</option>
+                                    <option value="confirmada">Confirmada</option>
+                                    <option value="em_andamento">Em Andamento</option>
+                                    <option value="realizada">Realizada</option>
+                                    <option value="faltou">Faltou</option>
+                                    <option value="cancelada">Cancelada</option>
+                                </select>
+                            </div>
+                            
+                            <!-- Campo: Tipo -->
+                            <div class="col-md-6 mb-3">
+                                <label for="editarTipo" class="form-label">
+                                    Tipo
+                                </label>
+                                <select id="editarTipo" 
+                                        name="tipo" 
+                                        class="form-select"
+                                        aria-label="Tipo de atendimento">
+                                    <option value="online">Online (Google Meet)</option>
+                                    <option value="presencial">Presencial</option>
+                                </select>
+                            </div>
+                            
+                            <!-- Campo: Valor -->
+                            <div class="col-md-6 mb-3">
+                                <label for="editarValor" class="form-label">
+                                    Valor (R$)
+                                </label>
+                                <input type="number" 
+                                       id="editarValor" 
+                                       name="valor" 
+                                       class="form-control" 
+                                       step="0.01" 
+                                       min="0"
+                                       aria-label="Valor da sessão em reais">
+                            </div>
+                            
+                            <!-- Campo: Pagamento -->
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Pagamento</label>
+                                <div class="form-check">
+                                    <input class="form-check-input" 
+                                           type="checkbox" 
+                                           id="editarPago" 
+                                           name="pago"
+                                           aria-label="Marcar como pago">
+                                    <label class="form-check-label" for="editarPago">
+                                        <i class="bi bi-check-circle"></i> Pagamento realizado
+                                    </label>
+                                </div>
+                            </div>
+                            
+                            <!-- Campo: Link Google Meet -->
+                            <div class="col-md-12 mb-3">
+                                <label for="editarLinkMeet" class="form-label">
+                                    <i class="bi bi-camera-video"></i> Link Google Meet
+                                </label>
+                                <input type="url" 
+                                       id="editarLinkMeet" 
+                                       name="link_meet" 
+                                       class="form-control"
+                                       placeholder="https://meet.google.com/xxx-xxxx-xxx"
+                                       aria-label="Link da reunião no Google Meet">
+                            </div>
+                            
+                            <!-- Campo: Observações -->
+                            <div class="col-md-12 mb-3">
+                                <label for="editarObservacoes" class="form-label">
+                                    Observações
+                                </label>
+                                <textarea id="editarObservacoes" 
+                                          name="observacoes" 
+                                          class="form-control" 
+                                          rows="3"
+                                          placeholder="Anotações sobre o agendamento..."
+                                          aria-label="Observações sobre o agendamento"></textarea>
+                            </div>
+                            
                         </div>
-                        
-                        <!-- Campo: Link Google Meet -->
-                        <div class="col-md-12 mb-3">
-                            <label for="editarLinkMeet" class="form-label">
-                                Link Google Meet
-                            </label>
-                            <input type="url" 
-                                   id="editarLinkMeet" 
-                                   name="link_meet" 
-                                   class="form-control">
-                        </div>
-                        
-                        <!-- Campo: Observações -->
-                        <div class="col-md-12 mb-3">
-                            <label for="editarObservacoes" class="form-label">
-                                Observações
-                            </label>
-                            <textarea id="editarObservacoes" 
-                                      name="observacoes" 
-                                      class="form-control" 
-                                      rows="3"></textarea>
-                        </div>
-                        
-                    </div>
-                </form>
+                    </form>
+                </div>
                 
             </div>
             
             <!-- Footer do Modal -->
             <div class="modal-footer">
                 
-                <!-- Botões do Modo Visualização -->
+                <!-- ==========================================
+                     BOTÕES DO MODO VISUALIZAÇÃO
+                     
+                     Descrição:
+                     Botões disponíveis quando o modal está em modo visualização.
+                     
+                     Botões:
+                     - Fechar: Fecha o modal
+                     - Editar: Alterna para modo edição
+                     - Deletar: Solicita confirmação e deleta o agendamento
+                     
+                     Visibilidade: Exibido apenas no modo visualização
+                     ID: #botoesVisualizacao
+                     ========================================== -->
                 <div id="botoesVisualizacao">
                     <button type="button" 
                             class="btn btn-secondary" 
@@ -561,8 +791,20 @@
                     </button>
                 </div>
                 
-                <!-- Botões do Modo Edição -->
-                <div id="botoesEdicao">
+                <!-- ==========================================
+                     BOTÕES DO MODO EDIÇÃO
+                     
+                     Descrição:
+                     Botões disponíveis quando o modal está em modo edição.
+                     
+                     Botões:
+                     - Cancelar: Volta para modo visualização sem salvar
+                     - Salvar Alterações: Valida e envia alterações para API
+                     
+                     Visibilidade: Exibido apenas no modo edição
+                     ID: #botoesEdicao
+                     ========================================== -->
+                <div id="botoesEdicao" style="display: none;">
                     <button type="button" 
                             class="btn btn-secondary" 
                             id="btnCancelarEdicao">
@@ -581,63 +823,175 @@
     </div>
 </div>
 
-<!-- ==========================================
-     DEPENDÊNCIAS EXTERNAS
-     
-     Descrição:
-     Carregamento de bibliotecas necessárias via CDN.
-     Todas as bibliotecas são carregadas no final do body
-     para melhor performance de carregamento da página.
-     
-     Bibliotecas:
-     1. FullCalendar Core - Biblioteca principal do calendário
-     2. FullCalendar Day Grid - Visualização em grade (mês)
-     3. FullCalendar Time Grid - Visualização em grade de tempo (semana/dia)
-     4. FullCalendar Interaction - Drag & drop e interações
-     5. FullCalendar List - Visualização em lista
-     6. FullCalendar Locale PT-BR - Tradução para português
-     
-     Versão: FullCalendar 6.1.10
-     CDN: jsDelivr (backup automático)
-     ========================================== -->
-
-{% block extra_css %}
-<!-- FullCalendar CSS -->
-<link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.css" rel="stylesheet">
 {% endblock %}
 
+<!-- ==========================================
+     SEÇÃO: ESTILOS CUSTOMIZADOS (CSS)
+     
+     Descrição:
+     Carregamento de folhas de estilo adicionais necessárias
+     para o funcionamento da agenda.
+     
+     Ordem de Carregamento:
+     1. Bootstrap 5.3.0 (já carregado no base.html)
+     2. FullCalendar CSS (carregado aqui)
+     3. main.css (estilos customizados, já carregado no base.html)
+     
+     FullCalendar CSS:
+     - Versão: 6.1.10
+     - CDN: jsDelivr (com fallback automático)
+     - Contém: Estilos base do calendário, grid, eventos, botões
+     ========================================== -->
+{% block extra_css %}
+<!-- FullCalendar - Estilos Base -->
+<link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.css" 
+      rel="stylesheet"
+      integrity="sha384-..." 
+      crossorigin="anonymous">
+{% endblock %}
+
+<!-- ==========================================
+     SEÇÃO: SCRIPTS JAVASCRIPT
+     
+     Descrição:
+     Carregamento de bibliotecas JavaScript necessárias
+     para o funcionamento da agenda.
+     
+     Ordem de Carregamento (CRÍTICA):
+     1. Bootstrap 5.3.0 JS (já carregado no base.html)
+     2. FullCalendar Core (carregado aqui)
+     3. FullCalendar Locale PT-BR (carregado aqui)
+     4. agenda.js - Lógica da aplicação (carregado aqui - APENAS UMA VEZ)
+     
+     IMPORTANTE:
+     - Cada script deve ser carregado APENAS UMA VEZ
+     - A ordem de carregamento deve ser respeitada
+     - FullCalendar deve ser carregado ANTES de agenda.js
+     - Locale PT-BR deve ser carregado DEPOIS do Core
+     
+     FullCalendar:
+     - Versão: 6.1.10
+     - CDN: jsDelivr
+     - Módulos: Core (inclui todos os plugins necessários)
+     
+     agenda.js:
+     - Localização: /static/js/agenda.js
+     - Responsabilidades:
+       * Inicialização do FullCalendar
+       * Configuração de eventos e callbacks
+       * Comunicação com APIs REST do backend
+       * Manipulação de modais (abrir, fechar, alternar modos)
+       * Validação de formulários
+       * Tratamento de erros e feedback visual
+       * Funções de debug e utilitários
+     ========================================== -->
 {% block extra_js %}
+
 <!-- ==========================================
      FULLCALENDAR - BIBLIOTECA PRINCIPAL
+     
+     Descrição:
+     Biblioteca JavaScript para calendários interativos.
+     Versão global inclui todos os plugins necessários.
+     
+     Plugins Incluídos:
+     - Day Grid: Visualização em grade (mês)
+     - Time Grid: Visualização em grade de tempo (semana/dia)
+     - Interaction: Drag & drop, resize, click events
+     - List: Visualização em lista
+     
+     Documentação: https://fullcalendar.io/docs
      ========================================== -->
-<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"
+        integrity="sha384-..." 
+        crossorigin="anonymous"></script>
 
 <!-- ==========================================
      FULLCALENDAR - LOCALE PT-BR
-     Tradução de todos os textos para português brasileiro
+     
+     Descrição:
+     Tradução de todos os textos do FullCalendar para português brasileiro.
+     
+     Textos Traduzidos:
+     - Nomes dos meses e dias da semana
+     - Botões de navegação (Hoje, Mês, Semana, Dia)
+     - Mensagens de erro
+     - Tooltips e labels
+     
+     Configuração:
+     Aplicada automaticamente em agenda.js via locale: 'pt-br'
      ========================================== -->
-<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/locales/pt-br.global.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/locales/pt-br.global.min.js"
+        integrity="sha384-..." 
+        crossorigin="anonymous"></script>
 
 <!-- ==========================================
      AGENDA.JS - LÓGICA DA APLICAÇÃO
+     
+     ATENÇÃO: ESTE SCRIPT DEVE SER CARREGADO APENAS UMA VEZ!
      
      Descrição:
      Arquivo JavaScript separado contendo toda a lógica
      de funcionamento da agenda.
      
-     Responsabilidades:
-     - Inicialização do FullCalendar
-     - Configuração de eventos e callbacks
-     - Comunicação com APIs do backend
-     - Manipulação de modais
-     - Validação de formulários
-     - Tratamento de erros
-     - Feedback visual (toasts/alerts)
+     Estrutura do Arquivo:
+     1. Variáveis Globais
+     2. Inicialização do FullCalendar
+     3. Funções de Carregamento de Dados
+     4. Funções de Manipulação de Modais
+     5. Funções de Validação
+     6. Funções de Comunicação com API
+     7. Event Listeners
+     8. Funções de Utilidade
+     9. Funções de Debug
+     
+     APIs Utilizadas:
+     - GET /api/agendamentos: Lista agendamentos
+     - POST /api/agendamentos: Cria novo agendamento
+     - PUT /api/agendamentos/<id>: Atualiza agendamento
+     - DELETE /api/agendamentos/<id>: Deleta agendamento
+     - GET /api/pacientes: Lista pacientes ativos
+     
+     Eventos do FullCalendar:
+     - dateClick: Clique em data → abre modal de novo agendamento
+     - eventClick: Clique em evento → abre modal de detalhes
+     - eventDrop: Drag & drop → atualiza data/hora
+     - eventResize: Redimensionar → atualiza duração
+     - datesSet: Mudança de período → recarrega eventos
+     
+     Atalhos de Teclado:
+     - Ctrl/Cmd + N: Novo agendamento
+     - T: Ir para hoje
+     - ← →: Navegar períodos
+     - M: Visualização Mês
+     - S: Visualização Semana
+     - D: Visualização Dia
+     
+     Funções de Debug (disponíveis no console):
+     - agendaDebug.ativarDebug(): Ativa modo debug
+     - agendaDebug.infoCalendario(): Exibe info do calendário
+     - agendaDebug.listarAgendamentos(): Lista todos os agendamentos
+     - agendaDebug.recarregarEventos(): Força recarga de eventos
+     - agendaDebug.testarAPI(): Testa conexão com API
      
      Localização: /static/js/agenda.js
+     Versão: 2.0.0
+     Última Atualização: 04/01/2026
      ========================================== -->
 <script src="{{ url_for('static', filename='js/agenda.js') }}"></script>
 
 {% endblock %}
 
-{% endblock %}
+<!-- ==========================================
+     FIM DO ARQUIVO agenda.html
+     
+     Desenvolvido por: Flavio Ricci + IA Adapta ONE 26
+     Data: Janeiro 2026
+     Versão: 2.0.0
+     
+     Changelog:
+     - 04/01/2026: Correção de duplicação de script agenda.js
+     - 04/01/2026: Adição de documentação completa
+     - 04/01/2026: Melhorias de acessibilidade (aria-labels)
+     - 04/01/2026: Organização em blocos lógicos
+     ========================================== -->
