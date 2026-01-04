@@ -1,3 +1,20 @@
+# ==========================================
+# MINDCAREPRO - SISTEMA DE GESTÃO PARA TERAPEUTAS
+# Arquivo: app.py
+# 
+# Descrição:
+# Sistema completo de gestão de consultório terapêutico com:
+# - Gestão de pacientes
+# - Agendamento de sessões
+# - Registro de evoluções
+# - Relatórios e estatísticas
+# - Agenda interativa com FullCalendar
+# 
+# Desenvolvido por: Flavio Ricci + IA Adapta ONE 26
+# Data: Janeiro 2026
+# Versão: 2.0.0
+# ==========================================
+
 import os
 from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
 from flask_sqlalchemy import SQLAlchemy
@@ -7,6 +24,10 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from decimal import Decimal
 from sqlalchemy import func, extract
 import traceback
+
+# ==========================================
+# CONFIGURAÇÃO DO FLASK
+# ==========================================
 
 app = Flask(__name__)
 
@@ -20,7 +41,10 @@ app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'mindcarepro-secret-key')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['TEMPLATES_AUTO_RELOAD'] = True
 
-# Inicialização das extensões
+# ==========================================
+# INICIALIZAÇÃO DAS EXTENSÕES
+# ==========================================
+
 db = SQLAlchemy(app)
 login_manager = LoginManager()
 login_manager.init_app(app)
@@ -28,11 +52,15 @@ login_manager.login_view = 'login'
 
 @login_manager.user_loader
 def load_user(user_id):
+    """Carrega usuário para sessão do Flask-Login"""
     return Usuario.query.get(int(user_id))
 
-# ========== MODELOS DO BANCO DE DADOS ==========
+# ==========================================
+# MODELOS DO BANCO DE DADOS
+# ==========================================
 
 class Usuario(UserMixin, db.Model):
+    """Modelo de usuário/terapeuta do sistema"""
     __tablename__ = 'usuarios'
     
     id = db.Column(db.Integer, primary_key=True)
@@ -45,12 +73,15 @@ class Usuario(UserMixin, db.Model):
     data_criacao = db.Column(db.DateTime, default=datetime.utcnow)
     
     def set_password(self, password):
+        """Define senha com hash seguro"""
         self.senha_hash = generate_password_hash(password)
     
     def check_password(self, password):
+        """Verifica senha fornecida contra hash armazenado"""
         return check_password_hash(self.senha_hash, password)
 
 class Paciente(db.Model):
+    """Modelo de paciente"""
     __tablename__ = 'pacientes'
     
     id = db.Column(db.Integer, primary_key=True)
@@ -64,11 +95,13 @@ class Paciente(db.Model):
     data_cadastro = db.Column(db.DateTime, default=datetime.utcnow)
     terapeuta_id = db.Column(db.Integer, db.ForeignKey('usuarios.id'), nullable=False)
     
+    # Relacionamentos
     sessoes = db.relationship('Sessao', backref='paciente', lazy=True)
     evolucoes = db.relationship('Evolucao', backref='paciente', lazy=True)
     agendamentos = db.relationship('Agendamento', backref='paciente', lazy=True)
 
 class Sessao(db.Model):
+    """Modelo de sessão terapêutica"""
     __tablename__ = 'sessoes'
     
     id = db.Column(db.Integer, primary_key=True)
@@ -85,6 +118,7 @@ class Sessao(db.Model):
     terapeuta = db.relationship('Usuario', backref='sessoes_terapeuta', lazy=True)
 
 class Evolucao(db.Model):
+    """Modelo de evolução/prontuário"""
     __tablename__ = 'evolucoes'
     
     id = db.Column(db.Integer, primary_key=True)
@@ -98,63 +132,42 @@ class Evolucao(db.Model):
     observacoes_privadas = db.Column(db.Text)
 
 class Agendamento(db.Model):
+    """Modelo de agendamento para agenda interativa"""
     __tablename__ = 'agendamentos'
     
     id = db.Column(db.Integer, primary_key=True)
     paciente_id = db.Column(db.Integer, db.ForeignKey('pacientes.id'), nullable=False)
     terapeuta_id = db.Column(db.Integer, db.ForeignKey('usuarios.id'), nullable=False)
-    
-    # Data e hora
     data_inicio = db.Column(db.DateTime, nullable=False)
     data_fim = db.Column(db.DateTime, nullable=False)
     duracao = db.Column(db.Integer, default=60)
-    
-    # Status
     status = db.Column(db.String(20), default='agendada')
-    
-    # Tipo
     tipo = db.Column(db.String(20), default='online')
-    
-    # Financeiro
     valor = db.Column(db.Numeric(10, 2))
     pago = db.Column(db.Boolean, default=False)
-    
-    # Observações
     observacoes = db.Column(db.Text)
     observacoes_terapeuta = db.Column(db.Text)
-    
-    # Google Meet
     link_meet = db.Column(db.String(500))
     transcricao = db.Column(db.Text)
     analise_ia = db.Column(db.Text)
-    
-    # Recorrência
     recorrente = db.Column(db.Boolean, default=False)
     recorrencia_tipo = db.Column(db.String(20))
     recorrencia_ate = db.Column(db.Date)
-    
-    # Auditoria
     data_criacao = db.Column(db.DateTime, default=datetime.utcnow)
     data_atualizacao = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     
-    # Relacionamentos
     terapeuta = db.relationship('Usuario', backref='agendamentos_terapeuta')
     
-    # ========== MÉTODO NOVO: CONVERSÃO PARA FULLCALENDAR ==========
     def to_dict(self):
-        """
-        Converte o agendamento para formato JSON compatível com FullCalendar.js
-        Retorna um dicionário com as propriedades necessárias para renderização no calendário.
-        """
-        # Cores por status
+        """Converte agendamento para formato JSON compatível com FullCalendar.js"""
         cores = {
-            'agendada': '#2196F3',      # Azul
-            'confirmada': '#4CAF50',    # Verde
-            'em_andamento': '#FF9800',  # Laranja
-            'realizada': '#388E3C',     # Verde escuro
-            'faltou': '#F44336',        # Vermelho
-            'cancelada': '#9E9E9E',     # Cinza
-            'reagendada': '#FF5722'     # Laranja escuro
+            'agendada': '#2196F3',
+            'confirmada': '#4CAF50',
+            'em_andamento': '#FF9800',
+            'realizada': '#388E3C',
+            'faltou': '#F44336',
+            'cancelada': '#9E9E9E',
+            'reagendada': '#FF5722'
         }
         
         return {
@@ -178,6 +191,7 @@ class Agendamento(db.Model):
         }
 
 class Configuracao(db.Model):
+    """Modelo de configurações do terapeuta"""
     __tablename__ = 'configuracoes'
     
     id = db.Column(db.Integer, primary_key=True)
@@ -201,9 +215,12 @@ class Configuracao(db.Model):
     
     usuario = db.relationship('Usuario', backref='configuracao', uselist=False)
 
-# ========== FUNÇÕES AUXILIARES ==========
+# ==========================================
+# FUNÇÕES AUXILIARES
+# ==========================================
 
 def processar_login():
+    """Processa login do usuário"""
     email = request.form.get('email', '').strip()
     senha = request.form.get('senha', '')
     
@@ -221,6 +238,7 @@ def processar_login():
         return False
 
 def obter_estatisticas_gerais(data_inicio, data_fim):
+    """Obtém estatísticas gerais do período"""
     try:
         stats = {}
         stats['total_pacientes'] = Paciente.query.filter_by(terapeuta_id=current_user.id).count()
@@ -256,139 +274,18 @@ def obter_estatisticas_gerais(data_inicio, data_fim):
         traceback.print_exc()
         return {}
 
-# ========== ROTAS DE AUTENTICAÇÃO ==========
+# ==========================================
+# FIM DO BLOCO 1
+# ==========================================
 
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    if request.method == 'POST':
-        if processar_login():
-            return redirect(url_for('dashboard'))
-        return render_template('login.html')
-    
-    if current_user.is_authenticated:
-        return redirect(url_for('dashboard'))
-    return render_template('login.html')
-    @app.route('/registro', methods=['GET', 'POST'])
-def registro():
-    if current_user.is_authenticated:
-        return redirect(url_for('dashboard'))
-    
-    if request.method == 'POST':
-        try:
-            nome = request.form.get('nome', '').strip()
-            email = request.form.get('email', '').strip()
-            senha = request.form.get('senha', '')
-            confirmar_senha = request.form.get('confirmar_senha', '')
-            crp = request.form.get('crp', '').strip()
-            
-            if not nome:
-                flash('Nome é obrigatório', 'error')
-                return render_template('registro.html')
-            
-            if not email:
-                flash('Email é obrigatório', 'error')
-                return render_template('registro.html')
-            
-            if not senha:
-                flash('Senha é obrigatória', 'error')
-                return render_template('registro.html')
-            
-            if len(senha) < 6:
-                flash('A senha deve ter no mínimo 6 caracteres', 'error')
-                return render_template('registro.html')
-            
-            if senha != confirmar_senha:
-                flash('As senhas não coincidem', 'error')
-                return render_template('registro.html')
-            
-            usuario_existente = Usuario.query.filter_by(email=email).first()
-            if usuario_existente:
-                flash('Este email já está cadastrado', 'error')
-                return render_template('registro.html')
-            
-            novo_usuario = Usuario(
-                nome=nome,
-                email=email,
-                crp=crp if crp else None
-            )
-            novo_usuario.set_password(senha)
-            
-            db.session.add(novo_usuario)
-            db.session.commit()
-            
-            print(f"✅ Novo usuário criado: {nome} ({email})")
-            flash('Conta criada com sucesso! Faça login para continuar.', 'success')
-            return redirect(url_for('login'))
-            
-        except Exception as e:
-            print(f"❌ Erro ao criar usuário: {e}")
-            traceback.print_exc()
-            flash('Erro ao criar conta. Tente novamente.', 'error')
-            db.session.rollback()
-            return render_template('registro.html')
-    
-    return render_template('registro.html')
-
-@app.route('/logout')
-@login_required
-def logout():
-    logout_user()
-    return redirect(url_for('login'))
-
-@app.route('/dashboard')
-@login_required
-def dashboard():
-    print("✅ Rota /dashboard acessada")
-    total_pacientes = 0
-    sessoes_hoje = 0
-    proximas_sessoes = []
-    sessoes_mes = 0
-    receita_mes = 0
-    
-    try:
-        total_pacientes = Paciente.query.filter_by(terapeuta_id=current_user.id, ativo=True).count()
-        hoje = date.today()
-        sessoes_hoje = Sessao.query.filter_by(terapeuta_id=current_user.id).filter(
-            db.func.date(Sessao.data_sessao) == hoje
-        ).count()
-        
-        proximas_sessoes = Sessao.query.filter_by(
-            terapeuta_id=current_user.id,
-            status='agendada'
-        ).filter(
-            Sessao.data_sessao >= datetime.now(),
-            Sessao.data_sessao <= datetime.now() + timedelta(days=7)
-        ).order_by(Sessao.data_sessao).limit(5).all()
-        
-        primeiro_dia_mes = hoje.replace(day=1)
-        sessoes_mes = Sessao.query.filter_by(terapeuta_id=current_user.id).filter(
-            db.func.date(Sessao.data_sessao) >= primeiro_dia_mes,
-            Sessao.status.in_(['realizada', 'agendada'])
-        ).count()
-        
-        receita_query = db.session.query(db.func.sum(Sessao.valor)).filter_by(
-            terapeuta_id=current_user.id,
-            status='realizada'
-        ).filter(
-            db.func.date(Sessao.data_sessao) >= primeiro_dia_mes
-        ).scalar()
-        receita_mes = float(receita_query) if receita_query else 0
-    except Exception as e:
-        print(f"❌ Erro ao buscar estatísticas do dashboard: {e}")
-        traceback.print_exc()
-    
-    return render_template('dashboard.html', 
-                         total_pacientes=total_pacientes,
-                         sessoes_hoje=sessoes_hoje,
-                         proximas_sessoes=proximas_sessoes,
-                         sessoes_mes=sessoes_mes,
-                         receita_mes=receita_mes)
-
-# ========== ROTAS DE PACIENTES ==========
+# ==========================================
+# ROTAS DE PACIENTES
+# ==========================================
 
 @app.route('/pacientes')
 @login_required
 def pacientes():
+    """Lista todos os pacientes do terapeuta"""
     print("✅ Rota /pacientes acessada")
     try:
         search = request.args.get('search', '')
@@ -435,6 +332,7 @@ def pacientes():
 @app.route('/pacientes/novo', methods=['GET', 'POST'])
 @login_required
 def novo_paciente():
+    """Cadastra novo paciente"""
     if request.method == 'POST':
         try:
             nome = request.form.get('nome', '').strip()
@@ -488,6 +386,7 @@ def novo_paciente():
 @app.route('/pacientes/<int:id>')
 @login_required
 def ver_paciente(id):
+    """Visualiza detalhes do paciente"""
     try:
         paciente = Paciente.query.filter_by(id=id, terapeuta_id=current_user.id).first_or_404()
         sessoes = Sessao.query.filter_by(paciente_id=id).order_by(Sessao.data_sessao.desc()).limit(10).all()
@@ -507,6 +406,7 @@ def ver_paciente(id):
 @app.route('/pacientes/<int:id>/editar', methods=['GET', 'POST'])
 @login_required
 def editar_paciente(id):
+    """Edita dados do paciente"""
     try:
         paciente = Paciente.query.filter_by(id=id, terapeuta_id=current_user.id).first_or_404()
         
@@ -558,6 +458,7 @@ def editar_paciente(id):
 @app.route('/pacientes/<int:id>/desativar', methods=['POST'])
 @login_required
 def desativar_paciente(id):
+    """Desativa paciente"""
     try:
         paciente = Paciente.query.filter_by(id=id, terapeuta_id=current_user.id).first_or_404()
         paciente.ativo = False
@@ -570,6 +471,7 @@ def desativar_paciente(id):
 @app.route('/pacientes/<int:id>/ativar', methods=['POST'])
 @login_required
 def ativar_paciente(id):
+    """Ativa paciente"""
     try:
         paciente = Paciente.query.filter_by(id=id, terapeuta_id=current_user.id).first_or_404()
         paciente.ativo = True
@@ -579,11 +481,14 @@ def ativar_paciente(id):
         print(f"❌ Erro ao ativar paciente: {e}")
         return jsonify({'success': False, 'message': 'Erro ao ativar paciente'})
 
-# ========== ROTAS DE SESSÕES ==========
+# ==========================================
+# ROTAS DE SESSÕES
+# ==========================================
 
 @app.route('/sessoes')
 @login_required
 def sessoes():
+    """Lista todas as sessões do terapeuta"""
     print("✅ Rota /sessoes acessada")
     try:
         status_filter = request.args.get('status', '')
@@ -643,6 +548,7 @@ def sessoes():
 @app.route('/sessoes/nova', methods=['GET', 'POST'])
 @login_required
 def nova_sessao():
+    """Cadastra nova sessão"""
     if request.method == 'POST':
         try:
             paciente_id = request.form.get('paciente_id')
@@ -738,6 +644,7 @@ def nova_sessao():
 @app.route('/sessoes/<int:id>')
 @login_required
 def ver_sessao(id):
+    """Visualiza detalhes da sessão"""
     try:
         sessao = Sessao.query.filter_by(id=id, terapeuta_id=current_user.id).first_or_404()
         return render_template('ver_sessao.html', sessao=sessao, today=date.today())
@@ -749,6 +656,7 @@ def ver_sessao(id):
 @app.route('/sessoes/<int:id>/editar', methods=['GET', 'POST'])
 @login_required
 def editar_sessao(id):
+    """Edita dados da sessão"""
     try:
         sessao = Sessao.query.filter_by(id=id, terapeuta_id=current_user.id).first_or_404()
         
@@ -807,6 +715,7 @@ def editar_sessao(id):
 @app.route('/sessoes/<int:id>/marcar-realizada', methods=['POST'])
 @login_required
 def marcar_sessao_realizada(id):
+    """Marca sessão como realizada"""
     try:
         sessao = Sessao.query.filter_by(id=id, terapeuta_id=current_user.id).first_or_404()
         sessao.status = 'realizada'
@@ -818,6 +727,7 @@ def marcar_sessao_realizada(id):
 @app.route('/sessoes/<int:id>/marcar-faltou', methods=['POST'])
 @login_required
 def marcar_sessao_faltou(id):
+    """Marca sessão como falta"""
     try:
         sessao = Sessao.query.filter_by(id=id, terapeuta_id=current_user.id).first_or_404()
         sessao.status = 'faltou'
@@ -829,6 +739,7 @@ def marcar_sessao_faltou(id):
 @app.route('/sessoes/<int:id>/cancelar', methods=['POST'])
 @login_required
 def cancelar_sessao(id):
+    """Cancela sessão"""
     try:
         sessao = Sessao.query.filter_by(id=id, terapeuta_id=current_user.id).first_or_404()
         sessao.status = 'cancelada'
@@ -840,6 +751,7 @@ def cancelar_sessao(id):
 @app.route('/sessoes/<int:id>/reagendar', methods=['POST'])
 @login_required
 def reagendar_sessao(id):
+    """Reagenda sessão"""
     try:
         sessao = Sessao.query.filter_by(id=id, terapeuta_id=current_user.id).first_or_404()
         sessao.status = 'agendada'
@@ -848,11 +760,19 @@ def reagendar_sessao(id):
     except Exception as e:
         return jsonify({'success': False, 'message': 'Erro ao reagendar sessão'})
 
+# ==========================================
+# FIM DO BLOCO 3
+# ==========================================
 
-        # ========== ROTAS DE PRONTUÁRIO/EVOLUÇÃO ==========
+
+# ==========================================
+# ROTAS DE PRONTUÁRIO/EVOLUÇÃO
+# ==========================================
+
 @app.route('/prontuario/<int:paciente_id>', methods=['GET', 'POST'])
 @login_required
 def prontuario(paciente_id):
+    """Visualiza e registra evoluções no prontuário do paciente"""
     print("✅ Rota /prontuario acessada")
     try:
         paciente = Paciente.query.filter_by(id=paciente_id, terapeuta_id=current_user.id).first_or_404()
@@ -897,13 +817,10 @@ def prontuario(paciente_id):
 @app.route('/evolucoes')
 @login_required
 def evolucoes():
-    print("=" * 80)
-    print("🔍 DEBUG: ROTA /EVOLUCOES ACESSADA")
-    print("=" * 80)
+    """Lista todas as evoluções do terapeuta"""
+    print("✅ Rota /evolucoes acessada")
     
     try:
-        print(f"✅ PASSO 1: Usuário autenticado: {current_user.nome} (ID: {current_user.id})")
-        
         paciente_filter = request.args.get('paciente', '')
         data_inicio = request.args.get('data_inicio', '')
         data_fim = request.args.get('data_fim', '')
@@ -954,6 +871,7 @@ def evolucoes():
 @app.route('/evolucoes/nova', methods=['GET', 'POST'])
 @login_required
 def nova_evolucao():
+    """Cadastra nova evolução"""
     if request.method == 'POST':
         try:
             paciente_id = request.form.get('paciente_id')
@@ -1010,6 +928,7 @@ def nova_evolucao():
 @app.route('/evolucoes/<int:id>')
 @login_required
 def ver_evolucao(id):
+    """Visualiza detalhes da evolução"""
     try:
         evolucao = Evolucao.query.join(Paciente).filter(
             Evolucao.id == id,
@@ -1025,6 +944,7 @@ def ver_evolucao(id):
 @app.route('/evolucoes/<int:id>/editar', methods=['GET', 'POST'])
 @login_required
 def editar_evolucao(id):
+    """Edita evolução"""
     try:
         evolucao = Evolucao.query.join(Paciente).filter(
             Evolucao.id == id,
@@ -1062,6 +982,7 @@ def editar_evolucao(id):
 @app.route('/evolucoes/<int:id>/excluir', methods=['POST'])
 @login_required
 def excluir_evolucao(id):
+    """Exclui evolução"""
     try:
         evolucao = Evolucao.query.join(Paciente).filter(
             Evolucao.id == id,
@@ -1075,11 +996,14 @@ def excluir_evolucao(id):
     except Exception as e:
         return jsonify({'success': False, 'message': 'Erro ao excluir evolução'})
 
-# ========== ROTAS DE CONFIGURAÇÕES ==========
+# ==========================================
+# ROTAS DE CONFIGURAÇÕES
+# ==========================================
 
 @app.route('/configuracoes')
 @login_required
 def configuracoes():
+    """Página de configurações do terapeuta"""
     print("✅ Rota /configuracoes acessada")
     try:
         config = Configuracao.query.filter_by(usuario_id=current_user.id).first()
@@ -1092,6 +1016,7 @@ def configuracoes():
 @app.route('/configuracoes/salvar', methods=['POST'])
 @login_required
 def salvar_configuracoes():
+    """Salva configurações do terapeuta"""
     try:
         config = Configuracao.query.filter_by(usuario_id=current_user.id).first()
         
@@ -1170,11 +1095,14 @@ def salvar_configuracoes():
         db.session.rollback()
         return redirect(url_for('configuracoes'))
 
-# ========== ROTAS DE RELATÓRIOS ==========
+# ==========================================
+# ROTAS DE RELATÓRIOS
+# ==========================================
 
 @app.route('/relatorios')
 @login_required
 def relatorios():
+    """Página de relatórios e estatísticas"""
     print("✅ Rota /relatorios acessada")
     try:
         periodo = request.args.get('periodo', '12')
@@ -1202,11 +1130,14 @@ def relatorios():
         flash('Erro ao carregar relatórios', 'error')
         return redirect(url_for('dashboard'))
 
-# ========== APIs PARA GRÁFICOS ==========
+# ==========================================
+# APIs PARA GRÁFICOS
+# ==========================================
 
 @app.route('/api/relatorios/receita-mensal')
 @login_required
 def api_receita_mensal():
+    """API: Dados de receita mensal para gráfico"""
     try:
         periodo = int(request.args.get('periodo', 12))
         hoje = date.today()
@@ -1240,6 +1171,7 @@ def api_receita_mensal():
 @app.route('/api/relatorios/sessoes-status')
 @login_required
 def api_sessoes_status():
+    """API: Distribuição de sessões por status"""
     try:
         periodo = int(request.args.get('periodo', 12))
         hoje = date.today()
@@ -1276,6 +1208,7 @@ def api_sessoes_status():
 @app.route('/api/relatorios/pacientes-ativos')
 @login_required
 def api_pacientes_ativos():
+    """API: Distribuição de pacientes ativos/inativos"""
     try:
         ativos = Paciente.query.filter_by(terapeuta_id=current_user.id, ativo=True).count()
         inativos = Paciente.query.filter_by(terapeuta_id=current_user.id, ativo=False).count()
@@ -1292,6 +1225,7 @@ def api_pacientes_ativos():
 @app.route('/api/relatorios/evolucao-sessoes')
 @login_required
 def api_evolucao_sessoes():
+    """API: Evolução de sessões ao longo do tempo"""
     try:
         periodo = int(request.args.get('periodo', 12))
         hoje = date.today()
@@ -1347,6 +1281,7 @@ def api_evolucao_sessoes():
 @app.route('/api/relatorios/top-pacientes')
 @login_required
 def api_top_pacientes():
+    """API: Top 5 pacientes por número de sessões"""
     try:
         periodo = int(request.args.get('periodo', 12))
         hoje = date.today()
@@ -1377,7 +1312,13 @@ def api_top_pacientes():
         print(f"❌ Erro na API top pacientes: {e}")
         return jsonify({'error': 'Erro ao buscar dados'}), 500
 
-# ========== ROTAS DA AGENDA (NOVO) ==========
+# ==========================================
+# FIM DO BLOCO 4
+# ==========================================
+
+# ==========================================
+# ROTAS DA AGENDA (NOVO)
+# ==========================================
 
 @app.route('/agenda')
 @login_required
@@ -1389,7 +1330,9 @@ def agenda():
     print("✅ Rota /agenda acessada")
     return render_template('agenda.html')
 
-# ========== API DA AGENDA - LISTAR AGENDAMENTOS ==========
+# ==========================================
+# API DA AGENDA - LISTAR AGENDAMENTOS
+# ==========================================
 
 @app.route('/api/agendamentos', methods=['GET'])
 @login_required
@@ -1430,14 +1373,14 @@ def api_listar_agendamentos():
         traceback.print_exc()
         return jsonify({'error': str(e)}), 500
 
-# ========== API DA AGENDA - CRIAR AGENDAMENTO ==========
+# ==========================================
+# API DA AGENDA - CRIAR AGENDAMENTO
+# ==========================================
 
 @app.route('/api/agendamentos', methods=['POST'])
 @login_required
 def api_criar_agendamento():
-    """
-    API: Cria um novo agendamento na agenda.
-    """
+    """API: Cria um novo agendamento na agenda"""
     try:
         print(f"✅ API /api/agendamentos (POST) - Usuário: {current_user.nome}")
         dados = request.get_json()
@@ -1521,14 +1464,14 @@ def api_criar_agendamento():
         db.session.rollback()
         return jsonify({'error': str(e)}), 500
 
-# ========== API DA AGENDA - ATUALIZAR AGENDAMENTO ==========
+# ==========================================
+# API DA AGENDA - ATUALIZAR AGENDAMENTO
+# ==========================================
 
 @app.route('/api/agendamentos/<int:id>', methods=['PUT'])
 @login_required
 def api_atualizar_agendamento(id):
-    """
-    API: Atualiza um agendamento existente.
-    """
+    """API: Atualiza um agendamento existente"""
     try:
         print(f"✅ API /api/agendamentos/{id} (PUT) - Usuário: {current_user.nome}")
         
@@ -1622,14 +1565,14 @@ def api_atualizar_agendamento(id):
         db.session.rollback()
         return jsonify({'error': str(e)}), 500
 
-# ========== API DA AGENDA - DELETAR AGENDAMENTO ==========
+# ==========================================
+# API DA AGENDA - DELETAR AGENDAMENTO
+# ==========================================
 
 @app.route('/api/agendamentos/<int:id>', methods=['DELETE'])
 @login_required
 def api_deletar_agendamento(id):
-    """
-    API: Deleta um agendamento.
-    """
+    """API: Deleta um agendamento"""
     try:
         print(f"✅ API /api/agendamentos/{id} (DELETE) - Usuário: {current_user.nome}")
         
@@ -1653,14 +1596,14 @@ def api_deletar_agendamento(id):
         db.session.rollback()
         return jsonify({'error': str(e)}), 500
 
-# ========== API - LISTAR PACIENTES (PARA SELECT) ==========
+# ==========================================
+# API - LISTAR PACIENTES (PARA SELECT)
+# ==========================================
 
 @app.route('/api/pacientes', methods=['GET'])
 @login_required
 def api_listar_pacientes():
-    """
-    API: Lista todos os pacientes ativos do terapeuta.
-    """
+    """API: Lista todos os pacientes ativos do terapeuta"""
     try:
         print(f"✅ API /api/pacientes (GET) - Usuário: {current_user.nome}")
         
@@ -1684,11 +1627,14 @@ def api_listar_pacientes():
         traceback.print_exc()
         return jsonify({'error': str(e)}), 500
 
-# ========== ROTA DE DEBUG ==========
+# ==========================================
+# ROTA DE DEBUG
+# ==========================================
 
 @app.route('/debug/rotas')
 @login_required
 def debug_rotas():
+    """Lista todas as rotas registradas no sistema"""
     rotas = []
     for rule in app.url_map.iter_rules():
         rotas.append({
@@ -1698,7 +1644,9 @@ def debug_rotas():
         })
     return jsonify(rotas)
 
-# ========== INICIALIZAÇÃO ==========
+# ==========================================
+# INICIALIZAÇÃO DO BANCO DE DADOS
+# ==========================================
 
 with app.app_context():
     try:
@@ -1712,6 +1660,7 @@ with app.app_context():
         
         inspector = inspect(db.engine)
         
+        # Verifica coluna CRP em usuarios
         colunas_usuarios = [col['name'] for col in inspector.get_columns('usuarios')]
         if 'crp' not in colunas_usuarios:
             try:
@@ -1723,6 +1672,7 @@ with app.app_context():
                 print(f"⚠️ Erro ao adicionar coluna 'crp': {e}")
                 db.session.rollback()
         
+        # Verifica coluna terapeuta_id em pacientes
         colunas_pacientes = [col['name'] for col in inspector.get_columns('pacientes')]
         if 'terapeuta_id' not in colunas_pacientes:
             try:
@@ -1744,6 +1694,7 @@ with app.app_context():
                 print(f"⚠️ Erro ao adicionar coluna 'terapeuta_id' em pacientes: {e}")
                 db.session.rollback()
         
+        # Remove constraint NOT NULL de psicologo_id (se existir)
         if 'psicologo_id' in colunas_pacientes:
             try:
                 sql = 'ALTER TABLE pacientes ALTER COLUMN psicologo_id DROP NOT NULL;'
@@ -1754,6 +1705,7 @@ with app.app_context():
                 print(f"⚠️ Erro ao remover constraint: {e}")
                 db.session.rollback()
         
+        # Verifica coluna terapeuta_id em sessoes
         colunas_sessoes = [col['name'] for col in inspector.get_columns('sessoes')]
         if 'terapeuta_id' not in colunas_sessoes:
             try:
@@ -1775,6 +1727,7 @@ with app.app_context():
                 print(f"⚠️ Erro ao adicionar coluna 'terapeuta_id' em sessoes: {e}")
                 db.session.rollback()
         
+        # Verifica coluna data_atualizacao em sessoes
         if 'data_atualizacao' not in colunas_sessoes:
             try:
                 sql = 'ALTER TABLE sessoes ADD COLUMN data_atualizacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP;'
@@ -1785,6 +1738,7 @@ with app.app_context():
                 print(f"⚠️ Erro ao adicionar coluna 'data_atualizacao': {e}")
                 db.session.rollback()
         
+        # Verifica colunas adicionais em evolucoes
         colunas_evolucoes = [col['name'] for col in inspector.get_columns('evolucoes')]
         colunas_necessarias_evolucoes = {
             'humor': 'VARCHAR(20)',
@@ -1805,7 +1759,6 @@ with app.app_context():
         
         print("=" * 60)
         print("\n🔗 ROTAS REGISTRADAS:")
-        print("   - / (login)")
         print("   - /login")
         print("   - /registro")
         print("   - /logout")
@@ -1821,7 +1774,8 @@ with app.app_context():
         print("   - /api/agendamentos/<id> (PUT, DELETE) ✨ NOVO")
         print("   - /api/pacientes (GET) ✨ NOVO")
         print("=" * 60)
-        print("\n🎉 AGENDA IMPLEMENTADA COM SUCESSO!")
+        print("\n🎉 MINDCAREPRO - SISTEMA PARA TERAPEUTAS")
+        print("🎉 AGENDA IMPLEMENTADA COM SUCESSO!")
         print("=" * 60)
         
     except Exception as e:
@@ -1830,5 +1784,18 @@ with app.app_context():
         traceback.print_exc()
         print("=" * 60)
 
+# ==========================================
+# EXECUÇÃO DO SERVIDOR
+# ==========================================
+
 if __name__ == '__main__':
     app.run(debug=True)
+
+# ==========================================
+# FIM DO ARQUIVO app.py
+# MINDCAREPRO - SISTEMA DE GESTÃO PARA TERAPEUTAS
+# Versão: 2.0.0
+# Desenvolvido por: Flavio Ricci + IA Adapta ONE 26
+# Data: Janeiro 2026
+# ==========================================
+
