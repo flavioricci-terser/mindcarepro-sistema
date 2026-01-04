@@ -1,799 +1,87 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <!-- ==========================================
-         META TAGS
-         
-         Descrição:
-         Configurações básicas de charset, viewport e compatibilidade.
-         Essenciais para responsividade e renderização correta.
-         
-         Charset: UTF-8 (suporte a caracteres especiais)
-         Viewport: Configuração para responsividade mobile
-         X-UA-Compatible: Força modo mais recente do IE/Edge
-         ========================================== -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    
-    <!-- ==========================================
-         TÍTULO DA PÁGINA
-         
-         Descrição:
-         Título dinâmico que pode ser sobrescrito por páginas filhas.
-         Aparece na aba do navegador e nos resultados de busca.
-         
-         Padrão: "MindCarePro - Sistema de Gestão"
-         
-         Exemplo de sobrescrita em página filha:
-         {% block title %}Agenda - MindCarePro{% endblock %}
-         ========================================== -->
     <title>{% block title %}MindCarePro - Sistema de Gestão{% endblock %}</title>
     
-    <!-- ==========================================
-         FAVICON
-         
-         Descrição:
-         Ícone exibido na aba do navegador e favoritos.
-         Melhora identidade visual e profissionalismo.
-         
-         Formatos suportados: .ico, .png, .svg
-         Tamanhos recomendados: 16x16, 32x32, 48x48
-         
-         TODO: Criar e adicionar favicon personalizado
-         Localização sugerida: /static/img/favicon.ico
-         
-         Ferramentas para criar favicon:
-         - https://favicon.io/
-         - https://realfavicongenerator.net/
-         ========================================== -->
-    <!-- <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='img/favicon.ico') }}"> -->
-    
-    <!-- ==========================================
-         BOOTSTRAP 5.3.0 - CSS FRAMEWORK
-         
-         Descrição:
-         Framework CSS para componentes responsivos e estilização moderna.
-         Base visual de todo o sistema MindCarePro.
-         
-         CRÍTICO: Deve ser carregado ANTES de qualquer CSS customizado
-         para permitir sobrescrita de estilos.
-         
-         Componentes utilizados no MindCarePro:
-         - Grid System: Layout responsivo de 12 colunas
-         - Modals: Janelas modais para formulários
-         - Forms: Inputs, selects, textareas estilizados
-         - Buttons: Botões com variações de cores
-         - Alerts: Mensagens de feedback (sucesso, erro, aviso)
-         - Cards: Cartões de conteúdo
-         - Badges: Etiquetas de status
-         - Tables: Tabelas responsivas
-         - Navbar: Barra de navegação
-         - Dropdowns: Menus suspensos
-         
-         CDN: jsDelivr (CDN rápido e confiável)
-         Versão: 5.3.0 (última versão estável LTS)
-         Tamanho: ~200KB (minificado e comprimido)
-         
-         Documentação oficial: https://getbootstrap.com/docs/5.3/
-         
-         Alternativa (fallback local):
-         Se o CDN falhar, considere adicionar versão local em:
-         /static/css/bootstrap.min.css
-         ========================================== -->
+    <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     
-    <!-- ==========================================
-         FONT AWESOME 6.0.0 - BIBLIOTECA DE ÍCONES
-         
-         Descrição:
-         Biblioteca de ícones vetoriais escaláveis.
-         Usada extensivamente no menu lateral, botões e indicadores.
-         
-         Ícones utilizados no MindCarePro:
-         - fa-tachometer-alt: Dashboard
-         - fa-calendar-check: Agenda
-         - fa-users: Pacientes
-         - fa-calendar-alt: Sessões
-         - fa-chart-line: Evoluções
-         - fa-chart-bar: Relatórios
-         - fa-cog: Configurações
-         - fa-plus-circle: Adicionar
-         - fa-edit: Editar
-         - fa-trash: Deletar
-         
-         CDN: CloudFlare (CDN global)
-         Versão: 6.0.0
-         Tamanho: ~80KB (minificado)
-         
-         Documentação: https://fontawesome.com/icons
-         
-         Nota: Versão gratuita inclui ~2.000 ícones
-         ========================================== -->
+    <!-- Font Awesome Icons -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     
-    <!-- ==========================================
-         BOOTSTRAP ICONS 1.11.3 - ÍCONES ADICIONAIS
-         
-         Descrição:
-         Biblioteca oficial de ícones do Bootstrap.
-         Complementa Font Awesome com ícones específicos.
-         
-         Ícones utilizados no MindCarePro:
-         - bi-calendar3: Calendário
-         - bi-person: Pessoa
-         - bi-clock: Relógio
-         - bi-check-circle: Confirmação
-         - bi-x-circle: Cancelar
-         - bi-info-circle: Informação
-         - bi-exclamation-triangle: Aviso
-         
-         CDN: jsDelivr
-         Versão: 1.11.3 (última versão)
-         Tamanho: ~100KB (minificado)
-         
-         Documentação: https://icons.getbootstrap.com/
-         
-         Vantagem: Estilo consistente com Bootstrap
-         ========================================== -->
+    <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
     
-    <!-- ==========================================
-         CSS CUSTOMIZADO - MAIN.CSS
-         
-         Descrição:
-         Estilos personalizados do MindCarePro.
-         Sobrescreve e complementa estilos do Bootstrap.
-         
-         Localização: /static/css/main.css
-         
-         Conteúdo do arquivo:
-         1. Variáveis CSS (cores do tema)
-         2. Reset e normalização
-         3. Estilos do menu lateral (sidebar)
-         4. Estilos de cards e badges customizados
-         5. Animações e transições
-         6. Responsividade mobile
-         7. Estilos de formulários
-         8. Estilos de tabelas
-         9. Utilitários customizados
-         
-         Cores do tema:
-         - Primária: #007bff (azul)
-         - Secundária: #28a745 (verde)
-         - Sucesso: #28a745 (verde)
-         - Perigo: #dc3545 (vermelho)
-         - Aviso: #ffc107 (amarelo)
-         - Info: #17a2b8 (azul claro)
-         
-         Breakpoints responsivos:
-         - Mobile: < 768px
-         - Tablet: 768px - 1024px
-         - Desktop: > 1024px
-         
-         Manutenção:
-         Para modificar cores do tema, edite as variáveis CSS
-         no início do arquivo main.css
-         ========================================== -->
+    <!-- CSS Principal -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
     
-    <!-- ==========================================
-         BLOCO: EXTRA CSS
-         
-         Descrição:
-         Permite que páginas filhas adicionem CSS adicional.
-         Carregado APÓS todos os CSS base para permitir sobrescrita.
-         
-         Uso principal:
-         - agenda.html: FullCalendar CSS
-         - relatorios.html: CSS específico de gráficos
-         - Qualquer página que necessite estilos específicos
-         
-         Exemplo de uso em página filha:
-         {% block extra_css %}
-         <link href="https://cdn.../fullcalendar.min.css" rel="stylesheet">
-         <style>
-             .custom-class { color: red; }
-         </style>
-         {% endblock %}
-         
-         Boas práticas:
-         - Prefira arquivos externos a <style> inline
-         - Use classes específicas para evitar conflitos
-         - Documente estilos complexos
-         - Mantenha CSS organizado e legível
-         ========================================== -->
+    <!-- Bloco para CSS adicional -->
     {% block extra_css %}{% endblock %}
 </head>
 <body>
-    <!-- ==========================================
-         MENU LATERAL (SIDEBAR)
-         
-         Descrição:
-         Menu de navegação principal do sistema MindCarePro.
-         Fixo à esquerda em desktop, colapsável em mobile.
-         
-         Estrutura:
-         1. Header: Logo e nome do sistema
-         2. Nav: Links de navegação organizados por função
-         
-         Comportamento responsivo:
-         - Desktop (>1024px): Sempre visível, largura 250px
-         - Tablet (768-1024px): Colapsável, overlay
-         - Mobile (<768px): Colapsável, fullscreen
-         
-         Classes CSS (definidas em main.css):
-         - .sidebar: Container principal do menu
-         - .sidebar-header: Cabeçalho com logo
-         - .sidebar-menu: Container dos links de navegação
-         - .menu-item: Link individual de navegação
-         - .menu-item.active: Link da página atual (destaque)
-         - .menu-item:hover: Estado hover dos links
-         
-         Acessibilidade:
-         - Navegação por teclado (Tab, Enter)
-         - ARIA labels nos links
-         - Contraste adequado (WCAG AA)
-         - Foco visível nos elementos
-         
-         JavaScript relacionado:
-         - /static/js/menu-fix.js: Correção de navegação SPA
-         - Previne reload completo ao navegar
-         - Mantém estado do menu ativo
-         
-         Manutenção futura:
-         Para adicionar novo item de menu:
-         1. Adicionar link no HTML abaixo
-         2. Adicionar rota no app.py
-         3. Criar template da página
-         4. Testar navegação e estado ativo
-         ========================================== -->
+    <!-- Menu Lateral -->
     <div class="sidebar">
-        <!-- ==========================================
-             HEADER DO MENU
-             
-             Descrição:
-             Cabeçalho do menu com logo e nome do sistema.
-             Visível em todas as páginas.
-             
-             TODO: Adicionar logo/imagem do MindCarePro
-             Sugestão: Substituir <h2> por <img> + <h2>
-             ========================================== -->
         <div class="sidebar-header">
             <h2>MindCarePro</h2>
             <p>Sistema de Gestão</p>
         </div>
         
-        <!-- ==========================================
-             LINKS DE NAVEGAÇÃO
-             
-             Descrição:
-             Lista de links para todas as páginas do sistema.
-             Organizado por ordem de importância/uso.
-             
-             Lógica de destaque (classe 'active'):
-             - Usa request.endpoint do Flask
-             - Compara com nome da rota atual
-             - Adiciona classe 'active' se corresponder
-             
-             Atributo 'title':
-             - Tooltip ao passar mouse
-             - Melhora acessibilidade
-             - Descreve função da página
-             ========================================== -->
         <nav class="sidebar-menu">
-            <!-- Dashboard: Visão geral do sistema -->
-            <a href="{{ url_for('dashboard') }}" 
-               class="menu-item {% if request.endpoint == 'dashboard' %}active{% endif %}"
-               title="Visão geral do sistema com estatísticas e gráficos">
+            <a href="{{ url_for('dashboard') }}" class="menu-item {% if request.endpoint == 'dashboard' %}active{% endif %}">
                 <i class="fas fa-tachometer-alt"></i>
                 Dashboard
             </a>
             
-            <!-- Agenda: Gerenciamento de agendamentos -->
-            <a href="{{ url_for('agenda') }}" 
-               class="menu-item {% if request.endpoint == 'agenda' %}active{% endif %}"
-               title="Gerenciar agendamentos de sessões">
+            <a href="{{ url_for('agenda') }}" class="menu-item {% if request.endpoint == 'agenda' %}active{% endif %}">
                 <i class="fas fa-calendar-check"></i>
                 Agenda
             </a>
             
-            <!-- Pacientes: Cadastro e gestão de pacientes -->
-            <a href="{{ url_for('pacientes') }}" 
-               class="menu-item {% if request.endpoint in ['pacientes', 'novo_paciente', 'ver_paciente', 'editar_paciente'] %}active{% endif %}"
-               title="Gerenciar cadastro de pacientes">
+            <a href="{{ url_for('pacientes') }}" class="menu-item {% if request.endpoint in ['pacientes', 'novo_paciente', 'ver_paciente', 'editar_paciente'] %}active{% endif %}">
                 <i class="fas fa-users"></i>
                 Pacientes
             </a>
             
-            <!-- Sessões: Registro de sessões terapêuticas -->
-            <a href="{{ url_for('sessoes') }}" 
-               class="menu-item {% if request.endpoint in ['sessoes', 'nova_sessao', 'ver_sessao', 'editar_sessao'] %}active{% endif %}"
-               title="Gerenciar sessões terapêuticas">
+            <a href="{{ url_for('sessoes') }}" class="menu-item {% if request.endpoint in ['sessoes', 'nova_sessao', 'ver_sessao', 'editar_sessao'] %}active{% endif %}">
                 <i class="fas fa-calendar-alt"></i>
                 Sessões
             </a>
             
-            <!-- Evoluções: Acompanhamento de evolução dos pacientes -->
-            <a href="{{ url_for('evolucoes') }}" 
-               class="menu-item {% if request.endpoint in ['evolucoes', 'nova_evolucao', 'ver_evolucao', 'editar_evolucao'] %}active{% endif %}"
-               title="Acompanhar evolução dos pacientes">
+            <a href="{{ url_for('evolucoes') }}" class="menu-item {% if request.endpoint in ['evolucoes', 'nova_evolucao', 'ver_evolucao', 'editar_evolucao'] %}active{% endif %}">
                 <i class="fas fa-chart-line"></i>
                 Evoluções
             </a>
             
-            <!-- Relatórios: Relatórios financeiros e estatísticos -->
-            <a href="{{ url_for('relatorios') }}" 
-               class="menu-item {% if request.endpoint in ['relatorios', 'relatorio_financeiro'] %}active{% endif %}"
-               title="Visualizar relatórios financeiros e estatísticos">
+            <a href="{{ url_for('relatorios') }}" class="menu-item {% if request.endpoint in ['relatorios', 'relatorio_financeiro'] %}active{% endif %}">
                 <i class="fas fa-chart-bar"></i>
                 Relatórios
             </a>
             
-            <!-- Configurações: Configurações do sistema e perfil -->
-            <a href="{{ url_for('configuracoes') }}" 
-               class="menu-item {% if request.endpoint in ['configuracoes', 'configuracoes_perfil', 'configuracoes_senha'] %}active{% endif %}"
-               title="Configurações do sistema e perfil do usuário">
+            <a href="{{ url_for('configuracoes') }}" class="menu-item {% if request.endpoint in ['configuracoes', 'configuracoes_perfil', 'configuracoes_senha'] %}active{% endif %}">
                 <i class="fas fa-cog"></i>
                 Configurações
             </a>
         </nav>
     </div>
 
-    <!-- ==========================================
-         CONTEÚDO PRINCIPAL
-         
-         Descrição:
-         Área principal onde o conteúdo das páginas filhas é renderizado.
-         Ocupa todo o espaço disponível à direita do menu lateral.
-         
-         Layout responsivo:
-         - Desktop: margin-left: 250px (compensa largura do sidebar)
-         - Mobile: margin-left: 0 (sidebar colapsado)
-         
-         Padding interno:
-         - Desktop: 30px (espaçamento confortável)
-         - Mobile: 15px (otimizado para telas pequenas)
-         
-         Bloco Jinja2:
-         {% block content %}
-         Todo o conteúdo da página vai aqui
-         {% endblock %}
-         
-         Exemplo de uso em página filha:
-         {% extends "base.html" %}
-         {% block content %}
-         <h1>Título da Página</h1>
-         <p>Conteúdo...</p>
-         {% endblock %}
-         
-         Estilos CSS:
-         Definidos em main.css na classe .main-content
-         ========================================== -->
+    <!-- Conteúdo Principal -->
     <div class="main-content">
         {% block content %}{% endblock %}
     </div>
 
-    <!-- ==========================================
-         JAVASCRIPT - BIBLIOTECAS E SCRIPTS
-         
-         Descrição:
-         Carregamento de bibliotecas JavaScript essenciais.
-         Posicionado no final do <body> para melhor performance.
-         
-         ORDEM CRÍTICA DE CARREGAMENTO:
-         A ordem dos scripts é FUNDAMENTAL para evitar erros.
-         Cada script depende dos anteriores.
-         
-         Sequência:
-         1. Bootstrap Bundle (base para componentes)
-         2. Chart.js (gráficos)
-         3. menu-fix.js (navegação customizada)
-         4. Scripts específicos das páginas (extra_js)
-         
-         Performance:
-         Scripts no final do body permitem que o HTML
-         seja renderizado antes, melhorando tempo de carregamento.
-         
-         Async/Defer:
-         Não usamos async/defer aqui devido às dependências
-         entre scripts. A ordem síncrona é necessária.
-         ========================================== -->
-    
-    <!-- ==========================================
-         BOOTSTRAP 5.3.0 - JAVASCRIPT BUNDLE
-         
-         Descrição:
-         JavaScript do Bootstrap + Popper.js integrados.
-         Fornece funcionalidade para todos os componentes interativos.
-         
-         CRÍTICO: Este script DEVE ser carregado ANTES de qualquer
-         código que use componentes Bootstrap (como modais).
-         
-         Componentes JavaScript incluídos:
-         - Modal: Janelas modais (usado em formulários)
-         - Dropdown: Menus suspensos
-         - Tooltip: Dicas de ferramentas
-         - Popover: Popovers informativos
-         - Alert: Alertas dismissíveis
-         - Collapse: Elementos colapsáveis
-         - Carousel: Carrosséis de imagens
-         - Offcanvas: Painéis laterais
-         - Scrollspy: Navegação por scroll
-         - Toast: Notificações temporárias
-         
-         Popper.js:
-         Incluído no bundle para posicionamento inteligente
-         de tooltips, popovers e dropdowns.
-         
-         CDN: jsDelivr
-         Versão: 5.3.0
-         Tamanho: ~80KB (minificado e comprimido)
-         
-         Documentação: https://getbootstrap.com/docs/5.3/getting-started/javascript/
-         
-         Variável global criada:
-         - window.bootstrap: Objeto com todos os componentes
-         
-         Exemplo de uso:
-         const modal = new bootstrap.Modal(document.getElementById('myModal'));
-         modal.show();
-         
-         IMPORTANTE PARA AGENDA:
-         O arquivo agenda.js depende desta variável 'bootstrap'
-         para criar e manipular modais. Se este script não
-         carregar, o erro "bootstrap is not defined" ocorrerá.
-         ========================================== -->
+    <!-- Bootstrap JS Bundle -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     
-    <!-- ==========================================
-         CHART.JS 4.4.0 - BIBLIOTECA DE GRÁFICOS
-         
-         Descrição:
-         Biblioteca JavaScript para criação de gráficos interativos.
-         Usada principalmente no Dashboard e Relatórios.
-         
-         Tipos de gráficos disponíveis:
-         - Line: Gráficos de linha (evolução temporal)
-         - Bar: Gráficos de barras (comparações)
-         - Pie: Gráficos de pizza (proporções)
-         - Doughnut: Gráficos de rosca (proporções com centro vazio)
-         - Radar: Gráficos de radar (múltiplas dimensões)
-         - Polar Area: Área polar (proporções radiais)
-         - Bubble: Gráficos de bolhas (3 dimensões)
-         - Scatter: Gráficos de dispersão (correlações)
-         
-         Recursos:
-         - Responsivo (adapta ao tamanho do container)
-         - Animado (transições suaves)
-         - Interativo (tooltips, hover, click)
-         - Acessível (ARIA labels)
-         - Customizável (cores, fontes, estilos)
-         
-         CDN: jsDelivr
-         Versão: 4.4.0 (última versão estável)
-         Tamanho: ~200KB (minificado)
-         
-         Documentação: https://www.chartjs.org/docs/latest/
-         
-         Uso no MindCarePro:
-         - Dashboard: Gráfico de sessões por mês
-         - Dashboard: Gráfico de receita mensal
-         - Relatórios: Diversos gráficos estatísticos
-         
-         Exemplo de uso:
-         const ctx = document.getElementById('myChart');
-         new Chart(ctx, {
-             type: 'bar',
-             data: { ... },
-             options: { ... }
-         });
-         
-         Performance:
-         Chart.js usa Canvas API para renderização,
-         garantindo boa performance mesmo com muitos dados.
-         ========================================== -->
+    <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     
-    <!-- ==========================================
-         MENU-FIX.JS - CORREÇÃO DE NAVEGAÇÃO SPA
-         
-         Descrição:
-         Script customizado para melhorar comportamento do menu.
-         Implementa navegação estilo SPA (Single Page Application)
-         sem recarregar a página completamente.
-         
-         Funcionalidades:
-         1. Intercepta cliques nos links do menu
-         2. Usa History API para navegação sem reload
-         3. Mantém estado do menu ativo correto
-         4. Melhora performance da navegação
-         5. Preserva scroll position
-         6. Gerencia histórico do navegador
-         
-         Benefícios:
-         - Navegação mais rápida (sem reload completo)
-         - Melhor experiência do usuário
-         - Menor consumo de banda
-         - Transições mais suaves
-         
-         Localização: /static/js/menu-fix.js
-         
-         Compatibilidade:
-         - Chrome 90+
-         - Firefox 88+
-         - Safari 14+
-         - Edge 90+
-         
-         Fallback:
-         Se JavaScript estiver desabilitado, os links
-         funcionam normalmente com reload completo.
-         
-         Manutenção:
-         Para modificar comportamento de navegação,
-         edite o arquivo /static/js/menu-fix.js
-         
-         Eventos disparados:
-         - menuNavigate: Quando navegação é iniciada
-         - menuNavigateComplete: Quando navegação termina
-         ========================================== -->
+    <!-- Menu Fix -->
     <script src="{{ url_for('static', filename='js/menu-fix.js') }}"></script>
     
-    <!-- ==========================================
-         BLOCO: EXTRA JS
-         
-         Descrição:
-         Permite que páginas filhas adicionem JavaScript adicional.
-         Carregado APÓS todas as bibliotecas base.
-         
-         IMPORTANTE:
-         Scripts neste bloco têm acesso garantido a:
-         - window.bootstrap (componentes Bootstrap)
-         - window.Chart (Chart.js)
-         - jQuery (se carregado)
-         - Todas as funções de menu-fix.js
-         
-         Uso principal:
-         - agenda.html: FullCalendar JS + agenda.js
-         - dashboard.html: Scripts de gráficos
-         - Qualquer página com lógica JavaScript específica
-         
-         Exemplo de uso em página filha:
-         {% block extra_js %}
-         <script src="https://cdn.../fullcalendar.min.js"></script>
-         <script src="{{ url_for('static', filename='js/agenda.js') }}"></script>
-         <script>
-             // Código JavaScript inline
-             console.log('Página carregada');
-         </script>
-         {% endblock %}
-         
-         Boas práticas:
-         1. Prefira arquivos externos a código inline
-         2. Use 'use strict'; no início dos scripts
-         3. Encapsule código em IIFEs para evitar poluição global
-         4. Documente funções complexas
-         5. Trate erros adequadamente (try/catch)
-         6. Use console.log para debug (remover em produção)
-         
-         Ordem de execução:
-         Scripts são executados na ordem em que aparecem
-         dentro deste bloco. Respeite dependências.
-         
-         Performance:
-         - Minimize número de arquivos externos
-         - Considere concatenar/minificar em produção
-         - Use defer/async quando possível
-         - Evite código síncrono pesado
-         
-         Debugging:
-         Para debug, abra DevTools (F12) e vá para:
-         - Console: Ver logs e erros
-         - Sources: Debugar código
-         - Network: Ver carregamento de scripts
-         ========================================== -->
+    <!-- Bloco para JavaScript adicional -->
     {% block extra_js %}{% endblock %}
 </body>
 </html>
-
-<!-- ==========================================
-     FIM DO ARQUIVO base.html
-     
-     INFORMAÇÕES DO ARQUIVO:
-     Nome: base.html
-     Localização: /templates/base.html
-     Tipo: Template Jinja2 (Flask)
-     Função: Template base para todas as páginas do sistema
-     
-     DESENVOLVIDO POR:
-     Desenvolvedor: Flavio Ricci
-     Assistente IA: Adapta ONE 26
-     Data inicial: Janeiro 2026
-     
-     VERSÃO ATUAL:
-     Versão: 2.0.1
-     Data: 04/01/2026 - 23:00
-     Status: Produção
-     
-     CHANGELOG (HISTÓRICO DE ALTERAÇÕES):
-     
-     v2.0.1 - 04/01/2026 23:00
-     - [CORREÇÃO CRÍTICA] Removida duplicação do bloco extra_css
-     - [CORREÇÃO] Removido bloco extra_scripts redundante
-     - [MELHORIA] Documentação massivamente expandida
-     - [MELHORIA] Adicionados comentários detalhados em TODOS os elementos
-     - [MELHORIA] Explicações técnicas de cada biblioteca
-     - [MELHORIA] Guias de troubleshooting inline
-     - [MELHORIA] Exemplos de uso em todos os blocos
-     - [OTIMIZAÇÃO] Movido Chart.js para final do body (performance)
-     
-     v2.0.0 - 04/01/2026 20:00
-     - [NOVO] Adicionado Bootstrap CSS e JS (correção crítica)
-     - [NOVO] Documentação completa adicionada
-     - [NOVO] Reorganizada ordem de carregamento de scripts
-     - [NOVO] Adicionados títulos (tooltips) nos links do menu
-     - [MELHORIA] Melhorada acessibilidade com ARIA labels
-     
-     v1.0.0 - Janeiro 2026
-     - Versão inicial do template base
-     - Menu lateral implementado
-     - Estrutura básica de CSS e JS
-     
-     ESTRUTURA DE DEPENDÊNCIAS:
-     
-     CSS (ordem de carregamento):
-     1. Bootstrap CSS 5.3.0 (framework base)
-     2. Font Awesome 6.0.0 (ícones principais)
-     3. Bootstrap Icons 1.11.3 (ícones complementares)
-     4. main.css (estilos customizados)
-     5. CSS específico da página (via extra_css)
-     
-     JavaScript (ordem de carregamento):
-     1. Bootstrap Bundle 5.3.0 (DEVE vir primeiro!)
-     2. Chart.js 4.4.0 (gráficos)
-     3. menu-fix.js (navegação SPA)
-     4. Scripts da página (via extra_js)
-     
-     BLOCOS JINJA2 DISPONÍVEIS:
-     
-     No <head>:
-     - {% block title %}: Título da página
-     - {% block extra_css %}: CSS adicional
-     
-     No <body>:
-     - {% block content %}: Conteúdo principal
-     - {% block extra_js %}: JavaScript adicional
-     
-     PÁGINAS QUE HERDAM ESTE TEMPLATE:
-     - dashboard.html: Página inicial com estatísticas
-     - agenda.html: Calendário de agendamentos
-     - pacientes.html: Lista de pacientes
-     - sessoes.html: Registro de sessões
-     - evolucoes.html: Acompanhamento de evolução
-     - relatorios.html: Relatórios financeiros
-     - configuracoes.html: Configurações do sistema
-     - login.html: Página de login (não herda, template próprio)
-     
-     TROUBLESHOOTING (RESOLUÇÃO DE PROBLEMAS):
-     
-     Problema: Modais não abrem
-     Solução: Verificar se Bootstrap JS está carregando
-     Debug: Abrir console (F12) e verificar erro "bootstrap is not defined"
-     
-     Problema: Ícones não aparecem
-     Solução: Verificar se Font Awesome e Bootstrap Icons estão carregando
-     Debug: Verificar Network tab no DevTools
-     
-     Problema: Layout quebrado
-     Solução: Verificar ordem de carregamento do CSS
-     Debug: Inspecionar elemento e verificar estilos aplicados
-     
-     Problema: Gráficos não aparecem
-     Solução: Verificar se Chart.js está carregando
-     Debug: Console deve mostrar erro se Chart não estiver definido
-     
-     Problema: Menu não funciona
-     Solução: Verificar se menu-fix.js está carregando
-     Debug: Verificar console para erros JavaScript
-     
-     Problema: Erro 500 ao carregar página
-     Solução: Verificar logs do servidor Flask
-     Debug: Procurar por TemplateAssertionError ou TemplateSyntaxError
-     
-     MANUTENÇÃO FUTURA:
-     
-     Para atualizar Bootstrap:
-     1. Mudar versão em 2 lugares: CSS (linha 63) e JS (linha 354)
-     2. Testar todos os componentes (modais, dropdowns, etc)
-     3. Verificar breaking changes na documentação oficial
-     4. Atualizar número de versão neste changelog
-     
-     Para adicionar nova biblioteca:
-     1. Adicionar link/script ANTES dos blocos extra_*
-     2. Documentar uso e dependências
-     3. Atualizar seção "Estrutura de Dependências"
-     4. Testar compatibilidade com bibliotecas existentes
-     
-     Para modificar menu:
-     1. Editar seção <nav class="sidebar-menu"> (linha 180)
-     2. Adicionar rota correspondente no app.py
-     3. Criar template da nova página
-     4. Testar navegação e estado ativo
-     5. Atualizar documentação
-     
-     Para adicionar meta tags globais:
-     1. Adicionar no <head> após meta tags existentes
-     2. Documentar propósito da meta tag
-     3. Verificar se não conflita com meta tags de páginas filhas
-     
-     COMPATIBILIDADE:
-     
-     Navegadores suportados:
-     - Google Chrome 90+ ✅
-     - Mozilla Firefox 88+ ✅
-     - Apple Safari 14+ ✅
-     - Microsoft Edge 90+ ✅
-     - Opera 76+ ✅
-     
-     Navegadores NÃO suportados:
-     - Internet Explorer (qualquer versão) ❌
-     - Navegadores muito antigos (>5 anos) ❌
-     
-     Dispositivos:
-     - Desktop (1920x1080+) ✅ Otimizado
-     - Laptop (1366x768+) ✅ Otimizado
-     - Tablet (768x1024+) ✅ Responsivo
-     - Mobile (375x667+) ✅ Responsivo
-     
-     Acessibilidade:
-     - WCAG 2.1 Level AA ✅
-     - Navegação por teclado ✅
-     - Leitores de tela compatíveis ✅
-     - Contraste adequado ✅
-     - ARIA labels implementados ✅
-     
-     PERFORMANCE:
-     
-     Métricas alvo (Google Lighthouse):
-     - Performance: >90
-     - Accessibility: >95
-     - Best Practices: >90
-     - SEO: >80
-     
-     Otimizações implementadas:
-     - CSS e JS minificados via CDN
-     - Scripts no final do body
-     - Lazy loading de imagens (quando aplicável)
-     - Cache de recursos estáticos
-     - Compressão gzip no servidor
-     
-     SEGURANÇA:
-     
-     Medidas implementadas:
-     - HTTPS obrigatório (via Render)
-     - CSP headers (Content Security Policy)
-     - XSS protection (Flask escape automático)
-     - CSRF tokens em formulários
-     - Sanitização de inputs
-     
-     Recomendações:
-     - Manter bibliotecas atualizadas
-     - Monitorar vulnerabilidades conhecidas
-     - Usar SRI (Subresource Integrity) em produção
-     - Implementar rate limiting
-     - Logs de segurança
-     
-     CONTATO E SUPORTE:
-     
-     Para dúvidas ou problemas:
-     - Desenvolvedor: Flavio Ricci
-     - Email: [seu-email]
-     - GitHub: [seu-github]
-     - Documentação: [link-documentacao]
-     
-     LICENÇA:
-     Proprietário - Flavio Ricci
-     Todos os direitos reservados © 2026
-     Uso restrito ao sistema MindCarePro
-     
-     ========================================== -->
