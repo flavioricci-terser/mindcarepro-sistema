@@ -279,6 +279,156 @@ def obter_estatisticas_gerais(data_inicio, data_fim):
 # ==========================================
 
 # ==========================================
+# FIM DO BLOCO 1
+# ==========================================
+
+# ==========================================
+# ROTAS DE AUTENTICAÇÃO
+# ==========================================
+
+@app.route('/')
+def index():
+    """Rota raiz - redireciona para login ou dashboard"""
+    if current_user.is_authenticated:
+        return redirect(url_for('dashboard'))
+    return redirect(url_for('login'))
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    """Rota de login do sistema"""
+    if request.method == 'POST':
+        if processar_login():
+            return redirect(url_for('dashboard'))
+        return render_template('login.html')
+    
+    if current_user.is_authenticated:
+        return redirect(url_for('dashboard'))
+    return render_template('login.html')
+
+@app.route('/registro', methods=['GET', 'POST'])
+def registro():
+    """Rota de registro de novo terapeuta"""
+    if current_user.is_authenticated:
+        return redirect(url_for('dashboard'))
+    
+    if request.method == 'POST':
+        try:
+            nome = request.form.get('nome', '').strip()
+            email = request.form.get('email', '').strip()
+            senha = request.form.get('senha', '')
+            confirmar_senha = request.form.get('confirmar_senha', '')
+            crp = request.form.get('crp', '').strip()
+            
+            if not nome:
+                flash('Nome é obrigatório', 'error')
+                return render_template('registro.html')
+            
+            if not email:
+                flash('Email é obrigatório', 'error')
+                return render_template('registro.html')
+            
+            if not senha:
+                flash('Senha é obrigatória', 'error')
+                return render_template('registro.html')
+            
+            if len(senha) < 6:
+                flash('A senha deve ter no mínimo 6 caracteres', 'error')
+                return render_template('registro.html')
+            
+            if senha != confirmar_senha:
+                flash('As senhas não coincidem', 'error')
+                return render_template('registro.html')
+            
+            usuario_existente = Usuario.query.filter_by(email=email).first()
+            if usuario_existente:
+                flash('Este email já está cadastrado', 'error')
+                return render_template('registro.html')
+            
+            novo_usuario = Usuario(
+                nome=nome,
+                email=email,
+                crp=crp if crp else None
+            )
+            novo_usuario.set_password(senha)
+            
+            db.session.add(novo_usuario)
+            db.session.commit()
+            
+            print(f"✅ Novo usuário criado: {nome} ({email})")
+            flash('Conta criada com sucesso! Faça login para continuar.', 'success')
+            return redirect(url_for('login'))
+            
+        except Exception as e:
+            print(f"❌ Erro ao criar usuário: {e}")
+            traceback.print_exc()
+            flash('Erro ao criar conta. Tente novamente.', 'error')
+            db.session.rollback()
+            return render_template('registro.html')
+    
+    return render_template('registro.html')
+
+@app.route('/logout')
+@login_required
+def logout():
+    """Rota de logout"""
+    logout_user()
+    return redirect(url_for('login'))
+
+@app.route('/dashboard')
+@login_required
+def dashboard():
+    """Dashboard principal com estatísticas"""
+    print("✅ Rota /dashboard acessada")
+    total_pacientes = 0
+    sessoes_hoje = 0
+    proximas_sessoes = []
+    sessoes_mes = 0
+    receita_mes = 0
+    
+    try:
+        total_pacientes = Paciente.query.filter_by(terapeuta_id=current_user.id, ativo=True).count()
+        hoje = date.today()
+        sessoes_hoje = Sessao.query.filter_by(terapeuta_id=current_user.id).filter(
+            db.func.date(Sessao.data_sessao) == hoje
+        ).count()
+        
+        proximas_sessoes = Sessao.query.filter_by(
+            terapeuta_id=current_user.id,
+            status='agendada'
+        ).filter(
+            Sessao.data_sessao >= datetime.now(),
+            Sessao.data_sessao <= datetime.now() + timedelta(days=7)
+        ).order_by(Sessao.data_sessao).limit(5).all()
+        
+        primeiro_dia_mes = hoje.replace(day=1)
+        sessoes_mes = Sessao.query.filter_by(terapeuta_id=current_user.id).filter(
+            db.func.date(Sessao.data_sessao) >= primeiro_dia_mes,
+            Sessao.status.in_(['realizada', 'agendada'])
+        ).count()
+        
+        receita_query = db.session.query(db.func.sum(Sessao.valor)).filter_by(
+            terapeuta_id=current_user.id,
+            status='realizada'
+        ).filter(
+            db.func.date(Sessao.data_sessao) >= primeiro_dia_mes
+        ).scalar()
+        receita_mes = float(receita_query) if receita_query else 0
+    except Exception as e:
+        print(f"❌ Erro ao buscar estatísticas do dashboard: {e}")
+        traceback.print_exc()
+    
+    return render_template('dashboard.html', 
+                         total_pacientes=total_pacientes,
+                         sessoes_hoje=sessoes_hoje,
+                         proximas_sessoes=proximas_sessoes,
+                         sessoes_mes=sessoes_mes,
+                         receita_mes=receita_mes)
+
+# ==========================================
+# ROTAS DE PACIENTES
+# ==========================================
+
+# ==========================================
 # ROTAS DE PACIENTES
 # ==========================================
 
@@ -1798,4 +1948,5 @@ if __name__ == '__main__':
 # Desenvolvido por: Flavio Ricci + IA Adapta ONE 26
 # Data: Janeiro 2026
 # ==========================================
+
 
