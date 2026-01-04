@@ -256,19 +256,7 @@ def obter_estatisticas_gerais(data_inicio, data_fim):
         traceback.print_exc()
         return {}
 
-
 # ========== ROTAS DE AUTENTICAÇÃO ==========
-
-@app.route('/', methods=['GET', 'POST'])
-def index():
-    if request.method == 'POST':
-        if processar_login():
-            return redirect(url_for('dashboard'))
-        return render_template('login.html')
-    
-    if current_user.is_authenticated:
-        return redirect(url_for('dashboard'))
-    return render_template('login.html')
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -280,8 +268,7 @@ def login():
     if current_user.is_authenticated:
         return redirect(url_for('dashboard'))
     return render_template('login.html')
-
-@app.route('/registro', methods=['GET', 'POST'])
+    @app.route('/registro', methods=['GET', 'POST'])
 def registro():
     if current_user.is_authenticated:
         return redirect(url_for('dashboard'))
@@ -861,8 +848,8 @@ def reagendar_sessao(id):
     except Exception as e:
         return jsonify({'success': False, 'message': 'Erro ao reagendar sessão'})
 
-# ========== ROTAS DE PRONTUÁRIO/EVOLUÇÃO ==========
 
+        # ========== ROTAS DE PRONTUÁRIO/EVOLUÇÃO ==========
 @app.route('/prontuario/<int:paciente_id>', methods=['GET', 'POST'])
 @login_required
 def prontuario(paciente_id):
@@ -1088,835 +1075,760 @@ def excluir_evolucao(id):
     except Exception as e:
         return jsonify({'success': False, 'message': 'Erro ao excluir evolução'})
 
+# ========== ROTAS DE CONFIGURAÇÕES ==========
 
-
-# ========== ROTAS DE AUTENTICAÇÃO ==========
-
-@app.route('/', methods=['GET', 'POST'])
-def index():
-    if request.method == 'POST':
-        if processar_login():
-            return redirect(url_for('dashboard'))
-        return render_template('login.html')
-    
-    if current_user.is_authenticated:
-        return redirect(url_for('dashboard'))
-    return render_template('login.html')
-
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    if request.method == 'POST':
-        if processar_login():
-            return redirect(url_for('dashboard'))
-        return render_template('login.html')
-    
-    if current_user.is_authenticated:
-        return redirect(url_for('dashboard'))
-    return render_template('login.html')
-
-@app.route('/registro', methods=['GET', 'POST'])
-def registro():
-    if current_user.is_authenticated:
-        return redirect(url_for('dashboard'))
-    
-    if request.method == 'POST':
-        try:
-            nome = request.form.get('nome', '').strip()
-            email = request.form.get('email', '').strip()
-            senha = request.form.get('senha', '')
-            confirmar_senha = request.form.get('confirmar_senha', '')
-            crp = request.form.get('crp', '').strip()
-            
-            if not nome:
-                flash('Nome é obrigatório', 'error')
-                return render_template('registro.html')
-            
-            if not email:
-                flash('Email é obrigatório', 'error')
-                return render_template('registro.html')
-            
-            if not senha:
-                flash('Senha é obrigatória', 'error')
-                return render_template('registro.html')
-            
-            if len(senha) < 6:
-                flash('A senha deve ter no mínimo 6 caracteres', 'error')
-                return render_template('registro.html')
-            
-            if senha != confirmar_senha:
-                flash('As senhas não coincidem', 'error')
-                return render_template('registro.html')
-            
-            usuario_existente = Usuario.query.filter_by(email=email).first()
-            if usuario_existente:
-                flash('Este email já está cadastrado', 'error')
-                return render_template('registro.html')
-            
-            novo_usuario = Usuario(
-                nome=nome,
-                email=email,
-                crp=crp if crp else None
-            )
-            novo_usuario.set_password(senha)
-            
-            db.session.add(novo_usuario)
-            db.session.commit()
-            
-            print(f"✅ Novo usuário criado: {nome} ({email})")
-            flash('Conta criada com sucesso! Faça login para continuar.', 'success')
-            return redirect(url_for('login'))
-            
-        except Exception as e:
-            print(f"❌ Erro ao criar usuário: {e}")
-            traceback.print_exc()
-            flash('Erro ao criar conta. Tente novamente.', 'error')
-            db.session.rollback()
-            return render_template('registro.html')
-    
-    return render_template('registro.html')
-
-@app.route('/logout')
+@app.route('/configuracoes')
 @login_required
-def logout():
-    logout_user()
-    return redirect(url_for('login'))
-
-@app.route('/dashboard')
-@login_required
-def dashboard():
-    print("✅ Rota /dashboard acessada")
-    total_pacientes = 0
-    sessoes_hoje = 0
-    proximas_sessoes = []
-    sessoes_mes = 0
-    receita_mes = 0
-    
+def configuracoes():
+    print("✅ Rota /configuracoes acessada")
     try:
-        total_pacientes = Paciente.query.filter_by(terapeuta_id=current_user.id, ativo=True).count()
+        config = Configuracao.query.filter_by(usuario_id=current_user.id).first()
+        return render_template('configuracoes.html', config=config, usuario=current_user, today=date.today())
+    except Exception as e:
+        print(f"❌ Erro ao carregar configurações: {e}")
+        traceback.print_exc()
+        return render_template('configuracoes.html', config=None, usuario=current_user, today=date.today())
+
+@app.route('/configuracoes/salvar', methods=['POST'])
+@login_required
+def salvar_configuracoes():
+    try:
+        config = Configuracao.query.filter_by(usuario_id=current_user.id).first()
+        
+        if not config:
+            config = Configuracao(usuario_id=current_user.id)
+            db.session.add(config)
+        
+        config.nome_completo = request.form.get('nome_completo')
+        config.crp = request.form.get('crp')
+        config.especialidade = request.form.get('especialidade')
+        config.telefone_profissional = request.form.get('telefone_profissional')
+        config.email_profissional = request.form.get('email_profissional')
+        config.endereco = request.form.get('endereco')
+        config.cidade = request.form.get('cidade')
+        config.estado = request.form.get('estado')
+        config.cep = request.form.get('cep')
+        
+        duracao = request.form.get('duracao_sessao')
+        if duracao:
+            config.duracao_sessao = int(duracao)
+        
+        valor = request.form.get('valor_sessao')
+        if valor:
+            try:
+                config.valor_sessao = Decimal(valor.replace(',', '.'))
+            except:
+                pass
+        
+        horario_inicio = request.form.get('horario_inicio')
+        horario_fim = request.form.get('horario_fim')
+        if horario_inicio:
+            try:
+                config.horario_inicio = datetime.strptime(horario_inicio, '%H:%M').time()
+            except:
+                pass
+        if horario_fim:
+            try:
+                config.horario_fim = datetime.strptime(horario_fim, '%H:%M').time()
+            except:
+                pass
+        
+        dias = request.form.getlist('dias_atendimento')
+        config.dias_atendimento = ','.join(dias) if dias else None
+        config.lembrete_paciente = 'lembrete_paciente' in request.form
+        
+        antecedencia = request.form.get('antecedencia_lembrete')
+        if antecedencia:
+            config.antecedencia_lembrete = int(antecedencia)
+        
+        senha_atual = request.form.get('senha_atual')
+        nova_senha = request.form.get('nova_senha')
+        confirmar_senha = request.form.get('confirmar_senha')
+        
+        if senha_atual and nova_senha:
+            if current_user.check_password(senha_atual):
+                if nova_senha == confirmar_senha:
+                    if len(nova_senha) >= 6:
+                        current_user.set_password(nova_senha)
+                        flash('Senha alterada com sucesso!', 'success')
+                    else:
+                        flash('A nova senha deve ter pelo menos 6 caracteres!', 'warning')
+                else:
+                    flash('As senhas não coincidem!', 'danger')
+                    return redirect(url_for('configuracoes'))
+            else:
+                flash('Senha atual incorreta!', 'danger')
+                return redirect(url_for('configuracoes'))
+        
+        db.session.commit()
+        flash('Configurações salvas com sucesso!', 'success')
+        return redirect(url_for('configuracoes'))
+    except Exception as e:
+        print(f"❌ Erro ao salvar configurações: {e}")
+        traceback.print_exc()
+        flash('Erro ao salvar configurações', 'error')
+        db.session.rollback()
+        return redirect(url_for('configuracoes'))
+
+# ========== ROTAS DE RELATÓRIOS ==========
+
+@app.route('/relatorios')
+@login_required
+def relatorios():
+    print("✅ Rota /relatorios acessada")
+    try:
+        periodo = request.args.get('periodo', '12')
         hoje = date.today()
-        sessoes_hoje = Sessao.query.filter_by(terapeuta_id=current_user.id).filter(
-            db.func.date(Sessao.data_sessao) == hoje
-        ).count()
         
-        proximas_sessoes = Sessao.query.filter_by(
-            terapeuta_id=current_user.id,
-            status='agendada'
-        ).filter(
-            Sessao.data_sessao >= datetime.now(),
-            Sessao.data_sessao <= datetime.now() + timedelta(days=7)
-        ).order_by(Sessao.data_sessao).limit(5).all()
-        
-        primeiro_dia_mes = hoje.replace(day=1)
-        sessoes_mes = Sessao.query.filter_by(terapeuta_id=current_user.id).filter(
-            db.func.date(Sessao.data_sessao) >= primeiro_dia_mes,
-            Sessao.status.in_(['realizada', 'agendada'])
-        ).count()
-        
-        receita_query = db.session.query(db.func.sum(Sessao.valor)).filter_by(
-            terapeuta_id=current_user.id,
-            status='realizada'
-        ).filter(
-            db.func.date(Sessao.data_sessao) >= primeiro_dia_mes
-        ).scalar()
-        receita_mes = float(receita_query) if receita_query else 0
-    except Exception as e:
-        print(f"❌ Erro ao buscar estatísticas do dashboard: {e}")
-        traceback.print_exc()
-    
-    return render_template('dashboard.html', 
-                         total_pacientes=total_pacientes,
-                         sessoes_hoje=sessoes_hoje,
-                         proximas_sessoes=proximas_sessoes,
-                         sessoes_mes=sessoes_mes,
-                         receita_mes=receita_mes)
-
-# ========== ROTAS DE PACIENTES ==========
-
-@app.route('/pacientes')
-@login_required
-def pacientes():
-    print("✅ Rota /pacientes acessada")
-    try:
-        search = request.args.get('search', '')
-        
-        if search:
-            pacientes_lista = Paciente.query.filter_by(terapeuta_id=current_user.id).filter(
-                db.or_(
-                    Paciente.nome.ilike(f'%{search}%'),
-                    Paciente.email.ilike(f'%{search}%'),
-                    Paciente.telefone.ilike(f'%{search}%')
-                )
-            ).order_by(Paciente.nome).all()
+        if periodo == '1':
+            data_inicio = hoje.replace(day=1)
+        elif periodo == '3':
+            data_inicio = hoje - timedelta(days=90)
+        elif periodo == '6':
+            data_inicio = hoje - timedelta(days=180)
         else:
-            pacientes_lista = Paciente.query.filter_by(terapeuta_id=current_user.id).order_by(Paciente.nome).all()
+            data_inicio = hoje - timedelta(days=365)
         
-        total_pacientes = Paciente.query.filter_by(terapeuta_id=current_user.id).count()
-        pacientes_ativos = Paciente.query.filter_by(terapeuta_id=current_user.id, ativo=True).count()
-        primeiro_dia_mes = date.today().replace(day=1)
-        novos_mes = Paciente.query.filter_by(terapeuta_id=current_user.id).filter(
-            Paciente.data_cadastro >= primeiro_dia_mes
-        ).count()
+        stats = obter_estatisticas_gerais(data_inicio, hoje)
         
-        try:
-            sessoes_mes = Sessao.query.filter_by(terapeuta_id=current_user.id).filter(
-                db.func.extract('month', Sessao.data_sessao) == date.today().month,
-                db.func.extract('year', Sessao.data_sessao) == date.today().year
+        return render_template('relatorios.html', 
+                             stats=stats,
+                             periodo=periodo,
+                             data_inicio=data_inicio.strftime('%Y-%m-%d'),
+                             data_fim=hoje.strftime('%Y-%m-%d'))
+    except Exception as e:
+        print(f"❌ Erro na página de relatórios: {e}")
+        traceback.print_exc()
+        flash('Erro ao carregar relatórios', 'error')
+        return redirect(url_for('dashboard'))
+
+# ========== APIs PARA GRÁFICOS ==========
+
+@app.route('/api/relatorios/receita-mensal')
+@login_required
+def api_receita_mensal():
+    try:
+        periodo = int(request.args.get('periodo', 12))
+        hoje = date.today()
+        meses = []
+        receitas = []
+        
+        for i in range(periodo):
+            mes_atual = hoje.replace(day=1) - timedelta(days=i*30)
+            primeiro_dia = mes_atual.replace(day=1)
+            
+            if mes_atual.month == 12:
+                ultimo_dia = mes_atual.replace(year=mes_atual.year+1, month=1, day=1) - timedelta(days=1)
+            else:
+                ultimo_dia = mes_atual.replace(month=mes_atual.month+1, day=1) - timedelta(days=1)
+            
+            receita = db.session.query(func.sum(Sessao.valor)).filter(
+                Sessao.terapeuta_id == current_user.id,
+                Sessao.status == 'realizada',
+                func.date(Sessao.data_sessao) >= primeiro_dia,
+                func.date(Sessao.data_sessao) <= ultimo_dia
+            ).scalar() or 0
+            
+            meses.insert(0, mes_atual.strftime('%m/%Y'))
+            receitas.insert(0, float(receita))
+        
+        return jsonify({'labels': meses, 'data': receitas})
+    except Exception as e:
+        print(f"❌ Erro na API receita mensal: {e}")
+        return jsonify({'error': 'Erro ao buscar dados'}), 500
+
+@app.route('/api/relatorios/sessoes-status')
+@login_required
+def api_sessoes_status():
+    try:
+        periodo = int(request.args.get('periodo', 12))
+        hoje = date.today()
+        data_inicio = hoje - timedelta(days=periodo*30)
+        
+        status_counts = db.session.query(
+            Sessao.status,
+            func.count(Sessao.id)
+        ).filter(
+            Sessao.terapeuta_id == current_user.id,
+            func.date(Sessao.data_sessao) >= data_inicio
+        ).group_by(Sessao.status).all()
+        
+        labels = []
+        data = []
+        colors = {
+            'realizada': '#28a745',
+            'agendada': '#007bff',
+            'cancelada': '#dc3545',
+            'faltou': '#ffc107'
+        }
+        background_colors = []
+        
+        for status, count in status_counts:
+            labels.append(status.title())
+            data.append(count)
+            background_colors.append(colors.get(status, '#6c757d'))
+        
+        return jsonify({'labels': labels, 'data': data, 'backgroundColor': background_colors})
+    except Exception as e:
+        print(f"❌ Erro na API sessões status: {e}")
+        return jsonify({'error': 'Erro ao buscar dados'}), 500
+
+@app.route('/api/relatorios/pacientes-ativos')
+@login_required
+def api_pacientes_ativos():
+    try:
+        ativos = Paciente.query.filter_by(terapeuta_id=current_user.id, ativo=True).count()
+        inativos = Paciente.query.filter_by(terapeuta_id=current_user.id, ativo=False).count()
+        
+        return jsonify({
+            'labels': ['Ativos', 'Inativos'],
+            'data': [ativos, inativos],
+            'backgroundColor': ['#28a745', '#dc3545']
+        })
+    except Exception as e:
+        print(f"❌ Erro na API pacientes ativos: {e}")
+        return jsonify({'error': 'Erro ao buscar dados'}), 500
+
+@app.route('/api/relatorios/evolucao-sessoes')
+@login_required
+def api_evolucao_sessoes():
+    try:
+        periodo = int(request.args.get('periodo', 12))
+        hoje = date.today()
+        semanas = []
+        sessoes_realizadas = []
+        sessoes_agendadas = []
+        
+        for i in range(periodo):
+            inicio_semana = hoje - timedelta(days=hoje.weekday() + i*7)
+            fim_semana = inicio_semana + timedelta(days=6)
+            
+            realizadas = Sessao.query.filter(
+                Sessao.terapeuta_id == current_user.id,
+                Sessao.status == 'realizada',
+                func.date(Sessao.data_sessao) >= inicio_semana,
+                func.date(Sessao.data_sessao) <= fim_semana
             ).count()
-        except:
-            sessoes_mes = 0
+            
+            agendadas = Sessao.query.filter(
+                Sessao.terapeuta_id == current_user.id,
+                Sessao.status == 'agendada',
+                func.date(Sessao.data_sessao) >= inicio_semana,
+                func.date(Sessao.data_sessao) <= fim_semana
+            ).count()
+            
+            semanas.insert(0, f"{inicio_semana.strftime('%d/%m')}")
+            sessoes_realizadas.insert(0, realizadas)
+            sessoes_agendadas.insert(0, agendadas)
         
-        return render_template('pacientes.html',
-                             pacientes=pacientes_lista,
-                             total_pacientes=total_pacientes,
-                             pacientes_ativos=pacientes_ativos,
-                             novos_mes=novos_mes,
-                             sessoes_mes=sessoes_mes,
-                             today=date.today())
+        return jsonify({
+            'labels': semanas,
+            'datasets': [
+                {
+                    'label': 'Realizadas',
+                    'data': sessoes_realizadas,
+                    'borderColor': '#28a745',
+                    'backgroundColor': 'rgba(40, 167, 69, 0.1)',
+                    'fill': True
+                },
+                {
+                    'label': 'Agendadas',
+                    'data': sessoes_agendadas,
+                    'borderColor': '#007bff',
+                    'backgroundColor': 'rgba(0, 123, 255, 0.1)',
+                    'fill': True
+                }
+            ]
+        })
     except Exception as e:
-        print(f"❌ Erro na página de pacientes: {e}")
-        traceback.print_exc()
-        flash('Erro ao carregar pacientes', 'error')
-        return redirect(url_for('dashboard'))
+        print(f"❌ Erro na API evolução sessões: {e}")
+        return jsonify({'error': 'Erro ao buscar dados'}), 500
 
-@app.route('/pacientes/novo', methods=['GET', 'POST'])
+@app.route('/api/relatorios/top-pacientes')
 @login_required
-def novo_paciente():
-    if request.method == 'POST':
-        try:
-            nome = request.form.get('nome', '').strip()
-            email = request.form.get('email', '').strip()
-            telefone = request.form.get('telefone', '').strip()
-            data_nascimento_str = request.form.get('data_nascimento', '')
-            endereco = request.form.get('endereco', '').strip()
-            observacoes = request.form.get('observacoes', '').strip()
-            
-            if not nome:
-                flash('Nome é obrigatório', 'error')
-                return render_template('novo_paciente.html')
-            
-            data_nascimento = None
-            if data_nascimento_str:
-                try:
-                    data_nascimento = datetime.strptime(data_nascimento_str, '%Y-%m-%d').date()
-                except:
-                    flash('Data de nascimento inválida', 'error')
-                    return render_template('novo_paciente.html')
-            
-            if email:
-                paciente_existente = Paciente.query.filter_by(email=email, terapeuta_id=current_user.id).first()
-                if paciente_existente:
-                    flash('Já existe um paciente com este email', 'error')
-                    return render_template('novo_paciente.html')
-            
-            novo_paciente = Paciente(
-                nome=nome,
-                email=email if email else None,
-                telefone=telefone if telefone else None,
-                data_nascimento=data_nascimento,
-                endereco=endereco if endereco else None,
-                observacoes=observacoes if observacoes else None,
-                terapeuta_id=current_user.id
-            )
-            
-            db.session.add(novo_paciente)
-            db.session.commit()
-            
-            flash(f'Paciente {nome} cadastrado com sucesso!', 'success')
-            return redirect(url_for('pacientes'))
-        except Exception as e:
-            print(f"❌ Erro ao cadastrar paciente: {e}")
-            traceback.print_exc()
-            flash('Erro ao cadastrar paciente', 'error')
-            db.session.rollback()
+def api_top_pacientes():
+    try:
+        periodo = int(request.args.get('periodo', 12))
+        hoje = date.today()
+        data_inicio = hoje - timedelta(days=periodo*30)
+        
+        top_pacientes = db.session.query(
+            Paciente.nome,
+            func.count(Sessao.id).label('total_sessoes'),
+            func.sum(Sessao.valor).label('total_receita')
+        ).join(Sessao).filter(
+            Sessao.terapeuta_id == current_user.id,
+            func.date(Sessao.data_sessao) >= data_inicio,
+            Sessao.status == 'realizada'
+        ).group_by(Paciente.id, Paciente.nome).order_by(
+            func.count(Sessao.id).desc()
+        ).limit(5).all()
+        
+        pacientes = []
+        for nome, total_sessoes, total_receita in top_pacientes:
+            pacientes.append({
+                'nome': nome,
+                'sessoes': total_sessoes,
+                'receita': float(total_receita or 0)
+            })
+        
+        return jsonify({'pacientes': pacientes})
+    except Exception as e:
+        print(f"❌ Erro na API top pacientes: {e}")
+        return jsonify({'error': 'Erro ao buscar dados'}), 500
+
+# ========== ROTAS DA AGENDA (NOVO) ==========
+
+@app.route('/agenda')
+@login_required
+def agenda():
+    """
+    Página principal da agenda do terapeuta.
+    Exibe calendário interativo com todos os agendamentos usando FullCalendar.js
+    """
+    print("✅ Rota /agenda acessada")
+    return render_template('agenda.html')
+
+# ========== API DA AGENDA - LISTAR AGENDAMENTOS ==========
+
+@app.route('/api/agendamentos', methods=['GET'])
+@login_required
+def api_listar_agendamentos():
+    """
+    API: Lista todos os agendamentos do terapeuta.
+    Retorna formato JSON compatível com FullCalendar.js
+    """
+    try:
+        print(f"✅ API /api/agendamentos (GET) - Usuário: {current_user.nome}")
+        
+        query = Agendamento.query.filter_by(terapeuta_id=current_user.id)
+        
+        status = request.args.get('status')
+        if status and status != 'todos':
+            query = query.filter_by(status=status)
+            print(f"   Filtro status: {status}")
+        
+        start = request.args.get('start')
+        end = request.args.get('end')
+        if start:
+            start_date = datetime.fromisoformat(start.replace('Z', ''))
+            query = query.filter(Agendamento.data_inicio >= start_date)
+            print(f"   Filtro data início: {start_date}")
+        if end:
+            end_date = datetime.fromisoformat(end.replace('Z', ''))
+            query = query.filter(Agendamento.data_fim <= end_date)
+            print(f"   Filtro data fim: {end_date}")
+        
+        agendamentos = query.order_by(Agendamento.data_inicio).all()
+        eventos = [agendamento.to_dict() for agendamento in agendamentos]
+        
+        print(f"   ✅ Retornando {len(eventos)} agendamentos")
+        return jsonify(eventos), 200
     
-    return render_template('novo_paciente.html')
-
-@app.route('/pacientes/<int:id>')
-@login_required
-def ver_paciente(id):
-    try:
-        paciente = Paciente.query.filter_by(id=id, terapeuta_id=current_user.id).first_or_404()
-        sessoes = Sessao.query.filter_by(paciente_id=id).order_by(Sessao.data_sessao.desc()).limit(10).all()
-        evolucoes = Evolucao.query.filter_by(paciente_id=id).order_by(Evolucao.data_evolucao.desc()).limit(5).all()
-        
-        return render_template('ver_paciente.html', 
-                             paciente=paciente,
-                             sessoes=sessoes,
-                             evolucoes=evolucoes,
-                             today=date.today())
     except Exception as e:
-        print(f"❌ Erro ao ver paciente: {e}")
+        print(f"❌ Erro na API listar agendamentos: {e}")
         traceback.print_exc()
-        flash('Paciente não encontrado', 'error')
-        return redirect(url_for('pacientes'))
+        return jsonify({'error': str(e)}), 500
 
-@app.route('/pacientes/<int:id>/editar', methods=['GET', 'POST'])
+# ========== API DA AGENDA - CRIAR AGENDAMENTO ==========
+
+@app.route('/api/agendamentos', methods=['POST'])
 @login_required
-def editar_paciente(id):
+def api_criar_agendamento():
+    """
+    API: Cria um novo agendamento na agenda.
+    """
     try:
-        paciente = Paciente.query.filter_by(id=id, terapeuta_id=current_user.id).first_or_404()
+        print(f"✅ API /api/agendamentos (POST) - Usuário: {current_user.nome}")
+        dados = request.get_json()
+        print(f"   Dados recebidos: {dados}")
         
-        if request.method == 'POST':
-            nome = request.form.get('nome', '').strip()
-            email = request.form.get('email', '').strip()
-            telefone = request.form.get('telefone', '').strip()
-            data_nascimento_str = request.form.get('data_nascimento', '')
-            endereco = request.form.get('endereco', '').strip()
-            observacoes = request.form.get('observacoes', '').strip()
-            
-            if not nome:
-                flash('Nome é obrigatório', 'error')
-                return render_template('editar_paciente.html', paciente=paciente, today=date.today())
-            
-            data_nascimento = None
-            if data_nascimento_str:
-                try:
-                    data_nascimento = datetime.strptime(data_nascimento_str, '%Y-%m-%d').date()
-                except:
-                    flash('Data de nascimento inválida', 'error')
-                    return render_template('editar_paciente.html', paciente=paciente, today=date.today())
-            
-            if email and email != paciente.email:
-                paciente_existente = Paciente.query.filter_by(email=email, terapeuta_id=current_user.id).first()
-                if paciente_existente:
-                    flash('Já existe um paciente com este email', 'error')
-                    return render_template('editar_paciente.html', paciente=paciente, today=date.today())
-            
-            paciente.nome = nome
-            paciente.email = email if email else None
-            paciente.telefone = telefone if telefone else None
-            paciente.data_nascimento = data_nascimento
-            paciente.endereco = endereco if endereco else None
-            paciente.observacoes = observacoes if observacoes else None
-            
-            db.session.commit()
-            
-            flash(f'Dados de {nome} atualizados com sucesso!', 'success')
-            return redirect(url_for('ver_paciente', id=id))
+        if not dados.get('paciente_id'):
+            return jsonify({'error': 'Paciente é obrigatório'}), 400
         
-        return render_template('editar_paciente.html', paciente=paciente, today=date.today())
-    except Exception as e:
-        print(f"❌ Erro ao editar paciente: {e}")
-        traceback.print_exc()
-        flash('Paciente não encontrado', 'error')
-        return redirect(url_for('pacientes'))
-
-@app.route('/pacientes/<int:id>/desativar', methods=['POST'])
-@login_required
-def desativar_paciente(id):
-    try:
-        paciente = Paciente.query.filter_by(id=id, terapeuta_id=current_user.id).first_or_404()
-        paciente.ativo = False
-        db.session.commit()
-        return jsonify({'success': True, 'message': f'Paciente {paciente.nome} desativado com sucesso'})
-    except Exception as e:
-        print(f"❌ Erro ao desativar paciente: {e}")
-        return jsonify({'success': False, 'message': 'Erro ao desativar paciente'})
-
-@app.route('/pacientes/<int:id>/ativar', methods=['POST'])
-@login_required
-def ativar_paciente(id):
-    try:
-        paciente = Paciente.query.filter_by(id=id, terapeuta_id=current_user.id).first_or_404()
-        paciente.ativo = True
-        db.session.commit()
-        return jsonify({'success': True, 'message': f'Paciente {paciente.nome} ativado com sucesso'})
-    except Exception as e:
-        print(f"❌ Erro ao ativar paciente: {e}")
-        return jsonify({'success': False, 'message': 'Erro ao ativar paciente'})
-
-# ========== ROTAS DE SESSÕES ==========
-
-@app.route('/sessoes')
-@login_required
-def sessoes():
-    print("✅ Rota /sessoes acessada")
-    try:
-        status_filter = request.args.get('status', '')
-        paciente_filter = request.args.get('paciente', '')
-        data_inicio = request.args.get('data_inicio', '')
-        data_fim = request.args.get('data_fim', '')
+        if not dados.get('data_inicio'):
+            return jsonify({'error': 'Data de início é obrigatória'}), 400
         
-        query = Sessao.query.filter_by(terapeuta_id=current_user.id)
+        paciente = Paciente.query.filter_by(
+            id=dados['paciente_id'],
+            terapeuta_id=current_user.id
+        ).first()
         
-        if status_filter:
-            query = query.filter(Sessao.status == status_filter)
+        if not paciente:
+            return jsonify({'error': 'Paciente não encontrado'}), 404
         
-        if paciente_filter:
-            query = query.filter(Sessao.paciente_id == paciente_filter)
+        data_inicio = datetime.fromisoformat(dados['data_inicio'].replace('Z', ''))
         
-        if data_inicio:
-            try:
-                data_inicio_obj = datetime.strptime(data_inicio, '%Y-%m-%d').date()
-                query = query.filter(db.func.date(Sessao.data_sessao) >= data_inicio_obj)
-            except:
-                pass
+        if dados.get('data_fim'):
+            data_fim = datetime.fromisoformat(dados['data_fim'].replace('Z', ''))
+        else:
+            duracao = dados.get('duracao', 60)
+            data_fim = data_inicio + timedelta(minutes=int(duracao))
         
-        if data_fim:
-            try:
-                data_fim_obj = datetime.strptime(data_fim, '%Y-%m-%d').date()
-                query = query.filter(db.func.date(Sessao.data_sessao) <= data_fim_obj)
-            except:
-                pass
+        duracao = int((data_fim - data_inicio).total_seconds() / 60)
         
-        sessoes_lista = query.order_by(Sessao.data_sessao.desc()).all()
-        pacientes_lista = Paciente.query.filter_by(terapeuta_id=current_user.id, ativo=True).order_by(Paciente.nome).all()
+        conflito = Agendamento.query.filter(
+            Agendamento.terapeuta_id == current_user.id,
+            Agendamento.status.in_(['agendada', 'confirmada', 'em_andamento']),
+            db.or_(
+                db.and_(
+                    Agendamento.data_inicio <= data_inicio,
+                    Agendamento.data_fim > data_inicio
+                ),
+                db.and_(
+                    Agendamento.data_inicio < data_fim,
+                    Agendamento.data_fim >= data_fim
+                ),
+                db.and_(
+                    Agendamento.data_inicio >= data_inicio,
+                    Agendamento.data_fim <= data_fim
+                )
+            )
+        ).first()
         
-        total_sessoes = Sessao.query.filter_by(terapeuta_id=current_user.id).count()
-        sessoes_agendadas = Sessao.query.filter_by(terapeuta_id=current_user.id, status='agendada').count()
-        sessoes_realizadas = Sessao.query.filter_by(terapeuta_id=current_user.id, status='realizada').count()
+        if conflito:
+            return jsonify({
+                'error': 'Conflito de horário',
+                'message': f'Já existe um agendamento com {conflito.paciente.nome} neste horário'
+            }), 409
         
-        receita_query = db.session.query(db.func.sum(Sessao.valor)).filter_by(
+        novo_agendamento = Agendamento(
             terapeuta_id=current_user.id,
-            status='realizada'
-        ).scalar()
-        receita_total = float(receita_query) if receita_query else 0
+            paciente_id=dados['paciente_id'],
+            data_inicio=data_inicio,
+            data_fim=data_fim,
+            duracao=duracao,
+            tipo=dados.get('tipo', 'online'),
+            valor=Decimal(str(dados['valor'])) if dados.get('valor') else None,
+            status=dados.get('status', 'agendada'),
+            pago=dados.get('pago', False),
+            observacoes=dados.get('observacoes'),
+            link_meet=dados.get('link_meet')
+        )
         
-        return render_template('sessoes.html',
-                             sessoes=sessoes_lista,
-                             pacientes=pacientes_lista,
-                             total_sessoes=total_sessoes,
-                             sessoes_agendadas=sessoes_agendadas,
-                             sessoes_realizadas=sessoes_realizadas,
-                             receita_total=receita_total,
-                             today=date.today())
+        db.session.add(novo_agendamento)
+        db.session.commit()
+        
+        print(f"   ✅ Agendamento criado: ID {novo_agendamento.id}")
+        return jsonify({
+            'message': 'Agendamento criado com sucesso',
+            'agendamento': novo_agendamento.to_dict()
+        }), 201
+    
     except Exception as e:
-        print(f"❌ Erro na página de sessões: {e}")
+        print(f"❌ Erro ao criar agendamento: {e}")
         traceback.print_exc()
-        flash('Erro ao carregar sessões', 'error')
-        return redirect(url_for('dashboard'))
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
 
-@app.route('/sessoes/nova', methods=['GET', 'POST'])
+# ========== API DA AGENDA - ATUALIZAR AGENDAMENTO ==========
+
+@app.route('/api/agendamentos/<int:id>', methods=['PUT'])
 @login_required
-def nova_sessao():
-    if request.method == 'POST':
-        try:
-            paciente_id = request.form.get('paciente_id')
-            data_sessao_str = request.form.get('data_sessao')
-            hora_sessao = request.form.get('hora_sessao')
-            duracao = request.form.get('duracao', 60)
-            valor_str = request.form.get('valor', '').strip()
-            observacoes = request.form.get('observacoes', '').strip()
+def api_atualizar_agendamento(id):
+    """
+    API: Atualiza um agendamento existente.
+    """
+    try:
+        print(f"✅ API /api/agendamentos/{id} (PUT) - Usuário: {current_user.nome}")
+        
+        agendamento = Agendamento.query.filter_by(
+            id=id,
+            terapeuta_id=current_user.id
+        ).first()
+        
+        if not agendamento:
+            return jsonify({'error': 'Agendamento não encontrado'}), 404
+        
+        dados = request.get_json()
+        print(f"   Dados recebidos: {dados}")
+        
+        if dados.get('data_inicio'):
+            data_inicio = datetime.fromisoformat(dados['data_inicio'].replace('Z', ''))
+            agendamento.data_inicio = data_inicio
             
-            if not paciente_id or paciente_id == '' or paciente_id == 'None':
-                flash('Paciente é obrigatório', 'error')
-                pacientes_lista = Paciente.query.filter_by(terapeuta_id=current_user.id, ativo=True).order_by(Paciente.nome).all()
-                return render_template('nova_sessao.html', pacientes=pacientes_lista)
+            if dados.get('data_fim'):
+                data_fim = datetime.fromisoformat(dados['data_fim'].replace('Z', ''))
+            else:
+                data_fim = data_inicio + timedelta(minutes=agendamento.duracao)
             
-            try:
-                paciente_id_int = int(paciente_id)
-            except (ValueError, TypeError):
-                flash('Paciente inválido', 'error')
-                pacientes_lista = Paciente.query.filter_by(terapeuta_id=current_user.id, ativo=True).order_by(Paciente.nome).all()
-                return render_template('nova_sessao.html', pacientes=pacientes_lista)
-            
-            if not data_sessao_str or not hora_sessao:
-                flash('Data e hora são obrigatórios', 'error')
-                pacientes_lista = Paciente.query.filter_by(terapeuta_id=current_user.id, ativo=True).order_by(Paciente.nome).all()
-                return render_template('nova_sessao.html', pacientes=pacientes_lista)
-            
-            try:
-                data_sessao = datetime.strptime(f"{data_sessao_str} {hora_sessao}", '%Y-%m-%d %H:%M')
-            except Exception:
-                flash('Data ou hora inválida', 'error')
-                pacientes_lista = Paciente.query.filter_by(terapeuta_id=current_user.id, ativo=True).order_by(Paciente.nome).all()
-                return render_template('nova_sessao.html', pacientes=pacientes_lista)
-            
-            if data_sessao < datetime.now():
-                flash('Não é possível agendar sessão no passado', 'error')
-                pacientes_lista = Paciente.query.filter_by(terapeuta_id=current_user.id, ativo=True).order_by(Paciente.nome).all()
-                return render_template('nova_sessao.html', pacientes=pacientes_lista)
-            
-            paciente = Paciente.query.filter_by(id=paciente_id_int, terapeuta_id=current_user.id).first()
-            if not paciente:
-                flash('Paciente não encontrado', 'error')
-                pacientes_lista = Paciente.query.filter_by(terapeuta_id=current_user.id, ativo=True).order_by(Paciente.nome).all()
-                return render_template('nova_sessao.html', pacientes=pacientes_lista)
-            
-            conflito = Sessao.query.filter(
-                Sessao.terapeuta_id == current_user.id,
-                Sessao.status == 'agendada',
-                Sessao.data_sessao == data_sessao
+            agendamento.data_fim = data_fim
+            agendamento.duracao = int((data_fim - data_inicio).total_seconds() / 60)
+        
+        if dados.get('paciente_id'):
+            paciente = Paciente.query.filter_by(
+                id=dados['paciente_id'],
+                terapeuta_id=current_user.id
             ).first()
-            
-            if conflito:
-                flash('Já existe uma sessão agendada para este horário', 'error')
-                pacientes_lista = Paciente.query.filter_by(terapeuta_id=current_user.id, ativo=True).order_by(Paciente.nome).all()
-                return render_template('nova_sessao.html', pacientes=pacientes_lista)
-            
-            valor = None
-            if valor_str and valor_str.strip():
-                try:
-                    valor_limpo = valor_str.replace(',', '.').strip()
-                    valor = Decimal(valor_limpo)
-                except Exception:
-                    flash('Valor inválido', 'error')
-                    pacientes_lista = Paciente.query.filter_by(terapeuta_id=current_user.id, ativo=True).order_by(Paciente.nome).all()
-                    return render_template('nova_sessao.html', pacientes=pacientes_lista)
-            
-            nova_sessao_obj = Sessao(
-                paciente_id=paciente_id_int,
-                terapeuta_id=current_user.id,
-                data_sessao=data_sessao,
-                duracao=int(duracao),
-                valor=valor,
-                observacoes=observacoes if observacoes else None
-            )
-            
-            db.session.add(nova_sessao_obj)
-            db.session.commit()
-            
-            flash(f'Sessão agendada com {paciente.nome} para {data_sessao.strftime("%d/%m/%Y às %H:%M")}!', 'success')
-            return redirect(url_for('sessoes'))
-        except Exception as e:
-            print(f"❌ Erro ao salvar sessão: {e}")
-            traceback.print_exc()
-            flash('Erro ao salvar sessão no banco de dados', 'error')
-            db.session.rollback()
-    
-    try:
-        pacientes_lista = Paciente.query.filter_by(terapeuta_id=current_user.id, ativo=True).order_by(Paciente.nome).all()
-    except Exception:
-        pacientes_lista = []
-    
-    return render_template('nova_sessao.html', pacientes=pacientes_lista)
-
-@app.route('/sessoes/<int:id>')
-@login_required
-def ver_sessao(id):
-    try:
-        sessao = Sessao.query.filter_by(id=id, terapeuta_id=current_user.id).first_or_404()
-        return render_template('ver_sessao.html', sessao=sessao, today=date.today())
-    except Exception as e:
-        print(f"❌ Erro ao ver sessão: {e}")
-        flash('Sessão não encontrada', 'error')
-        return redirect(url_for('sessoes'))
-
-@app.route('/sessoes/<int:id>/editar', methods=['GET', 'POST'])
-@login_required
-def editar_sessao(id):
-    try:
-        sessao = Sessao.query.filter_by(id=id, terapeuta_id=current_user.id).first_or_404()
-        
-        if request.method == 'POST':
-            data_sessao_str = request.form.get('data_sessao')
-            hora_sessao = request.form.get('hora_sessao')
-            duracao = request.form.get('duracao', 60)
-            valor_str = request.form.get('valor', '').strip()
-            observacoes = request.form.get('observacoes', '').strip()
-            
-            if not data_sessao_str or not hora_sessao:
-                flash('Data e hora são obrigatórios', 'error')
-                return render_template('editar_sessao.html', sessao=sessao, today=date.today())
-            
-            try:
-                data_sessao = datetime.strptime(f"{data_sessao_str} {hora_sessao}", '%Y-%m-%d %H:%M')
-            except:
-                flash('Data ou hora inválida', 'error')
-                return render_template('editar_sessao.html', sessao=sessao, today=date.today())
-            
-            conflito = Sessao.query.filter(
-                Sessao.terapeuta_id == current_user.id,
-                Sessao.status == 'agendada',
-                Sessao.data_sessao == data_sessao,
-                Sessao.id != id
-            ).first()
-            
-            if conflito:
-                flash('Já existe uma sessão agendada para este horário', 'error')
-                return render_template('editar_sessao.html', sessao=sessao, today=date.today())
-            
-            valor = None
-            if valor_str and valor_str.strip():
-                try:
-                    valor = Decimal(valor_str.replace(',', '.'))
-                except:
-                    flash('Valor inválido', 'error')
-                    return render_template('editar_sessao.html', sessao=sessao, today=date.today())
-            
-            sessao.data_sessao = data_sessao
-            sessao.duracao = int(duracao)
-            sessao.valor = valor
-            sessao.observacoes = observacoes if observacoes else None
-            
-            db.session.commit()
-            
-            flash('Sessão atualizada com sucesso!', 'success')
-            return redirect(url_for('ver_sessao', id=id))
-        
-        return render_template('editar_sessao.html', sessao=sessao, today=date.today())
-    except Exception as e:
-        print(f"❌ Erro ao editar sessão: {e}")
-        flash('Sessão não encontrada', 'error')
-        return redirect(url_for('sessoes'))
-
-@app.route('/sessoes/<int:id>/marcar-realizada', methods=['POST'])
-@login_required
-def marcar_sessao_realizada(id):
-    try:
-        sessao = Sessao.query.filter_by(id=id, terapeuta_id=current_user.id).first_or_404()
-        sessao.status = 'realizada'
-        db.session.commit()
-        return jsonify({'success': True, 'message': 'Sessão marcada como realizada'})
-    except Exception as e:
-        return jsonify({'success': False, 'message': 'Erro ao atualizar sessão'})
-
-@app.route('/sessoes/<int:id>/marcar-faltou', methods=['POST'])
-@login_required
-def marcar_sessao_faltou(id):
-    try:
-        sessao = Sessao.query.filter_by(id=id, terapeuta_id=current_user.id).first_or_404()
-        sessao.status = 'faltou'
-        db.session.commit()
-        return jsonify({'success': True, 'message': 'Sessão marcada como falta'})
-    except Exception as e:
-        return jsonify({'success': False, 'message': 'Erro ao atualizar sessão'})
-
-@app.route('/sessoes/<int:id>/cancelar', methods=['POST'])
-@login_required
-def cancelar_sessao(id):
-    try:
-        sessao = Sessao.query.filter_by(id=id, terapeuta_id=current_user.id).first_or_404()
-        sessao.status = 'cancelada'
-        db.session.commit()
-        return jsonify({'success': True, 'message': 'Sessão cancelada'})
-    except Exception as e:
-        return jsonify({'success': False, 'message': 'Erro ao cancelar sessão'})
-
-@app.route('/sessoes/<int:id>/reagendar', methods=['POST'])
-@login_required
-def reagendar_sessao(id):
-    try:
-        sessao = Sessao.query.filter_by(id=id, terapeuta_id=current_user.id).first_or_404()
-        sessao.status = 'agendada'
-        db.session.commit()
-        return jsonify({'success': True, 'message': 'Sessão reagendada'})
-    except Exception as e:
-        return jsonify({'success': False, 'message': 'Erro ao reagendar sessão'})
-
-# ========== ROTAS DE PRONTUÁRIO/EVOLUÇÃO ==========
-
-@app.route('/prontuario/<int:paciente_id>', methods=['GET', 'POST'])
-@login_required
-def prontuario(paciente_id):
-    print("✅ Rota /prontuario acessada")
-    try:
-        paciente = Paciente.query.filter_by(id=paciente_id, terapeuta_id=current_user.id).first_or_404()
-        
-        if request.method == 'POST':
-            tipo = request.form.get('tipo', 'evolucao')
-            titulo = request.form.get('titulo', '').strip()
-            descricao = request.form.get('descricao', '').strip()
-            humor = request.form.get('humor', '')
-            medicamentos = request.form.get('medicamentos', '').strip()
-            observacoes_privadas = request.form.get('observacoes_privadas', '').strip()
-            
-            if not titulo or not descricao:
-                flash('Título e descrição são obrigatórios', 'error')
-                evolucoes = Evolucao.query.filter_by(paciente_id=paciente_id).order_by(Evolucao.data_evolucao.desc()).all()
-                return render_template('prontuario.html', paciente=paciente, evolucoes=evolucoes, today=date.today())
-            
-            nova_evolucao = Evolucao(
-                paciente_id=paciente_id,
-                tipo=tipo,
-                titulo=titulo,
-                descricao=descricao,
-                humor=humor if humor else None,
-                medicamentos=medicamentos if medicamentos else None,
-                observacoes_privadas=observacoes_privadas if observacoes_privadas else None
-            )
-            
-            db.session.add(nova_evolucao)
-            db.session.commit()
-            
-            flash('Evolução registrada com sucesso!', 'success')
-            return redirect(url_for('prontuario', paciente_id=paciente_id))
-        
-        evolucoes = Evolucao.query.filter_by(paciente_id=paciente_id).order_by(Evolucao.data_evolucao.desc()).all()
-        return render_template('prontuario.html', paciente=paciente, evolucoes=evolucoes, today=date.today())
-    except Exception as e:
-        print(f"❌ Erro ao ver prontuário: {e}")
-        traceback.print_exc()
-        flash('Paciente não encontrado', 'error')
-        return redirect(url_for('pacientes'))
-
-@app.route('/evolucoes')
-@login_required
-def evolucoes():
-    print("=" * 80)
-    print("🔍 DEBUG: ROTA /EVOLUCOES ACESSADA")
-    print("=" * 80)
-    
-    try:
-        print(f"✅ PASSO 1: Usuário autenticado: {current_user.nome} (ID: {current_user.id})")
-        
-        paciente_filter = request.args.get('paciente', '')
-        data_inicio = request.args.get('data_inicio', '')
-        data_fim = request.args.get('data_fim', '')
-        
-        query = Evolucao.query.join(Paciente).filter(Paciente.terapeuta_id == current_user.id)
-        
-        if paciente_filter:
-            query = query.filter(Evolucao.paciente_id == paciente_filter)
-        
-        if data_inicio:
-            try:
-                data_inicio_obj = datetime.strptime(data_inicio, '%Y-%m-%d').date()
-                query = query.filter(func.date(Evolucao.data_evolucao) >= data_inicio_obj)
-            except Exception as e:
-                print(f"⚠️ AVISO: Erro ao aplicar filtro de data início: {e}")
-        
-        if data_fim:
-            try:
-                data_fim_obj = datetime.strptime(data_fim, '%Y-%m-%d').date()
-                query = query.filter(func.date(Evolucao.data_evolucao) <= data_fim_obj)
-            except Exception as e:
-                print(f"⚠️ AVISO: Erro ao aplicar filtro de data fim: {e}")
-        
-        evolucoes_lista = query.order_by(Evolucao.data_evolucao.desc()).all()
-        pacientes_lista = Paciente.query.filter_by(terapeuta_id=current_user.id, ativo=True).order_by(Paciente.nome).all()
-        
-        total_evolucoes = Evolucao.query.join(Paciente).filter(Paciente.terapeuta_id == current_user.id).count()
-        
-        primeiro_dia_mes = date.today().replace(day=1)
-        evolucoes_mes = Evolucao.query.join(Paciente).filter(
-            Paciente.terapeuta_id == current_user.id,
-            func.date(Evolucao.data_evolucao) >= primeiro_dia_mes
-        ).count()
-        
-        return render_template('evolucoes.html',
-                             evolucoes=evolucoes_lista,
-                             pacientes=pacientes_lista,
-                             total_evolucoes=total_evolucoes,
-                             evolucoes_mes=evolucoes_mes,
-                             today=date.today())
-    
-    except Exception as e:
-        print(f"❌ ERRO: {e}")
-        traceback.print_exc()
-        flash('Erro ao carregar evoluções', 'error')
-        return redirect(url_for('dashboard'))
-
-@app.route('/evolucoes/nova', methods=['GET', 'POST'])
-@login_required
-def nova_evolucao():
-    if request.method == 'POST':
-        try:
-            paciente_id = request.form.get('paciente_id')
-            titulo = request.form.get('titulo', '').strip()
-            descricao = request.form.get('descricao', '').strip()
-            tipo = request.form.get('tipo', 'evolucao')
-            
-            if not paciente_id or paciente_id == '' or paciente_id == 'None':
-                flash('Paciente é obrigatório', 'error')
-                pacientes_lista = Paciente.query.filter_by(terapeuta_id=current_user.id, ativo=True).order_by(Paciente.nome).all()
-                return render_template('nova_evolucao.html', pacientes=pacientes_lista)
-            
-            if not titulo:
-                flash('Título é obrigatório', 'error')
-                pacientes_lista = Paciente.query.filter_by(terapeuta_id=current_user.id, ativo=True).order_by(Paciente.nome).all()
-                return render_template('nova_evolucao.html', pacientes=pacientes_lista)
-            
-            if not descricao:
-                flash('Descrição é obrigatória', 'error')
-                pacientes_lista = Paciente.query.filter_by(terapeuta_id=current_user.id, ativo=True).order_by(Paciente.nome).all()
-                return render_template('nova_evolucao.html', pacientes=pacientes_lista)
-            
-            paciente = Paciente.query.filter_by(id=int(paciente_id), terapeuta_id=current_user.id).first()
             if not paciente:
-                flash('Paciente não encontrado', 'error')
-                pacientes_lista = Paciente.query.filter_by(terapeuta_id=current_user.id, ativo=True).order_by(Paciente.nome).all()
-                return render_template('nova_evolucao.html', pacientes=pacientes_lista)
-            
-            nova_evolucao_obj = Evolucao(
-                paciente_id=int(paciente_id),
-                titulo=titulo,
-                descricao=descricao,
-                tipo=tipo
+                return jsonify({'error': 'Paciente não encontrado'}), 404
+            agendamento.paciente_id = dados['paciente_id']
+        
+        if 'tipo' in dados:
+            agendamento.tipo = dados['tipo']
+        
+        if 'valor' in dados:
+            agendamento.valor = Decimal(str(dados['valor'])) if dados['valor'] else None
+        
+        if 'status' in dados:
+            agendamento.status = dados['status']
+        
+        if 'pago' in dados:
+            agendamento.pago = dados['pago']
+        
+        if 'observacoes' in dados:
+            agendamento.observacoes = dados['observacoes']
+        
+        if 'link_meet' in dados:
+            agendamento.link_meet = dados['link_meet']
+        
+        conflito = Agendamento.query.filter(
+            Agendamento.terapeuta_id == current_user.id,
+            Agendamento.status.in_(['agendada', 'confirmada', 'em_andamento']),
+            Agendamento.id != id,
+            db.or_(
+                db.and_(
+                    Agendamento.data_inicio <= agendamento.data_inicio,
+                    Agendamento.data_fim > agendamento.data_inicio
+                ),
+                db.and_(
+                    Agendamento.data_inicio < agendamento.data_fim,
+                    Agendamento.data_fim >= agendamento.data_fim
+                ),
+                db.and_(
+                    Agendamento.data_inicio >= agendamento.data_inicio,
+                    Agendamento.data_fim <= agendamento.data_fim
+                )
             )
-            
-            db.session.add(nova_evolucao_obj)
-            db.session.commit()
-            
-            flash(f'Evolução de {paciente.nome} registrada com sucesso!', 'success')
-            return redirect(url_for('evolucoes'))
-        except Exception as e:
-            print(f"❌ Erro ao criar evolução: {e}")
-            traceback.print_exc()
-            flash('Erro ao registrar evolução', 'error')
-            db.session.rollback()
-    
-    try:
-        pacientes_lista = Paciente.query.filter_by(terapeuta_id=current_user.id, ativo=True).order_by(Paciente.nome).all()
-    except Exception:
-        pacientes_lista = []
-    
-    return render_template('nova_evolucao.html', pacientes=pacientes_lista)
-
-@app.route('/evolucoes/<int:id>')
-@login_required
-def ver_evolucao(id):
-    try:
-        evolucao = Evolucao.query.join(Paciente).filter(
-            Evolucao.id == id,
-            Paciente.terapeuta_id == current_user.id
-        ).first_or_404()
+        ).first()
         
-        return render_template('ver_evolucao.html', evolucao=evolucao, today=date.today())
-    except Exception as e:
-        print(f"❌ Erro ao ver evolução: {e}")
-        flash('Evolução não encontrada', 'error')
-        return redirect(url_for('evolucoes'))
-
-@app.route('/evolucoes/<int:id>/editar', methods=['GET', 'POST'])
-@login_required
-def editar_evolucao(id):
-    try:
-        evolucao = Evolucao.query.join(Paciente).filter(
-            Evolucao.id == id,
-            Paciente.terapeuta_id == current_user.id
-        ).first_or_404()
+        if conflito:
+            return jsonify({
+                'error': 'Conflito de horário',
+                'message': f'Já existe um agendamento com {conflito.paciente.nome} neste horário'
+            }), 409
         
-        if request.method == 'POST':
-            titulo = request.form.get('titulo', '').strip()
-            descricao = request.form.get('descricao', '').strip()
-            tipo = request.form.get('tipo', 'evolucao')
-            
-            if not titulo:
-                flash('Título é obrigatório', 'error')
-                return render_template('editar_evolucao.html', evolucao=evolucao, today=date.today())
-            
-            if not descricao:
-                flash('Descrição é obrigatória', 'error')
-                return render_template('editar_evolucao.html', evolucao=evolucao, today=date.today())
-            
-            evolucao.titulo = titulo
-            evolucao.descricao = descricao
-            evolucao.tipo = tipo
-            
-            db.session.commit()
-            
-            flash('Evolução atualizada com sucesso!', 'success')
-            return redirect(url_for('ver_evolucao', id=id))
-        
-        return render_template('editar_evolucao.html', evolucao=evolucao, today=date.today())
-    except Exception as e:
-        print(f"❌ Erro ao editar evolução: {e}")
-        flash('Evolução não encontrada', 'error')
-        return redirect(url_for('evolucoes'))
-
-@app.route('/evolucoes/<int:id>/excluir', methods=['POST'])
-@login_required
-def excluir_evolucao(id):
-    try:
-        evolucao = Evolucao.query.join(Paciente).filter(
-            Evolucao.id == id,
-            Paciente.terapeuta_id == current_user.id
-        ).first_or_404()
-        
-        db.session.delete(evolucao)
         db.session.commit()
         
-        return jsonify({'success': True, 'message': 'Evolução excluída com sucesso'})
+        print(f"   ✅ Agendamento atualizado: ID {id}")
+        return jsonify({
+            'message': 'Agendamento atualizado com sucesso',
+            'agendamento': agendamento.to_dict()
+        }), 200
+    
     except Exception as e:
-        return jsonify({'success': False, 'message': 'Erro ao excluir evolução'})
+        print(f"❌ Erro ao atualizar agendamento: {e}")
+        traceback.print_exc()
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+
+# ========== API DA AGENDA - DELETAR AGENDAMENTO ==========
+
+@app.route('/api/agendamentos/<int:id>', methods=['DELETE'])
+@login_required
+def api_deletar_agendamento(id):
+    """
+    API: Deleta um agendamento.
+    """
+    try:
+        print(f"✅ API /api/agendamentos/{id} (DELETE) - Usuário: {current_user.nome}")
+        
+        agendamento = Agendamento.query.filter_by(
+            id=id,
+            terapeuta_id=current_user.id
+        ).first()
+        
+        if not agendamento:
+            return jsonify({'error': 'Agendamento não encontrado'}), 404
+        
+        db.session.delete(agendamento)
+        db.session.commit()
+        
+        print(f"   ✅ Agendamento deletado: ID {id}")
+        return jsonify({'message': 'Agendamento deletado com sucesso'}), 200
+    
+    except Exception as e:
+        print(f"❌ Erro ao deletar agendamento: {e}")
+        traceback.print_exc()
+        db.session.rollback()
+        return jsonify({'error': str(e)}), 500
+
+# ========== API - LISTAR PACIENTES (PARA SELECT) ==========
+
+@app.route('/api/pacientes', methods=['GET'])
+@login_required
+def api_listar_pacientes():
+    """
+    API: Lista todos os pacientes ativos do terapeuta.
+    """
+    try:
+        print(f"✅ API /api/pacientes (GET) - Usuário: {current_user.nome}")
+        
+        pacientes = Paciente.query.filter_by(
+            terapeuta_id=current_user.id,
+            ativo=True
+        ).order_by(Paciente.nome).all()
+        
+        pacientes_json = [{
+            'id': p.id,
+            'nome': p.nome,
+            'email': p.email,
+            'telefone': p.telefone
+        } for p in pacientes]
+        
+        print(f"   ✅ Retornando {len(pacientes_json)} pacientes")
+        return jsonify(pacientes_json), 200
+    
+    except Exception as e:
+        print(f"❌ Erro na API listar pacientes: {e}")
+        traceback.print_exc()
+        return jsonify({'error': str(e)}), 500
+
+# ========== ROTA DE DEBUG ==========
+
+@app.route('/debug/rotas')
+@login_required
+def debug_rotas():
+    rotas = []
+    for rule in app.url_map.iter_rules():
+        rotas.append({
+            'endpoint': rule.endpoint,
+            'methods': ','.join(rule.methods),
+            'path': str(rule)
+        })
+    return jsonify(rotas)
+
+# ========== INICIALIZAÇÃO ==========
+
+with app.app_context():
+    try:
+        db.create_all()
+        print("=" * 60)
+        print("✅ Tabelas criadas/verificadas com sucesso!")
+        
+        from sqlalchemy import text, inspect
+        
+        print("\n🔄 Verificando migrações necessárias...")
+        
+        inspector = inspect(db.engine)
+        
+        colunas_usuarios = [col['name'] for col in inspector.get_columns('usuarios')]
+        if 'crp' not in colunas_usuarios:
+            try:
+                sql = 'ALTER TABLE usuarios ADD COLUMN crp VARCHAR(20);'
+                db.session.execute(text(sql))
+                db.session.commit()
+                print("✅ Coluna 'crp' adicionada à tabela 'usuarios'!")
+            except Exception as e:
+                print(f"⚠️ Erro ao adicionar coluna 'crp': {e}")
+                db.session.rollback()
+        
+        colunas_pacientes = [col['name'] for col in inspector.get_columns('pacientes')]
+        if 'terapeuta_id' not in colunas_pacientes:
+            try:
+                if 'psicologo_id' in colunas_pacientes:
+                    sql = 'ALTER TABLE pacientes ADD COLUMN terapeuta_id INTEGER;'
+                    db.session.execute(text(sql))
+                    sql = 'UPDATE pacientes SET terapeuta_id = psicologo_id;'
+                    db.session.execute(text(sql))
+                    sql = 'ALTER TABLE pacientes ALTER COLUMN terapeuta_id SET NOT NULL;'
+                    db.session.execute(text(sql))
+                    sql = 'ALTER TABLE pacientes ADD CONSTRAINT fk_pacientes_terapeuta FOREIGN KEY (terapeuta_id) REFERENCES usuarios(id);'
+                    db.session.execute(text(sql))
+                else:
+                    sql = 'ALTER TABLE pacientes ADD COLUMN terapeuta_id INTEGER NOT NULL REFERENCES usuarios(id);'
+                    db.session.execute(text(sql))
+                db.session.commit()
+                print("✅ Coluna 'terapeuta_id' adicionada à tabela 'pacientes'!")
+            except Exception as e:
+                print(f"⚠️ Erro ao adicionar coluna 'terapeuta_id' em pacientes: {e}")
+                db.session.rollback()
+        
+        if 'psicologo_id' in colunas_pacientes:
+            try:
+                sql = 'ALTER TABLE pacientes ALTER COLUMN psicologo_id DROP NOT NULL;'
+                db.session.execute(text(sql))
+                db.session.commit()
+                print("✅ Constraint NOT NULL removida de 'psicologo_id' em pacientes!")
+            except Exception as e:
+                print(f"⚠️ Erro ao remover constraint: {e}")
+                db.session.rollback()
+        
+        colunas_sessoes = [col['name'] for col in inspector.get_columns('sessoes')]
+        if 'terapeuta_id' not in colunas_sessoes:
+            try:
+                if 'psicologo_id' in colunas_sessoes:
+                    sql = 'ALTER TABLE sessoes ADD COLUMN terapeuta_id INTEGER;'
+                    db.session.execute(text(sql))
+                    sql = 'UPDATE sessoes SET terapeuta_id = psicologo_id;'
+                    db.session.execute(text(sql))
+                    sql = 'ALTER TABLE sessoes ALTER COLUMN terapeuta_id SET NOT NULL;'
+                    db.session.execute(text(sql))
+                    sql = 'ALTER TABLE sessoes ADD CONSTRAINT fk_sessoes_terapeuta FOREIGN KEY (terapeuta_id) REFERENCES usuarios(id);'
+                    db.session.execute(text(sql))
+                else:
+                    sql = 'ALTER TABLE sessoes ADD COLUMN terapeuta_id INTEGER NOT NULL REFERENCES usuarios(id);'
+                    db.session.execute(text(sql))
+                db.session.commit()
+                print("✅ Coluna 'terapeuta_id' adicionada à tabela 'sessoes'!")
+            except Exception as e:
+                print(f"⚠️ Erro ao adicionar coluna 'terapeuta_id' em sessoes: {e}")
+                db.session.rollback()
+        
+        if 'data_atualizacao' not in colunas_sessoes:
+            try:
+                sql = 'ALTER TABLE sessoes ADD COLUMN data_atualizacao TIMESTAMP DEFAULT CURRENT_TIMESTAMP;'
+                db.session.execute(text(sql))
+                db.session.commit()
+                print("✅ Coluna 'data_atualizacao' adicionada à tabela 'sessoes'!")
+            except Exception as e:
+                print(f"⚠️ Erro ao adicionar coluna 'data_atualizacao': {e}")
+                db.session.rollback()
+        
+        colunas_evolucoes = [col['name'] for col in inspector.get_columns('evolucoes')]
+        colunas_necessarias_evolucoes = {
+            'humor': 'VARCHAR(20)',
+            'medicamentos': 'TEXT',
+            'observacoes_privadas': 'TEXT'
+        }
+        
+        for coluna, tipo in colunas_necessarias_evolucoes.items():
+            if coluna not in colunas_evolucoes:
+                try:
+                    sql = f'ALTER TABLE evolucoes ADD COLUMN {coluna} {tipo};'
+                    db.session.execute(text(sql))
+                    db.session.commit()
+                    print(f"✅ Coluna '{coluna}' adicionada à tabela 'evolucoes'!")
+                except Exception as e:
+                    print(f"⚠️ Erro ao adicionar coluna '{coluna}': {e}")
+                    db.session.rollback()
+        
+        print("=" * 60)
+        print("\n🔗 ROTAS REGISTRADAS:")
+        print("   - / (login)")
+        print("   - /login")
+        print("   - /registro")
+        print("   - /logout")
+        print("   - /dashboard")
+        print("   - /pacientes")
+        print("   - /sessoes")
+        print("   - /evolucoes")
+        print("   - /relatorios")
+        print("   - /configuracoes")
+        print("   - /prontuario/<id>")
+        print("   - /agenda ✨ NOVO")
+        print("   - /api/agendamentos (GET, POST) ✨ NOVO")
+        print("   - /api/agendamentos/<id> (PUT, DELETE) ✨ NOVO")
+        print("   - /api/pacientes (GET) ✨ NOVO")
+        print("=" * 60)
+        print("\n🎉 AGENDA IMPLEMENTADA COM SUCESSO!")
+        print("=" * 60)
+        
+    except Exception as e:
+        print("=" * 60)
+        print(f"❌ Erro ao criar tabelas: {e}")
+        traceback.print_exc()
+        print("=" * 60)
+
+if __name__ == '__main__':
+    app.run(debug=True)
