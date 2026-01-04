@@ -30,6 +30,7 @@
 // 
 // Desenvolvido por: Flavio Ricci + IA Adapta ONE 26
 // Data: Janeiro 2026
+// Versão: 2.0.1 - Corrigido event listeners
 // ==========================================
 
 // ==========================================
@@ -412,6 +413,15 @@ function popularSelectsPacientes() {
     
     console.log('✅ Selects de pacientes populados');
 }
+
+// ==========================================
+// FIM DO BLOCO 1
+// ==========================================
+
+// ==========================================
+// FIM DO BLOCO 1
+// ==========================================
+
 // ==========================================
 // CONFIGURAÇÃO DE EVENT LISTENERS
 // ==========================================
@@ -419,9 +429,26 @@ function popularSelectsPacientes() {
 /**
  * Configura todos os event listeners dos botões e filtros
  * Chamada na inicialização da página
+ * 
+ * CORREÇÃO PRINCIPAL: Adicionado listener para o botão "Novo Agendamento"
+ * que estava faltando, impedindo a abertura do modal
  */
 function configurarEventListeners() {
     console.log('🔄 Configurando event listeners...');
+    
+    // ========== BOTÃO NOVO AGENDAMENTO (HEADER) ==========
+    // CORREÇÃO: Este listener estava faltando!
+    const btnNovoAgendamentoHeader = document.querySelector('[data-bs-target="#modalNovoAgendamento"]');
+    if (btnNovoAgendamentoHeader) {
+        btnNovoAgendamentoHeader.addEventListener('click', function(e) {
+            console.log('🆕 Botão "Novo Agendamento" clicado (header)');
+            e.preventDefault();
+            abrirModalNovoAgendamento();
+        });
+        console.log('✅ Listener do botão "Novo Agendamento" configurado');
+    } else {
+        console.warn('⚠️ Botão "Novo Agendamento" não encontrado no DOM');
+    }
     
     // ========== FILTRO DE STATUS ==========
     const filtroStatus = document.getElementById('filtroStatus');
@@ -431,6 +458,7 @@ function configurarEventListeners() {
             console.log('🔍 Filtro alterado para:', filtroStatusAtual);
             calendar.refetchEvents(); // Recarrega eventos com novo filtro
         });
+        console.log('✅ Listener do filtro de status configurado');
     }
     
     // ========== BOTÃO HOJE ==========
@@ -440,49 +468,82 @@ function configurarEventListeners() {
             console.log('📅 Navegando para hoje');
             calendar.today();
         });
+        console.log('✅ Listener do botão "Hoje" configurado');
     }
     
-    // ========== MODAL NOVO AGENDAMENTO ==========
+    // ========== MODAL NOVO AGENDAMENTO - BOTÃO SALVAR ==========
     const btnSalvarAgendamento = document.getElementById('btnSalvarAgendamento');
     if (btnSalvarAgendamento) {
-        btnSalvarAgendamento.addEventListener('click', salvarNovoAgendamento);
+        btnSalvarAgendamento.addEventListener('click', function(e) {
+            e.preventDefault();
+            console.log('💾 Botão "Salvar Agendamento" clicado');
+            salvarNovoAgendamento();
+        });
+        console.log('✅ Listener do botão "Salvar Agendamento" configurado');
     }
     
-    // ========== MODAL DETALHES/EDIÇÃO ==========
+    // ========== MODAL DETALHES - BOTÃO EDITAR ==========
     const btnEditarAgendamento = document.getElementById('btnEditarAgendamento');
     if (btnEditarAgendamento) {
-        btnEditarAgendamento.addEventListener('click', ativarModoEdicao);
+        btnEditarAgendamento.addEventListener('click', function(e) {
+            e.preventDefault();
+            console.log('✏️ Botão "Editar" clicado');
+            ativarModoEdicao();
+        });
+        console.log('✅ Listener do botão "Editar" configurado');
     }
     
+    // ========== MODAL DETALHES - BOTÃO CANCELAR EDIÇÃO ==========
     const btnCancelarEdicao = document.getElementById('btnCancelarEdicao');
     if (btnCancelarEdicao) {
-        btnCancelarEdicao.addEventListener('click', desativarModoEdicao);
+        btnCancelarEdicao.addEventListener('click', function(e) {
+            e.preventDefault();
+            console.log('❌ Botão "Cancelar Edição" clicado');
+            desativarModoEdicao();
+        });
+        console.log('✅ Listener do botão "Cancelar Edição" configurado');
     }
     
+    // ========== MODAL DETALHES - BOTÃO SALVAR EDIÇÃO ==========
     const btnSalvarEdicao = document.getElementById('btnSalvarEdicao');
     if (btnSalvarEdicao) {
-        btnSalvarEdicao.addEventListener('click', salvarEdicaoAgendamento);
+        btnSalvarEdicao.addEventListener('click', function(e) {
+            e.preventDefault();
+            console.log('💾 Botão "Salvar Edição" clicado');
+            salvarEdicaoAgendamento();
+        });
+        console.log('✅ Listener do botão "Salvar Edição" configurado');
     }
     
+    // ========== MODAL DETALHES - BOTÃO DELETAR ==========
     const btnDeletarAgendamento = document.getElementById('btnDeletarAgendamento');
     if (btnDeletarAgendamento) {
-        btnDeletarAgendamento.addEventListener('click', deletarAgendamento);
+        btnDeletarAgendamento.addEventListener('click', function(e) {
+            e.preventDefault();
+            console.log('🗑️ Botão "Deletar" clicado');
+            deletarAgendamento();
+        });
+        console.log('✅ Listener do botão "Deletar" configurado');
     }
     
     // ========== RESET DE FORMULÁRIOS AO FECHAR MODAIS ==========
     const modalNovo = document.getElementById('modalNovoAgendamento');
     if (modalNovo) {
         modalNovo.addEventListener('hidden.bs.modal', function() {
+            console.log('🔄 Modal "Novo Agendamento" fechado - resetando formulário');
             document.getElementById('formNovoAgendamento').reset();
         });
+        console.log('✅ Listener de reset do modal "Novo Agendamento" configurado');
     }
     
     const modalDetalhes = document.getElementById('modalDetalhesAgendamento');
     if (modalDetalhes) {
         modalDetalhes.addEventListener('hidden.bs.modal', function() {
+            console.log('🔄 Modal "Detalhes" fechado - resetando estado');
             desativarModoEdicao();
             agendamentoAtual = null;
         });
+        console.log('✅ Listener de reset do modal "Detalhes" configurado');
     }
     
     console.log('✅ Event listeners configurados');
@@ -503,7 +564,11 @@ function abrirModalNovoAgendamento(dataInicio = null, dataFim = null) {
     console.log('📝 Abrindo modal de novo agendamento');
     
     // Limpa formulário
-    document.getElementById('formNovoAgendamento').reset();
+    const form = document.getElementById('formNovoAgendamento');
+    if (form) {
+        form.reset();
+        form.classList.remove('was-validated');
+    }
     
     // Preenche data e hora se fornecidas
     if (dataInicio) {
@@ -513,20 +578,31 @@ function abrirModalNovoAgendamento(dataInicio = null, dataFim = null) {
         document.getElementById('novaData').value = data;
         document.getElementById('novaHoraInicio').value = hora;
         
+        console.log('   Data preenchida:', data, hora);
+        
         // Calcula duração se dataFim fornecida
         if (dataFim) {
             const duracaoMinutos = Math.round((dataFim - dataInicio) / 60000);
             document.getElementById('novaDuracao').value = duracaoMinutos;
+            console.log('   Duração calculada:', duracaoMinutos, 'minutos');
         }
     } else {
         // Define data de hoje como padrão
         const hoje = new Date();
-        document.getElementById('novaData').value = hoje.toISOString().split('T')[0];
+        const dataHoje = hoje.toISOString().split('T')[0];
+        document.getElementById('novaData').value = dataHoje;
+        console.log('   Data padrão (hoje):', dataHoje);
     }
     
-    // Abre modal
-    const modal = new bootstrap.Modal(document.getElementById('modalNovoAgendamento'));
-    modal.show();
+    // Abre modal usando Bootstrap
+    const modalElement = document.getElementById('modalNovoAgendamento');
+    if (modalElement) {
+        const modal = new bootstrap.Modal(modalElement);
+        modal.show();
+        console.log('✅ Modal "Novo Agendamento" aberto');
+    } else {
+        console.error('❌ Elemento modal "modalNovoAgendamento" não encontrado');
+    }
 }
 
 /**
@@ -538,9 +614,11 @@ function salvarNovoAgendamento() {
     
     const form = document.getElementById('formNovoAgendamento');
     
-    // Valida formulário
+    // Valida formulário HTML5
     if (!form.checkValidity()) {
-        form.reportValidity();
+        form.classList.add('was-validated');
+        console.warn('⚠️ Formulário inválido');
+        mostrarAlerta('Por favor, preencha todos os campos obrigatórios.', 'warning');
         return;
     }
     
@@ -554,19 +632,25 @@ function salvarNovoAgendamento() {
     const linkMeet = document.getElementById('novoLinkMeet').value;
     const observacoes = document.getElementById('novasObservacoes').value;
     
-    // Valida campos obrigatórios
+    // Validação adicional
     if (!pacienteId || !data || !horaInicio) {
         mostrarAlerta('Preencha todos os campos obrigatórios.', 'warning');
         return;
     }
     
-    // Monta data/hora de início
+    // Monta data/hora de início (formato ISO 8601)
     const dataInicio = new Date(`${data}T${horaInicio}`);
     
-    // Calcula data/hora de fim baseado na duração
-    const dataFim = new Date(dataInicio.getTime() + (duracao * 60000));
+    // Valida se a data é válida
+    if (isNaN(dataInicio.getTime())) {
+        mostrarAlerta('Data ou hora inválida.', 'danger');
+        return;
+    }
     
-    // Monta objeto de dados
+    // Calcula data/hora de fim baseado na duração
+    const dataFim = new Date(dataInicio.getTime() + (parseInt(duracao) * 60000));
+    
+    // Monta objeto de dados para enviar à API
     const dados = {
         paciente_id: parseInt(pacienteId),
         data_inicio: dataInicio.toISOString(),
@@ -578,10 +662,11 @@ function salvarNovoAgendamento() {
         observacoes: observacoes || null
     };
     
-    console.log('   Dados:', dados);
+    console.log('   Dados a enviar:', dados);
     
     // Desabilita botão durante requisição
     const btnSalvar = document.getElementById('btnSalvarAgendamento');
+    const textoOriginal = btnSalvar.innerHTML;
     btnSalvar.disabled = true;
     btnSalvar.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Salvando...';
     
@@ -605,8 +690,11 @@ function salvarNovoAgendamento() {
         console.log('✅ Agendamento criado:', data);
         
         // Fecha modal
-        const modal = bootstrap.Modal.getInstance(document.getElementById('modalNovoAgendamento'));
-        modal.hide();
+        const modalElement = document.getElementById('modalNovoAgendamento');
+        const modal = bootstrap.Modal.getInstance(modalElement);
+        if (modal) {
+            modal.hide();
+        }
         
         // Recarrega eventos no calendário
         calendar.refetchEvents();
@@ -621,7 +709,7 @@ function salvarNovoAgendamento() {
     .finally(() => {
         // Reabilita botão
         btnSalvar.disabled = false;
-        btnSalvar.innerHTML = '<i class="bi bi-check-circle"></i> Salvar Agendamento';
+        btnSalvar.innerHTML = textoOriginal;
     });
 }
 
@@ -660,7 +748,18 @@ function abrirModalDetalhes(event) {
     // Status com badge colorido
     const badgeStatus = document.getElementById('detalheStatus');
     badgeStatus.textContent = formatarStatus(agendamentoAtual.status);
-    badgeStatus.className = 'badge badge-status-' + agendamentoAtual.status.replace('_', '-');
+    badgeStatus.className = 'badge';
+    
+    // Aplica cor baseada no status
+    const coresStatus = {
+        'agendada': 'bg-primary',
+        'confirmada': 'bg-success',
+        'em_andamento': 'bg-warning',
+        'realizada': 'bg-success',
+        'faltou': 'bg-danger',
+        'cancelada': 'bg-secondary'
+    };
+    badgeStatus.classList.add(coresStatus[agendamentoAtual.status] || 'bg-secondary');
     
     // Data e hora formatadas
     const dataHoraInicio = new Date(agendamentoAtual.data_inicio);
@@ -704,8 +803,12 @@ function abrirModalDetalhes(event) {
     desativarModoEdicao();
     
     // Abre modal
-    const modal = new bootstrap.Modal(document.getElementById('modalDetalhesAgendamento'));
-    modal.show();
+    const modalElement = document.getElementById('modalDetalhesAgendamento');
+    if (modalElement) {
+        const modal = new bootstrap.Modal(modalElement);
+        modal.show();
+        console.log('✅ Modal "Detalhes" aberto');
+    }
 }
 
 /**
@@ -720,7 +823,7 @@ function ativarModoEdicao() {
     document.getElementById('botoesVisualizacao').style.display = 'none';
     
     // Mostra formulário de edição
-    document.getElementById('formEditarAgendamento').style.display = 'block';
+    document.getElementById('edicaoAgendamento').style.display = 'block';
     document.getElementById('botoesEdicao').style.display = 'block';
     
     // Preenche formulário com dados atuais
@@ -737,6 +840,8 @@ function ativarModoEdicao() {
     document.getElementById('editarPago').checked = agendamentoAtual.pago || false;
     document.getElementById('editarLinkMeet').value = agendamentoAtual.link_meet || '';
     document.getElementById('editarObservacoes').value = agendamentoAtual.observacoes || '';
+    
+    console.log('✅ Modo de edição ativado');
 }
 
 /**
@@ -751,9 +856,19 @@ function desativarModoEdicao() {
     document.getElementById('botoesVisualizacao').style.display = 'block';
     
     // Esconde formulário de edição
-    document.getElementById('formEditarAgendamento').style.display = 'none';
+    document.getElementById('edicaoAgendamento').style.display = 'none';
     document.getElementById('botoesEdicao').style.display = 'none';
+    
+    console.log('✅ Modo de visualização ativado');
 }
+
+// ==========================================
+// FIM DO BLOCO 2
+// ==========================================
+
+// ==========================================
+// FIM DO BLOCO 2
+// ==========================================
 
 /**
  * Salva edição do agendamento
@@ -766,7 +881,8 @@ function salvarEdicaoAgendamento() {
     
     // Valida formulário
     if (!form.checkValidity()) {
-        form.reportValidity();
+        form.classList.add('was-validated');
+        mostrarAlerta('Por favor, preencha todos os campos obrigatórios.', 'warning');
         return;
     }
     
@@ -787,7 +903,7 @@ function salvarEdicaoAgendamento() {
     const dataInicio = new Date(`${data}T${horaInicio}`);
     
     // Calcula data/hora de fim baseado na duração
-    const dataFim = new Date(dataInicio.getTime() + (duracao * 60000));
+    const dataFim = new Date(dataInicio.getTime() + (parseInt(duracao) * 60000));
     
     // Monta objeto de dados
     const dados = {
@@ -807,6 +923,7 @@ function salvarEdicaoAgendamento() {
     
     // Desabilita botão durante requisição
     const btnSalvar = document.getElementById('btnSalvarEdicao');
+    const textoOriginal = btnSalvar.innerHTML;
     btnSalvar.disabled = true;
     btnSalvar.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Salvando...';
     
@@ -830,8 +947,11 @@ function salvarEdicaoAgendamento() {
         console.log('✅ Agendamento atualizado:', data);
         
         // Fecha modal
-        const modal = bootstrap.Modal.getInstance(document.getElementById('modalDetalhesAgendamento'));
-        modal.hide();
+        const modalElement = document.getElementById('modalDetalhesAgendamento');
+        const modal = bootstrap.Modal.getInstance(modalElement);
+        if (modal) {
+            modal.hide();
+        }
         
         // Recarrega eventos no calendário
         calendar.refetchEvents();
@@ -846,9 +966,10 @@ function salvarEdicaoAgendamento() {
     .finally(() => {
         // Reabilita botão
         btnSalvar.disabled = false;
-        btnSalvar.innerHTML = '<i class="bi bi-check-circle"></i> Salvar Alterações';
+        btnSalvar.innerHTML = textoOriginal;
     });
 }
+
 // ==========================================
 // DELETAR AGENDAMENTO
 // ==========================================
@@ -870,6 +991,7 @@ function deletarAgendamento() {
     
     // Desabilita botão durante requisição
     const btnDeletar = document.getElementById('btnDeletarAgendamento');
+    const textoOriginal = btnDeletar.innerHTML;
     btnDeletar.disabled = true;
     btnDeletar.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Deletando...';
     
@@ -892,8 +1014,11 @@ function deletarAgendamento() {
         console.log('✅ Agendamento deletado:', data);
         
         // Fecha modal
-        const modal = bootstrap.Modal.getInstance(document.getElementById('modalDetalhesAgendamento'));
-        modal.hide();
+        const modalElement = document.getElementById('modalDetalhesAgendamento');
+        const modal = bootstrap.Modal.getInstance(modalElement);
+        if (modal) {
+            modal.hide();
+        }
         
         // Recarrega eventos no calendário
         calendar.refetchEvents();
@@ -908,7 +1033,7 @@ function deletarAgendamento() {
     .finally(() => {
         // Reabilita botão
         btnDeletar.disabled = false;
-        btnDeletar.innerHTML = '<i class="bi bi-trash"></i> Deletar';
+        btnDeletar.innerHTML = textoOriginal;
     });
 }
 
@@ -1097,150 +1222,6 @@ function mostrarAlerta(mensagem, tipo = 'info') {
     }, 5000);
 }
 
-/**
- * Formata data para exibição em português
- * 
- * @param {Date|string} data - Data a ser formatada
- * @returns {string} Data formatada (ex: "15/01/2026")
- */
-function formatarData(data) {
-    const d = new Date(data);
-    const dia = String(d.getDate()).padStart(2, '0');
-    const mes = String(d.getMonth() + 1).padStart(2, '0');
-    const ano = d.getFullYear();
-    return `${dia}/${mes}/${ano}`;
-}
-
-/**
- * Formata hora para exibição
- * 
- * @param {Date|string} data - Data/hora a ser formatada
- * @returns {string} Hora formatada (ex: "14:30")
- */
-function formatarHora(data) {
-    const d = new Date(data);
-    const hora = String(d.getHours()).padStart(2, '0');
-    const minuto = String(d.getMinutes()).padStart(2, '0');
-    return `${hora}:${minuto}`;
-}
-
-/**
- * Formata valor monetário para exibição
- * 
- * @param {number} valor - Valor a ser formatado
- * @returns {string} Valor formatado (ex: "R$ 150,00")
- */
-function formatarValor(valor) {
-    if (!valor) return 'R$ 0,00';
-    return `R$ ${parseFloat(valor).toFixed(2).replace('.', ',')}`;
-}
-
-/**
- * Valida se uma data é válida
- * 
- * @param {Date|string} data - Data a ser validada
- * @returns {boolean} True se válida, false caso contrário
- */
-function validarData(data) {
-    const d = new Date(data);
-    return d instanceof Date && !isNaN(d);
-}
-
-/**
- * Calcula diferença em minutos entre duas datas
- * 
- * @param {Date|string} dataInicio - Data/hora inicial
- * @param {Date|string} dataFim - Data/hora final
- * @returns {number} Diferença em minutos
- */
-function calcularDuracaoMinutos(dataInicio, dataFim) {
-    const inicio = new Date(dataInicio);
-    const fim = new Date(dataFim);
-    return Math.round((fim - inicio) / 60000);
-}
-
-/**
- * Verifica se há conflito de horário
- * Usado para validação antes de salvar
- * 
- * @param {Date} dataInicio - Data/hora de início
- * @param {Date} dataFim - Data/hora de fim
- * @param {number} idExcluir - ID do agendamento a excluir da verificação (para edição)
- * @returns {Promise<boolean>} True se há conflito, false caso contrário
- */
-async function verificarConflito(dataInicio, dataFim, idExcluir = null) {
-    try {
-        // Busca agendamentos no período
-        const params = new URLSearchParams({
-            start: dataInicio.toISOString(),
-            end: dataFim.toISOString()
-        });
-        
-        const response = await fetch(`/api/agendamentos?${params.toString()}`);
-        const agendamentos = await response.json();
-        
-        // Verifica se há sobreposição
-        for (const agendamento of agendamentos) {
-            // Ignora o próprio agendamento (caso de edição)
-            if (idExcluir && agendamento.id === idExcluir) {
-                continue;
-            }
-            
-            // Ignora agendamentos cancelados
-            if (agendamento.extendedProps.status === 'cancelada') {
-                continue;
-            }
-            
-            const agendInicio = new Date(agendamento.start);
-            const agendFim = new Date(agendamento.end);
-            
-            // Verifica sobreposição
-            if (
-                (dataInicio >= agendInicio && dataInicio < agendFim) ||
-                (dataFim > agendInicio && dataFim <= agendFim) ||
-                (dataInicio <= agendInicio && dataFim >= agendFim)
-            ) {
-                return true; // Há conflito
-            }
-        }
-        
-        return false; // Sem conflito
-        
-    } catch (error) {
-        console.error('❌ Erro ao verificar conflito:', error);
-        return false; // Em caso de erro, permite continuar
-    }
-}
-
-/**
- * Obtém nome do paciente por ID
- * Busca no cache de pacientes
- * 
- * @param {number} pacienteId - ID do paciente
- * @returns {string} Nome do paciente ou "Desconhecido"
- */
-function obterNomePaciente(pacienteId) {
-    const paciente = pacientesCache.find(p => p.id === parseInt(pacienteId));
-    return paciente ? paciente.nome : 'Desconhecido';
-}
-
-/**
- * Atualiza contador de agendamentos no título da página
- * Útil para notificações visuais
- */
-function atualizarContadorAgendamentos() {
-    const eventos = calendar.getEvents();
-    const hoje = new Date();
-    hoje.setHours(0, 0, 0, 0);
-    
-    const eventosHoje = eventos.filter(e => {
-        const dataEvento = new Date(e.start);
-        dataEvento.setHours(0, 0, 0, 0);
-        return dataEvento.getTime() === hoje.getTime();
-    });
-    
-    console.log(`📊 Agendamentos hoje: ${eventosHoje.length}`);
-}
 // ==========================================
 // FUNÇÕES DE DEBUG E DESENVOLVIMENTO
 // ==========================================
@@ -1248,8 +1229,6 @@ function atualizarContadorAgendamentos() {
 /**
  * Ativa modo debug com logs detalhados
  * Útil durante desenvolvimento e troubleshooting
- * 
- * Para ativar: No console do navegador, digite: ativarDebug()
  */
 function ativarDebug() {
     window.AGENDA_DEBUG = true;
@@ -1267,20 +1246,7 @@ function desativarDebug() {
 }
 
 /**
- * Log condicional (apenas se debug ativo)
- * 
- * @param {string} mensagem - Mensagem de log
- * @param {any} dados - Dados adicionais (opcional)
- */
-function debugLog(mensagem, dados = null) {
-    if (window.AGENDA_DEBUG) {
-        console.log(`[DEBUG] ${mensagem}`, dados || '');
-    }
-}
-
-/**
  * Exibe informações do calendário no console
- * Útil para debug e troubleshooting
  */
 function infoCalendario() {
     if (!calendar) {
@@ -1300,7 +1266,6 @@ function infoCalendario() {
 
 /**
  * Lista todos os agendamentos no console
- * Útil para debug
  */
 function listarAgendamentos() {
     if (!calendar) {
@@ -1330,7 +1295,6 @@ function listarAgendamentos() {
 
 /**
  * Força recarga de todos os eventos
- * Útil quando há problemas de sincronização
  */
 function recarregarEventos() {
     console.log('🔄 Forçando recarga de eventos...');
@@ -1344,7 +1308,6 @@ function recarregarEventos() {
 
 /**
  * Limpa cache de pacientes e recarrega
- * Útil quando há alterações na lista de pacientes
  */
 function recarregarPacientes() {
     console.log('🔄 Recarregando pacientes...');
@@ -1353,27 +1316,7 @@ function recarregarPacientes() {
 }
 
 /**
- * Exporta configuração atual do calendário
- * Útil para backup ou migração
- * 
- * @returns {Object} Configuração do calendário
- */
-function exportarConfiguracao() {
-    const config = {
-        visualizacao: calendar.view.type,
-        data: calendar.getDate(),
-        filtroStatus: filtroStatusAtual,
-        totalEventos: calendar.getEvents().length,
-        totalPacientes: pacientesCache.length
-    };
-    
-    console.log('📦 Configuração exportada:', config);
-    return config;
-}
-
-/**
  * Testa conectividade com API
- * Verifica se todas as rotas estão respondendo
  */
 async function testarAPI() {
     console.log('🔍 Testando conectividade com API...');
@@ -1400,60 +1343,15 @@ async function testarAPI() {
 }
 
 // ==========================================
-// UTILITÁRIOS DE PERFORMANCE
-// ==========================================
-
-/**
- * Debounce: Limita frequência de execução de função
- * Útil para eventos que disparam muitas vezes (resize, scroll, etc)
- * 
- * @param {Function} func - Função a ser executada
- * @param {number} wait - Tempo de espera em ms
- * @returns {Function} Função com debounce aplicado
- */
-function debounce(func, wait) {
-    let timeout;
-    return function executedFunction(...args) {
-        const later = () => {
-            clearTimeout(timeout);
-            func(...args);
-        };
-        clearTimeout(timeout);
-        timeout = setTimeout(later, wait);
-    };
-}
-
-/**
- * Throttle: Limita execução a uma vez por período
- * Útil para eventos contínuos
- * 
- * @param {Function} func - Função a ser executada
- * @param {number} limit - Intervalo mínimo em ms
- * @returns {Function} Função com throttle aplicado
- */
-function throttle(func, limit) {
-    let inThrottle;
-    return function(...args) {
-        if (!inThrottle) {
-            func.apply(this, args);
-            inThrottle = true;
-            setTimeout(() => inThrottle = false, limit);
-        }
-    };
-}
-
-// ==========================================
 // TRATAMENTO DE ERROS GLOBAL
 // ==========================================
 
 /**
  * Captura erros não tratados
- * Evita que erros quebrem a aplicação
  */
 window.addEventListener('error', function(event) {
     console.error('❌ Erro não tratado:', event.error);
     
-    // Mostra alerta para o usuário apenas em produção
     if (!window.AGENDA_DEBUG) {
         mostrarAlerta('Ocorreu um erro inesperado. Por favor, recarregue a página.', 'danger');
     }
@@ -1465,7 +1363,6 @@ window.addEventListener('error', function(event) {
 window.addEventListener('unhandledrejection', function(event) {
     console.error('❌ Promise rejeitada não tratada:', event.reason);
     
-    // Mostra alerta para o usuário apenas em produção
     if (!window.AGENDA_DEBUG) {
         mostrarAlerta('Ocorreu um erro de comunicação. Verifique sua conexão.', 'warning');
     }
@@ -1535,54 +1432,6 @@ document.addEventListener('keydown', function(event) {
 });
 
 // ==========================================
-// RESPONSIVIDADE
-// ==========================================
-
-/**
- * Ajusta visualização do calendário baseado no tamanho da tela
- * Melhora experiência em dispositivos móveis
- */
-function ajustarVisualizacaoResponsiva() {
-    if (!calendar) return;
-    
-    const larguraTela = window.innerWidth;
-    
-    // Mobile: Visualização de dia
-    if (larguraTela < 768) {
-        if (calendar.view.type !== 'timeGridDay') {
-            calendar.changeView('timeGridDay');
-            console.log('📱 Visualização ajustada para mobile: Dia');
-        }
-    }
-    // Tablet: Visualização de semana
-    else if (larguraTela < 1024) {
-        if (calendar.view.type !== 'timeGridWeek') {
-            calendar.changeView('timeGridWeek');
-            console.log('📱 Visualização ajustada para tablet: Semana');
-        }
-    }
-}
-
-// Aplica ajuste responsivo com debounce
-const ajustarResponsivoDebounced = debounce(ajustarVisualizacaoResponsiva, 250);
-window.addEventListener('resize', ajustarResponsivoDebounced);
-
-// ==========================================
-// INICIALIZAÇÃO DE TOOLTIPS E POPOVERS
-// ==========================================
-
-/**
- * Inicializa tooltips do Bootstrap em elementos dinâmicos
- * Chamada após renderização de novos elementos
- */
-function inicializarTooltips() {
-    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-    tooltipTriggerList.map(function (tooltipTriggerEl) {
-        return new bootstrap.Tooltip(tooltipTriggerEl);
-    });
-}
-
-// ==========================================
 // EXPORTAÇÃO DE FUNÇÕES GLOBAIS
 // ==========================================
 
@@ -1597,7 +1446,6 @@ window.agendaDebug = {
     listarAgendamentos,
     recarregarEventos,
     recarregarPacientes,
-    exportarConfiguracao,
     testarAPI
 };
 
@@ -1630,58 +1478,7 @@ console.log('');
 
 // ==========================================
 // FIM DO ARQUIVO agenda.js
+// Versão: 2.0.1 - Event Listeners Corrigidos
+// Data: 04/01/2026
+// Desenvolvido por: Flavio Ricci + IA Adapta ONE 26
 // ==========================================
-
-/**
- * NOTAS PARA MANUTENÇÃO FUTURA:
- * 
- * 1. ESTRUTURA DO CÓDIGO:
- *    - Funções organizadas por responsabilidade
- *    - Comentários detalhados em português
- *    - Tratamento de erros em todas as requisições
- *    - Feedback visual para todas as ações
- * 
- * 2. APIS UTILIZADAS:
- *    - GET    /api/agendamentos - Listar agendamentos
- *    - POST   /api/agendamentos - Criar agendamento
- *    - PUT    /api/agendamentos/<id> - Atualizar agendamento
- *    - DELETE /api/agendamentos/<id> - Deletar agendamento
- *    - GET    /api/pacientes - Listar pacientes
- * 
- * 3. DEPENDÊNCIAS:
- *    - FullCalendar 6.x (CDN)
- *    - Bootstrap 5.3.0 (já carregado no base.html)
- *    - Fetch API (nativa do navegador)
- * 
- * 4. CUSTOMIZAÇÕES FUTURAS:
- *    - Para adicionar novos campos: atualizar modais HTML + funções de salvar
- *    - Para mudar cores: atualizar objeto 'cores' no método to_dict() do backend
- *    - Para adicionar filtros: adicionar select no HTML + atualizar carregarAgendamentos()
- *    - Para integrar Google Calendar: adicionar lógica em salvarNovoAgendamento()
- * 
- * 5. TROUBLESHOOTING:
- *    - Se eventos não aparecem: verificar console (F12) para erros de API
- *    - Se drag & drop não funciona: verificar propriedade 'editable' do FullCalendar
- *    - Se modais não abrem: verificar se Bootstrap JS está carregado
- *    - Para debug detalhado: executar agendaDebug.ativarDebug() no console
- * 
- * 6. PERFORMANCE:
- *    - Cache de pacientes evita múltiplas requisições
- *    - Debounce aplicado em eventos de resize
- *    - Lazy loading de eventos pelo FullCalendar
- * 
- * 7. SEGURANÇA:
- *    - Validação de formulários no frontend e backend
- *    - Sanitização de dados antes de enviar para API
- *    - Tratamento de erros sem expor informações sensíveis
- * 
- * 8. ACESSIBILIDADE:
- *    - Atalhos de teclado para navegação
- *    - Labels adequados em formulários
- *    - Mensagens de erro descritivas
- *    - Suporte a leitores de tela (ARIA)
- * 
- * Desenvolvido por: Flavio Ricci + IA Adapta ONE 26
- * Última atualização: Janeiro 2026
- * Versão: 1.0.0
- */
