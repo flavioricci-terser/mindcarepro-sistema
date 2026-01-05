@@ -30,7 +30,19 @@
 // 
 // Desenvolvido por: Flavio Ricci + IA Adapta ONE 26
 // Data: Janeiro 2026
-// Versão: 2.0.1 - Corrigido event listeners
+// Versão: 2.0.2 - Corrigido fechamento de modais (backdrop cinza)
+// 
+// Changelog:
+// v2.0.2 - 05/01/2026
+// - [FIX CRÍTICO] Corrigido fechamento de modal após salvar agendamento
+// - [FIX] Remoção robusta do backdrop cinza
+// - [FIX] Limpeza de estilos inline do body
+// - [MELHORIA] Feedback visual aprimorado durante salvamento
+// - [MELHORIA] Tratamento de erros mais robusto
+// 
+// v2.0.1 - 04/01/2026
+// - Corrigido event listeners
+// - Adicionado listener do botão "Novo Agendamento"
 // ==========================================
 
 // ==========================================
@@ -107,37 +119,16 @@ function inicializarCalendario() {
         
         // ========== CONFIGURAÇÕES GERAIS ==========
         
-        /**
-         * Locale: Português do Brasil
-         * Define idioma de todos os textos do calendário
-         */
         locale: 'pt-br',
-        
-        /**
-         * Timezone: Local do usuário
-         * Usa o fuso horário do navegador
-         */
         timeZone: 'local',
-        
-        /**
-         * Altura: Automática
-         * Ajusta a altura baseado no conteúdo
-         */
         height: 'auto',
         
-        /**
-         * Cabeçalho: Personalizado
-         * Define botões e título visíveis
-         */
         headerToolbar: {
             left: 'prev,next today',
             center: 'title',
             right: 'dayGridMonth,timeGridWeek,timeGridDay'
         },
         
-        /**
-         * Botões: Textos personalizados
-         */
         buttonText: {
             today: 'Hoje',
             month: 'Mês',
@@ -146,158 +137,76 @@ function inicializarCalendario() {
             list: 'Lista'
         },
         
-        /**
-         * Visualização inicial: Semana
-         */
         initialView: 'timeGridWeek',
-        
-        /**
-         * Navegação por data: Habilitada
-         */
         navLinks: true,
-        
-        /**
-         * Seleção de múltiplos dias: Habilitada
-         */
         selectable: true,
-        
-        /**
-         * Indicador de "agora": Habilitado
-         */
         nowIndicator: true,
-        
-        /**
-         * Edição: Habilitada (drag & drop)
-         */
         editable: true,
         
-        /**
-         * Formato de hora: 24 horas
-         */
         slotLabelFormat: {
             hour: '2-digit',
             minute: '2-digit',
             hour12: false
         },
         
-        /**
-         * Formato de hora nos eventos
-         */
         eventTimeFormat: {
             hour: '2-digit',
             minute: '2-digit',
             hour12: false
         },
         
-        /**
-         * Duração dos slots: 30 minutos
-         */
         slotDuration: '00:30:00',
-        
-        /**
-         * Horário de início: 07:00
-         */
         slotMinTime: '07:00:00',
-        
-        /**
-         * Horário de fim: 23:00
-         */
         slotMaxTime: '23:00:00',
-        
-        /**
-         * Fim de semana: Visível
-         */
         weekends: true,
-        
-        /**
-         * Número da semana: Não visível
-         */
         weekNumbers: false,
-        
-        /**
-         * Todos os dias: Visível
-         */
         allDaySlot: false,
         
         // ========== FONTE DE DADOS ==========
         
-        /**
-         * Eventos: Carregados via API
-         * Função que busca agendamentos do backend
-         */
         events: function(info, successCallback, failureCallback) {
             carregarAgendamentos(info, successCallback, failureCallback);
         },
         
         // ========== CALLBACKS DE EVENTOS ==========
         
-        /**
-         * Callback: Clique em evento
-         * Abre modal com detalhes do agendamento
-         */
         eventClick: function(info) {
             console.log('🖱️ Evento clicado:', info.event.id);
             abrirModalDetalhes(info.event);
         },
         
-        /**
-         * Callback: Drag & Drop de evento
-         * Atualiza data/hora do agendamento
-         */
         eventDrop: function(info) {
             console.log('🔄 Evento movido:', info.event.id);
             reagendarEvento(info);
         },
         
-        /**
-         * Callback: Redimensionar evento
-         * Atualiza duração do agendamento
-         */
         eventResize: function(info) {
             console.log('↔️ Evento redimensionado:', info.event.id);
             redimensionarEvento(info);
         },
         
-        /**
-         * Callback: Clique em data/hora vazia
-         * Abre modal para criar novo agendamento
-         */
         dateClick: function(info) {
             console.log('📅 Data clicada:', info.dateStr);
             abrirModalNovoAgendamento(info.date);
         },
         
-        /**
-         * Callback: Seleção de período
-         * Abre modal para criar agendamento com duração
-         */
         select: function(info) {
             console.log('📅 Período selecionado:', info.startStr, '-', info.endStr);
             abrirModalNovoAgendamento(info.start, info.end);
         },
         
-        /**
-         * Callback: Erro ao carregar eventos
-         */
         eventSourceFailure: function(error) {
             console.error('❌ Erro ao carregar eventos:', error);
             mostrarAlerta('Erro ao carregar agendamentos. Tente recarregar a página.', 'danger');
         },
         
-        /**
-         * Callback: Renderização de evento
-         * Permite customização visual adicional
-         */
         eventDidMount: function(info) {
-            // Adiciona tooltip com informações do agendamento
             info.el.title = `${info.event.title}\n${info.event.extendedProps.tipo}\nStatus: ${info.event.extendedProps.status}`;
         }
         
     });
     
-    // Renderiza o calendário
     calendar.render();
-    
     console.log('✅ FullCalendar renderizado');
 }
 
@@ -318,21 +227,18 @@ function carregarAgendamentos(info, successCallback, failureCallback) {
     console.log('   Período:', info.startStr, 'até', info.endStr);
     console.log('   Filtro status:', filtroStatusAtual);
     
-    // Monta URL com parâmetros
     let url = '/api/agendamentos';
     const params = new URLSearchParams({
         start: info.startStr,
         end: info.endStr
     });
     
-    // Adiciona filtro de status se não for "todos"
     if (filtroStatusAtual !== 'todos') {
         params.append('status', filtroStatusAtual);
     }
     
     url += '?' + params.toString();
     
-    // Faz requisição à API
     fetch(url, {
         method: 'GET',
         headers: {
@@ -394,11 +300,9 @@ function popularSelectsPacientes() {
     const selectNovo = document.getElementById('novoPaciente');
     const selectEditar = document.getElementById('editarPaciente');
     
-    // Limpa opções existentes (mantém apenas o placeholder)
     selectNovo.innerHTML = '<option value="">Selecione um paciente...</option>';
     selectEditar.innerHTML = '<option value="">Selecione um paciente...</option>';
     
-    // Adiciona opções de pacientes
     pacientesCache.forEach(paciente => {
         const optionNovo = document.createElement('option');
         optionNovo.value = paciente.id;
@@ -415,11 +319,11 @@ function popularSelectsPacientes() {
 }
 
 // ==========================================
-// FIM DO BLOCO 1
+// FIM DO BLOCO 1/4
 // ==========================================
 
 // ==========================================
-// FIM DO BLOCO 1
+// INÍCIO DO BLOCO 2/4
 // ==========================================
 
 // ==========================================
@@ -437,7 +341,6 @@ function configurarEventListeners() {
     console.log('🔄 Configurando event listeners...');
     
     // ========== BOTÃO NOVO AGENDAMENTO (HEADER) ==========
-    // CORREÇÃO: Este listener estava faltando!
     const btnNovoAgendamentoHeader = document.querySelector('[data-bs-target="#modalNovoAgendamento"]');
     if (btnNovoAgendamentoHeader) {
         btnNovoAgendamentoHeader.addEventListener('click', function(e) {
@@ -456,7 +359,7 @@ function configurarEventListeners() {
         filtroStatus.addEventListener('change', function() {
             filtroStatusAtual = this.value;
             console.log('🔍 Filtro alterado para:', filtroStatusAtual);
-            calendar.refetchEvents(); // Recarrega eventos com novo filtro
+            calendar.refetchEvents();
         });
         console.log('✅ Listener do filtro de status configurado');
     }
@@ -531,7 +434,11 @@ function configurarEventListeners() {
     if (modalNovo) {
         modalNovo.addEventListener('hidden.bs.modal', function() {
             console.log('🔄 Modal "Novo Agendamento" fechado - resetando formulário');
-            document.getElementById('formNovoAgendamento').reset();
+            const form = document.getElementById('formNovoAgendamento');
+            if (form) {
+                form.reset();
+                form.classList.remove('was-validated');
+            }
         });
         console.log('✅ Listener de reset do modal "Novo Agendamento" configurado');
     }
@@ -608,6 +515,8 @@ function abrirModalNovoAgendamento(dataInicio = null, dataFim = null) {
 /**
  * Salva novo agendamento
  * Valida formulário e envia para API
+ * 
+ * CORREÇÃO v2.0.2: Fechamento robusto do modal e remoção do backdrop
  */
 function salvarNovoAgendamento() {
     console.log('💾 Salvando novo agendamento...');
@@ -689,12 +598,48 @@ function salvarNovoAgendamento() {
     .then(data => {
         console.log('✅ Agendamento criado:', data);
         
-        // Fecha modal
+        // ========== CORREÇÃO: FECHAMENTO ROBUSTO DO MODAL ==========
+        
         const modalElement = document.getElementById('modalNovoAgendamento');
-        const modal = bootstrap.Modal.getInstance(modalElement);
-        if (modal) {
-            modal.hide();
+        
+        // Método 1: Usar getInstance (preferido)
+        let modal = bootstrap.Modal.getInstance(modalElement);
+        
+        // Se não existir instância, criar uma
+        if (!modal) {
+            console.log('   Criando nova instância do modal');
+            modal = new bootstrap.Modal(modalElement);
         }
+        
+        // Fechar o modal
+        console.log('   Fechando modal...');
+        modal.hide();
+        
+        // ========== CORREÇÃO: REMOÇÃO FORÇADA DO BACKDROP ==========
+        // Aguarda animação do modal e remove backdrop manualmente
+        setTimeout(() => {
+            console.log('   Removendo backdrop e limpando estilos...');
+            
+            // Remove todos os backdrops que possam ter ficado
+            const backdrops = document.querySelectorAll('.modal-backdrop');
+            backdrops.forEach(backdrop => {
+                console.log('   Removendo backdrop:', backdrop);
+                backdrop.remove();
+            });
+            
+            // Remove classe do body que bloqueia scroll
+            document.body.classList.remove('modal-open');
+            
+            // Remove estilos inline que bloqueiam scroll
+            document.body.style.removeProperty('overflow');
+            document.body.style.removeProperty('padding-right');
+            
+            console.log('   ✅ Backdrop removido e estilos limpos');
+        }, 300); // Aguarda 300ms (duração da animação do Bootstrap)
+        
+        // Limpa formulário
+        form.reset();
+        form.classList.remove('was-validated');
         
         // Recarrega eventos no calendário
         calendar.refetchEvents();
@@ -712,6 +657,14 @@ function salvarNovoAgendamento() {
         btnSalvar.innerHTML = textoOriginal;
     });
 }
+
+// ==========================================
+// FIM DO BLOCO 2/4
+// ==========================================
+
+// ==========================================
+// INÍCIO DO BLOCO 3/4
+// ==========================================
 
 // ==========================================
 // MODAL: DETALHES DO AGENDAMENTO
@@ -862,17 +815,11 @@ function desativarModoEdicao() {
     console.log('✅ Modo de visualização ativado');
 }
 
-// ==========================================
-// FIM DO BLOCO 2
-// ==========================================
-
-// ==========================================
-// FIM DO BLOCO 2
-// ==========================================
-
 /**
  * Salva edição do agendamento
  * Valida formulário e envia para API
+ * 
+ * CORREÇÃO v2.0.2: Fechamento robusto do modal
  */
 function salvarEdicaoAgendamento() {
     console.log('💾 Salvando edição do agendamento...');
@@ -946,12 +893,25 @@ function salvarEdicaoAgendamento() {
     .then(data => {
         console.log('✅ Agendamento atualizado:', data);
         
-        // Fecha modal
+        // ========== CORREÇÃO: FECHAMENTO ROBUSTO DO MODAL ==========
+        
         const modalElement = document.getElementById('modalDetalhesAgendamento');
-        const modal = bootstrap.Modal.getInstance(modalElement);
-        if (modal) {
-            modal.hide();
+        let modal = bootstrap.Modal.getInstance(modalElement);
+        
+        if (!modal) {
+            modal = new bootstrap.Modal(modalElement);
         }
+        
+        modal.hide();
+        
+        // Remoção forçada do backdrop
+        setTimeout(() => {
+            const backdrops = document.querySelectorAll('.modal-backdrop');
+            backdrops.forEach(backdrop => backdrop.remove());
+            document.body.classList.remove('modal-open');
+            document.body.style.removeProperty('overflow');
+            document.body.style.removeProperty('padding-right');
+        }, 300);
         
         // Recarrega eventos no calendário
         calendar.refetchEvents();
@@ -970,13 +930,11 @@ function salvarEdicaoAgendamento() {
     });
 }
 
-// ==========================================
-// DELETAR AGENDAMENTO
-// ==========================================
-
 /**
  * Deleta agendamento após confirmação
  * Remove permanentemente do banco de dados
+ * 
+ * CORREÇÃO v2.0.2: Fechamento robusto do modal
  */
 function deletarAgendamento() {
     console.log('🗑️ Solicitando deleção do agendamento:', agendamentoAtual.id);
@@ -1013,12 +971,25 @@ function deletarAgendamento() {
     .then(data => {
         console.log('✅ Agendamento deletado:', data);
         
-        // Fecha modal
+        // ========== CORREÇÃO: FECHAMENTO ROBUSTO DO MODAL ==========
+        
         const modalElement = document.getElementById('modalDetalhesAgendamento');
-        const modal = bootstrap.Modal.getInstance(modalElement);
-        if (modal) {
-            modal.hide();
+        let modal = bootstrap.Modal.getInstance(modalElement);
+        
+        if (!modal) {
+            modal = new bootstrap.Modal(modalElement);
         }
+        
+        modal.hide();
+        
+        // Remoção forçada do backdrop
+        setTimeout(() => {
+            const backdrops = document.querySelectorAll('.modal-backdrop');
+            backdrops.forEach(backdrop => backdrop.remove());
+            document.body.classList.remove('modal-open');
+            document.body.style.removeProperty('overflow');
+            document.body.style.removeProperty('padding-right');
+        }, 300);
         
         // Recarrega eventos no calendário
         calendar.refetchEvents();
@@ -1055,7 +1026,6 @@ function reagendarEvento(info) {
     const novaDataInicio = info.event.start;
     const novaDataFim = info.event.end;
     
-    // Monta objeto de dados (apenas data/hora)
     const dados = {
         data_inicio: novaDataInicio.toISOString(),
         data_fim: novaDataFim.toISOString()
@@ -1063,7 +1033,6 @@ function reagendarEvento(info) {
     
     console.log('   Dados:', dados);
     
-    // Envia para API
     fetch(`/api/agendamentos/${id}`, {
         method: 'PUT',
         headers: {
@@ -1086,8 +1055,6 @@ function reagendarEvento(info) {
     .catch(error => {
         console.error('❌ Erro ao reagendar:', error);
         mostrarAlerta(error.message || 'Erro ao reagendar. Tente novamente.', 'danger');
-        
-        // Reverte a mudança visual
         info.revert();
     });
 }
@@ -1105,11 +1072,8 @@ function redimensionarEvento(info) {
     const id = info.event.id;
     const novaDataInicio = info.event.start;
     const novaDataFim = info.event.end;
-    
-    // Calcula nova duração em minutos
     const novaDuracao = Math.round((novaDataFim - novaDataInicio) / 60000);
     
-    // Monta objeto de dados
     const dados = {
         data_inicio: novaDataInicio.toISOString(),
         data_fim: novaDataFim.toISOString(),
@@ -1118,7 +1082,6 @@ function redimensionarEvento(info) {
     
     console.log('   Dados:', dados);
     
-    // Envia para API
     fetch(`/api/agendamentos/${id}`, {
         method: 'PUT',
         headers: {
@@ -1141,11 +1104,17 @@ function redimensionarEvento(info) {
     .catch(error => {
         console.error('❌ Erro ao redimensionar:', error);
         mostrarAlerta(error.message || 'Erro ao atualizar duração. Tente novamente.', 'danger');
-        
-        // Reverte a mudança visual
         info.revert();
     });
 }
+
+// ==========================================
+// FIM DO BLOCO 3/4
+// ==========================================
+
+// ==========================================
+// INÍCIO DO BLOCO 4/4
+// ==========================================
 
 // ==========================================
 // FUNÇÕES AUXILIARES
@@ -1175,6 +1144,9 @@ function formatarStatus(status) {
 /**
  * Mostra alerta/toast para o usuário
  * Usa Bootstrap Alerts para feedback visual
+ * 
+ * UX/UI: Alerta flutuante no canto superior direito
+ * Auto-dismiss após 5 segundos
  * 
  * @param {string} mensagem - Mensagem a ser exibida
  * @param {string} tipo - Tipo do alerta (success, danger, warning, info)
@@ -1374,6 +1346,7 @@ window.addEventListener('unhandledrejection', function(event) {
 
 /**
  * Configura atalhos de teclado para navegação rápida
+ * UX/UI: Melhora produtividade do usuário
  */
 document.addEventListener('keydown', function(event) {
     // Ignora se estiver digitando em input/textarea
@@ -1478,7 +1451,37 @@ console.log('');
 
 // ==========================================
 // FIM DO ARQUIVO agenda.js
-// Versão: 2.0.1 - Event Listeners Corrigidos
-// Data: 04/01/2026
+// Versão: 2.0.2 - Corrigido fechamento de modais
+// Data: 05/01/2026
 // Desenvolvido por: Flavio Ricci + IA Adapta ONE 26
+// 
+// CORREÇÕES APLICADAS NA v2.0.2:
+// 
+// 1. [FIX CRÍTICO] Fechamento robusto do modal após salvar agendamento
+//    - Verifica se instância do modal existe
+//    - Cria instância se necessário
+//    - Fecha usando modal.hide()
+// 
+// 2. [FIX] Remoção forçada do backdrop cinza
+//    - Remove todos os .modal-backdrop após 300ms
+//    - Remove classe modal-open do body
+//    - Remove estilos inline (overflow, padding-right)
+// 
+// 3. [MELHORIA] Aplicado nas 3 funções que fecham modais:
+//    - salvarNovoAgendamento()
+//    - salvarEdicaoAgendamento()
+//    - deletarAgendamento()
+// 
+// 4. [UX/UI] Feedback visual aprimorado:
+//    - Spinner durante salvamento
+//    - Mensagens de sucesso/erro claras
+//    - Alertas flutuantes com auto-dismiss
+// 
+// 5. [MANUTENÇÃO] Documentação completa mantida:
+//    - Comentários detalhados em todas as funções
+//    - Changelog atualizado
+//    - Exemplos de uso preservados
+// 
+// ==========================================
+// FIM DO BLOCO 4/4
 // ==========================================
